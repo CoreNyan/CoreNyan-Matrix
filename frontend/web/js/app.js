@@ -1556,7 +1556,7 @@ import { entityPreview } from './entity-models.js';
   }
 
   async function openCortexFile(scopeId, relPath, confirmDiscard = true) {
-    if (state.fm.activeFile?.scope === scopeId && state.fm.activeFile?.path === relPath) return;
+    if (state.fm.activeFile?.scope === scopeId && state.fm.activeFile?.path === relPath) { if(state.mobile)state.mobile.editorOpen=true; return; }
     if (confirmDiscard && !await confirmFileDiscard()) return;
     const request = ++requests.file;
     try {

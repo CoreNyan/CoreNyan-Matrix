@@ -1,0 +1,30 @@
+/* One working surface at a time: browse, then edit. Shared by all clients. */
+body:not(.mobile-layout) .cortex-workbench-grid{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"navigation" "explorer";height:clamp(580px,75dvh,1100px)}
+body:not(.mobile-layout) .cortex-workbench-grid:is(.mobile-editor-open,.config-open){grid-template-areas:"navigation" "editor"}
+body:not(.mobile-layout) .fm-module-sidebar{display:block;height:auto;max-height:40dvh;padding:0;border-right:0;border-bottom:1px solid #333;border-radius:0;overflow:auto}
+body:not(.mobile-layout) .fm-module-sidebar:not(.mobile-workspace-open)>.workspace-section{display:none}
+.workspace-section{min-width:0}
+.workspace-arrow{display:grid;place-items:center;flex:none}.workspace-arrow svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.mobile-workspace-toggle[aria-expanded=true] .workspace-arrow{transform:rotate(180deg)}
+body:not(.mobile-layout) .workspace-section{display:grid;grid-template-columns:100px minmax(0,1fr);gap:16px;padding:12px 20px;border-top:1px solid #292929}
+body:not(.mobile-layout) .workspace-section .fm-sidebar-caption{padding:12px 0;margin:0}
+body:not(.mobile-layout) :is(#fmModuleNav,#fmScopeTabs){display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+body:not(.mobile-layout) .mobile-workspace-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:52px;padding:14px 20px;background:transparent;border:0;color:#eee;text-align:left;font:13px var(--font-sans);cursor:pointer}
+body:not(.mobile-layout) .cortex-explorer-pane{height:100%;min-height:0;border:0}
+body:not(.mobile-layout) .cortex-preview-column{display:none;height:100%;min-height:0;border:0;border-radius:0;flex-direction:column}
+body:not(.mobile-layout) :is(.mobile-editor-open,.config-open) .cortex-preview-column{display:flex}
+body:not(.mobile-layout) :is(.mobile-editor-open,.config-open) .cortex-explorer-pane{display:none}
+body:not(.mobile-layout) :is(.cortex-ide-pane,#fmConfigPanel){flex:1;min-height:0;height:auto}
+body:not(.mobile-layout) :is(.mobile-editor-back,.mobile-editor-resume){display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 14px;background:#181818;color:#eee;border:1px solid #3c3c3c;border-radius:10px;font:12px var(--font-sans);cursor:pointer}
+body:not(.mobile-layout) .mobile-editor-back{align-self:flex-start;margin:12px 16px 0;flex:none}
+body:not(.mobile-layout) .mobile-editor-back svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7}
+body:not(.mobile-layout) .config-open .mobile-editor-back,.mobile-editor-resume[hidden]{display:none!important}
+body:not(.mobile-layout) .explorer-action-bar{padding:16px;gap:10px;align-items:center}
+body:not(.mobile-layout) .explorer-action-bar .explorer-filter-input{flex:1 1 240px;width:auto;margin:0;height:40px}
+body:not(.mobile-layout) .explorer-action-bar .explorer-icon-btn{min-height:40px;padding:8px 12px}
+body:not(.mobile-layout) .ide-header-bar{align-items:center;padding:16px 20px}
+body:not(.mobile-layout) .ide-file-meta{flex:1 1 300px}
+body:not(.mobile-layout) .ide-toolbar-actions .wire-action-btn{min-height:38px;font-size:12px}
+.cortex-TopToolbar{flex-wrap:wrap}
+@media(prefers-reduced-motion:no-preference){.mobile-workspace-toggle,.mobile-editor-back,.mobile-editor-resume{transition:background .18s,transform .18s}.mobile-editor-back:active,.mobile-editor-resume:active{transform:scale(.96)}.mobile-workspace-open>.workspace-section{animation:workspace-reveal .22s ease-out}.cortex-explorer-pane{animation:workspace-reveal .22s ease-out}}
+@keyframes workspace-reveal{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}

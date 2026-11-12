@@ -10,21 +10,23 @@ export function mountMobileLayout(registry){
  for(const [id,label,icon] of [['btnSettings',C.settings,C.icons.settings]]){const button=document.getElementById(id),face=document.createElement('span'),desktop=document.createElement('span');desktop.className='desktop-toolbar-label';desktop.append(...button.childNodes);button.append(desktop);face.className='mobile-toolbar-face';face.innerHTML=svg(icon);button.append(face);button.setAttribute('aria-label',label);button.title=label;}
  state.mobile={workspaceOpen:false,editorOpen:false};
  const sidebar=document.querySelector('.fm-module-sidebar'),editor=document.querySelector('.cortex-preview-column'),workbench=document.querySelector('.cortex-workbench-grid');
+ for(const selector of ['#fmModuleNav','#fmScopeTabs']){const items=sidebar.querySelector(selector),section=document.createElement('section');section.className='workspace-section';items.before(section);section.append(section.previousElementSibling,items);}
  const workspace=document.createElement('button');workspace.type='button';workspace.className='mobile-workspace-toggle';workspace.setAttribute('aria-label',C.workspace);sidebar.prepend(workspace);
+ const workspaceLabel=document.createElement('span'),workspaceArrow=document.createElement('span');workspaceArrow.className='workspace-arrow';workspaceArrow.innerHTML=svg('m6 9 6 6 6-6');workspace.append(workspaceLabel,workspaceArrow);
  const back=document.createElement('button');back.type='button';back.className='mobile-editor-back';back.innerHTML=svg(C.icons.back);back.append(document.createTextNode(C.backFiles));editor.prepend(back);
  const resume=document.createElement('button');resume.type='button';resume.className='mobile-editor-resume';resume.textContent=C.openFile;document.querySelector('.cortex-TopToolbar').append(resume);
  workspace.onclick=()=>{state.mobile.workspaceOpen=!state.mobile.workspaceOpen;};
  back.onclick=()=>{state.mobile.editorOpen=false;};resume.onclick=()=>{state.mobile.editorOpen=true;};
  function render(){
-  const active=state.fm.activeFile;workbench.classList.toggle('mobile-editor-open',compact.matches&&state.mobile.editorOpen);
+  const active=state.fm.activeFile;workbench.classList.toggle('mobile-editor-open',state.mobile.editorOpen);
   sidebar.classList.toggle('mobile-workspace-open',state.mobile.workspaceOpen);
-  workspace.textContent=(EXPLORER.modules.find(m=>m.id===state.fm.module)?.label||state.fm.module||C.workspace)+'  '+(state.mobile.workspaceOpen?'−':'+');workspace.setAttribute('aria-expanded',String(state.mobile.workspaceOpen));
+  workspaceLabel.textContent=EXPLORER.modules.find(m=>m.id===state.fm.module)?.label||state.fm.module||C.workspace;workspace.setAttribute('aria-expanded',String(state.mobile.workspaceOpen));
   resume.hidden=!active||state.mobile.editorOpen;back.setAttribute('aria-label',C.backFiles);
  }
- registry.subscribe(['mobile','fm.module','fm.activeFile'],render);
- registry.subscribe(['fm.activeFile.path'],()=>{if(compact.matches)state.mobile.editorOpen=!!state.fm.activeFile;if(state.fm.activeFile&&compact.matches){requestAnimationFrame(()=>{editor.scrollIntoView({block:'start',behavior:'smooth'});window.dispatchEvent(new Event('resize'));});}render();});
+ registry.subscribe(['mobile','fm.module','fm.scopes','fm.activeFile'],render);
+ registry.subscribe(['fm.activeFile.path'],()=>{state.mobile.editorOpen=!!state.fm.activeFile;if(state.fm.activeFile&&compact.matches){requestAnimationFrame(()=>{editor.scrollIntoView({block:'start',behavior:'smooth'});window.dispatchEvent(new Event('resize'));});}render();});
  registry.subscribe(['fm.currentScope'],()=>{state.mobile.workspaceOpen=false;state.mobile.editorOpen=false;});
- registry.subscribe(['mobile.editorOpen'],()=>{if(compact.matches&&state.mobile.editorOpen){reveal(editor);window.dispatchEvent(new Event('resize'));}});
+ registry.subscribe(['mobile.editorOpen'],()=>{if(state.mobile.editorOpen){reveal(editor);window.dispatchEvent(new Event('resize'));}});
  function layout(){
   document.body.classList.toggle('mobile-layout',compact.matches);
   if(compact.matches)dock.append(nav);else slot.after(nav);

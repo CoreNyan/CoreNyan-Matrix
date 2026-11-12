@@ -3,9 +3,12 @@ window.matrixReady=(async()=>{
  const response=await fetch('/contracts/product.json',{cache:'no-cache'});
  if(!response.ok)throw Error('无法加载连接配置');
  const product=await response.json();
- const remote=location.origin!==new URL(product.serverUrl).origin&&(product.webOrigins||[]).includes(location.origin);
+ const pageOrigin=location.protocol==='http:'?'https://'+location.host:location.origin;
+ const remote=pageOrigin!==new URL(product.serverUrl).origin&&(product.webOrigins||[]).includes(pageOrigin);
  window.matrixPages=remote;
  if(!remote)return;
+ // HTTP Pages cannot install a service worker or authenticate against the API.
+ if(location.protocol!=='https:'){location.replace('https://'+location.host+location.pathname+location.search+location.hash);await new Promise(()=>{});}
  if(!('serviceWorker' in navigator)||!isSecureContext)throw Error('请使用 HTTPS 打开 CoreNyan');
  await navigator.serviceWorker.register('/matrix-sw.js',{scope:'/',updateViaCache:'none'});
  await navigator.serviceWorker.ready;

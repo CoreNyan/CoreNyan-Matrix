@@ -1,5 +1,5 @@
 import fs from 'node:fs';import path from 'node:path';import {randomUUID,createHash} from 'node:crypto';
-import {SOUNDS,defaultSounds,validateSoundSettings} from '../../contracts/sounds.js';
+import {SOUNDS,defaultSounds,normalizeSoundSettings,validateSoundSettings} from '../../contracts/sounds.js';
 const fail=(message,status=400)=>{throw Object.assign(Error(message),{status});};
 export function validateSoundWave(b){
  if(b.length<46||b.length>SOUNDS.maxBytes||b.toString('ascii',0,4)!=='RIFF'||b.readUInt32LE(4)!==b.length-8||b.toString('ascii',8,12)!=='WAVE'||b.toString('ascii',12,16)!=='fmt '||b.readUInt32LE(16)!==16||b.readUInt16LE(20)!==1||b.readUInt16LE(22)!==1||b.readUInt32LE(24)!==SOUNDS.sampleRate||b.readUInt32LE(28)!==SOUNDS.sampleRate*2||b.readUInt16LE(32)!==2||b.readUInt16LE(34)!==16||b.toString('ascii',36,40)!=='data'||b.readUInt32LE(40)!==b.length-44||(b.length-44)%2)fail('音频格式无效，请重新选择音效文件');
@@ -10,7 +10,7 @@ export function createSounds({directory,accounts}){
  let state=fs.existsSync(file)?JSON.parse(fs.readFileSync(file,'utf8')):{version:1,accounts:{}};if(state.version!==1||!state.accounts)throw Error('INVALID_SOUND_STORE');let queue=Promise.resolve();
  const empty=()=>({revision:0,settings:defaultSounds(),assets:[]});
  const row=id=>state.accounts[id]||empty();
- const view=id=>structuredClone(row(id));
+ const view=id=>structuredClone({...row(id),settings:normalizeSoundSettings(row(id).settings)});
  const accountDir=id=>path.join(root,createHash('sha256').update(id).digest('hex'));
  const assetPath=(id,asset)=>path.join(accountDir(id),asset+'.wav');
  const save=async next=>{const temp=file+'.'+randomUUID()+'.tmp';try{await fs.promises.writeFile(temp,JSON.stringify(next),{mode:0o600});await fs.promises.rename(temp,file);state=next;}finally{await fs.promises.unlink(temp).catch(()=>{});}};

@@ -1,11 +1,17 @@
 {
   "name": "CoreNyan",
-  "version": "0.1.0-beta.6",
+  "version": "0.1.0-beta.7",
   "appId": "cn.corenyan.matrix",
   "serverUrl": "https://123.56.150.177:25999",
   "certificate": "server-public.crt",
   "channel": "beta",
-  "userAgent": "CoreNyanMatrix/0.1.0-beta.6",
+  "userAgent": "CoreNyanMatrix/0.1.0-beta.7",
   "repositoryName": "CoreNyan-Matrix",
-  "versionCode": 6
+  "versionCode": 7,
+  "webUrl": "https://corenyan.fun",
+  "webOrigins": [
+    "https://corenyan.fun",
+    "https://www.corenyan.fun",
+    "https://corenyan.github.io"
+  ]
 }

@@ -1,4 +1,4 @@
-import {SOUNDS,defaultSounds} from '../../../contracts/sounds.js';
+import {SOUNDS,defaultSounds,soundPlayback} from '../../../contracts/sounds.js';
 let state={revision:0,settings:defaultSounds(),assets:[]},context,loading,initialized=false,syncPaused=false;
 const listeners=new Set(),buffers=new Map(),last=new Map();let voices=0;
 export const soundState=()=>structuredClone(state);
@@ -8,17 +8,17 @@ export function acceptSounds(next){state=next;for(const id of buffers.keys())if(
 export async function soundRequest(url,options={}){const res=await fetch(url,options),data=await res.json();if(!res.ok||!data.ok)throw Error(data.error||'音效设置暂不可用');return data;}
 export async function loadSounds(force=false){if(syncPaused&&!force)return soundState();if(loading)return loading;loading=soundRequest(SOUNDS.api).then(data=>{if(!syncPaused||force)acceptSounds(data);return data;}).finally(()=>loading=null);return loading;}
 function audio(){const C=globalThis.AudioContext||globalThis.webkitAudioContext;if(!C)throw Error('当前设备不支持音效');return context??=new C();}
-export async function playSound(event,{preview=false,id,volume}={}){
+export async function playSound(event,{preview=false,id,settings=state.settings}={}){
  if(!preview&&(!state.settings.enabled||document.hidden||!document.hasFocus()))return false;
- id??=state.settings.events[event];volume??=state.settings.volume;if(!id||id==='none'||volume<=0)return false;
+ id??=settings.events[event];const {volume,rate}=soundPlayback(settings,event);if(!id||id==='none'||volume<=0)return false;
  const now=performance.now(),gap=event==='click'?SOUNDS.clickGapMs:SOUNDS.eventGapMs;if(!preview&&now-(last.get(event)??-Infinity)<gap)return false;
  const ctx=audio();if(ctx.state!=='running'){if(preview)await ctx.resume();else return false;}if(voices>=4)return false;last.set(event,now);
  const preset=SOUNDS.presets.find(p=>p.id===id);
- if(preset){let start=ctx.currentTime;for(const [frequency,duration] of preset.notes){const o=ctx.createOscillator(),g=ctx.createGain();o.type=preset.wave;o.frequency.value=frequency;g.gain.setValueAtTime(0,start);g.gain.linearRampToValueAtTime(volume*.18,start+.005);g.gain.setValueAtTime(volume*.18,start+duration*.65);g.gain.linearRampToValueAtTime(0,start+duration);o.connect(g).connect(ctx.destination);voices++;o.onended=()=>{voices--;o.disconnect();g.disconnect();};o.start(start);o.stop(start+duration+.005);start+=duration;}return true;}
+ if(preset){let start=ctx.currentTime;for(const [frequency,duration] of preset.notes){const o=ctx.createOscillator(),g=ctx.createGain();o.type=preset.wave;o.frequency.value=frequency*rate;g.gain.setValueAtTime(0,start);g.gain.linearRampToValueAtTime(volume*.18,start+.005);g.gain.setValueAtTime(volume*.18,start+duration*.65);g.gain.linearRampToValueAtTime(0,start+duration);o.connect(g).connect(ctx.destination);voices++;o.onended=()=>{voices--;o.disconnect();g.disconnect();};o.start(start);o.stop(start+duration+.005);start+=duration;}return true;}
  const assetId=id.slice(7);if(!id.startsWith('custom:')||!state.assets.some(a=>a.id===assetId))throw Error('自定义音效已不存在');
  let buffer=buffers.get(assetId);if(!buffer){const res=await fetch(SOUNDS.api+'/files/'+encodeURIComponent(assetId));if(!res.ok)throw Error('音效下载失败');buffer=await ctx.decodeAudioData(await res.arrayBuffer());buffers.set(assetId,buffer);}
  if(voices>=4||!preview&&(document.hidden||!document.hasFocus()))return false;
- const source=ctx.createBufferSource(),gain=ctx.createGain();source.buffer=buffer;gain.gain.value=volume*.65;source.connect(gain).connect(ctx.destination);voices++;source.onended=()=>{voices--;source.disconnect();gain.disconnect();};source.start();return true;
+ const source=ctx.createBufferSource(),gain=ctx.createGain();source.buffer=buffer;source.playbackRate.value=rate;gain.gain.value=volume*.65;source.connect(gain).connect(ctx.destination);voices++;source.onended=()=>{voices--;source.disconnect();gain.disconnect();};source.start();return true;
 }
 export const emitSound=event=>void playSound(event).catch(()=>{});
 export function initSounds(){if(initialized)return;initialized=true;
