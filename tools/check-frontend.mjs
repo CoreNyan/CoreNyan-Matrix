@@ -2,10 +2,10 @@ import { readdir, readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { term } from '../frontend/web/js/terminology.js';
-const files = await readdir('web', { recursive: true });
+const files = await readdir('frontend/web', { recursive: true });
 let checked = 0;
 for (const relative of files.filter(file => /\.(js|css|html|json)$/.test(file))) {
-  const file = path.join('web', relative);
+  const file = path.join('frontend/web', relative);
   const bytes = await readFile(file);
   const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
   if (bytes.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf]))) throw Error(`BOM: ${file}`);
@@ -18,7 +18,7 @@ for (const relative of files.filter(file => /\.(js|css|html|json)$/.test(file)))
   }
   checked++;
 }
-for (const file of ['server.js', 'scripts/log-source.mjs', 'scripts/recycle-bin.mjs']) {
+for (const file of ['backend/server.js', 'backend/scripts/log-source.mjs', 'backend/scripts/recycle-bin.mjs']) {
   const text = await readFile(file, 'utf8');
   for (const [, key] of text.matchAll(/\{\{([a-zA-Z][\w.-]*)\}\}/g)) term(key);
   const result = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
