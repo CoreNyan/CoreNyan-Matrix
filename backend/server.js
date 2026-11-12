@@ -181,6 +181,7 @@ function getCoreNyanBioState() {
     }
   } catch {}
 
+  life.recentLogs = [];
   try { const thoughts = JSON.parse(fs.readFileSync(path.join(BRAIN_ROOT, 'data', 'recent-thoughts.json'), 'utf8')); if (Array.isArray(thoughts.entries)) life.recentLogs = thoughts.entries.slice(-80).map(({at,text}) => ({at,text})); } catch {}
 
   if(life.mode==='GAMING')life.mode='SURFING';

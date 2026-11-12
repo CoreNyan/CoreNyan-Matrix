@@ -38,7 +38,7 @@ export function createChatApi({sharedRoot,gatewayRoot}){
      json(res,200,{ok:true,message:await call('message.'+op,{messageId,revision:a.revision,...(op==='edit'?{text:a.text}:{})},requestId)});return true;
     }
     if(parts[2]==='messages'&&parts.length===3&&req.method==='POST'){const a=await body(req);uuid(a.id);if(!Array.isArray(a.files)||a.files.length>CHAT.maxFiles)throw Error('CHAT_FILE_LIMIT');json(res,202,{ok:true,message:await call('send',a,a.id)});return true;}
-    if(['clone','stop'].includes(parts[2])&&req.method==='POST'){json(res,200,{ok:true,thread:await call(parts[2],await body(req))});return true;}
+    if(['clone','stop','clear'].includes(parts[2])&&req.method==='POST'){json(res,200,{ok:true,thread:await call(parts[2],await body(req))});return true;}
     if(!parts[2]){if(req.method==='GET')json(res,200,{ok:true,...await call('messages',{before:url.searchParams.get('before')||''})});else if(req.method==='PATCH')json(res,200,{ok:true,thread:await call('update',await body(req))});else if(req.method==='DELETE')json(res,200,{ok:true,...await call('delete')});else throw Error('CHAT_METHOD_NOT_ALLOWED');return true;}
    }
    if(parts[0]==='groups'&&req.method==='POST'){json(res,200,{ok:true,...await call('folder',await body(req))});return true;}
