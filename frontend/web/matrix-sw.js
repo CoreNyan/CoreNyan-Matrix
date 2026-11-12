@@ -29,7 +29,7 @@ async function proxy(request,url){
  if(response.status===401||url.pathname==='/auth/logout'&&response.ok||url.pathname==='/auth/password'&&response.ok)await session(null);
  if(url.pathname==='/auth/logout'&&request.mode==='navigate'&&response.ok)return Response.redirect(self.location.origin+'/login/',303);
  const outputHeaders=new Headers(response.headers);outputHeaders.delete('set-cookie');outputHeaders.set('Cache-Control','no-store');
- return new Response(response.body,{status:response.status,statusText:response.statusText,headers:outputHeaders});
+ return new Response([204,205,304].includes(response.status)||method==='HEAD'?null:response.body,{status:response.status,statusText:response.statusText,headers:outputHeaders});
 }
 self.addEventListener('fetch',event=>{
  const url=new URL(event.request.url);if(url.origin!==self.location.origin)return;

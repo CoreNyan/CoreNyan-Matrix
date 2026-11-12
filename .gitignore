@@ -53,3 +53,10 @@ credentials*.json
 *.sqlite*
 *.db*
 .corenyan-private/
+
+# Retained local legacy models and acceptance helpers are not public source.
+/frontend/web/assets/entity/
+/frontend/web/assets/entity-v[4-8]/
+/playwright.config.js
+/tools/capture-preview.mjs
+/tools/smoke-live.mjs
