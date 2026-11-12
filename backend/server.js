@@ -454,11 +454,12 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
-    if (pathname === '/api/model-presets' || pathname === '/api/model-presets/bindings') {
+    if (pathname === '/api/model-presets' || pathname === '/api/model-presets/bindings' || pathname === '/api/model-presets/clone') {
       try {
         if(req.method!=='GET'&&req.headers.origin&&!trustedRequestOrigin(req)) return sendJson(res,403,{ok:false,error:'请从当前管理页面操作'});
         if(pathname==='/api/model-presets'&&req.method==='GET')return sendJson(res,200,{ok:true,...presetStore.catalog()});
         if(pathname==='/api/model-presets'&&req.method==='POST')return sendJson(res,200,{ok:true,preset:presetStore.save(await readJsonBody(req))});
+        if(pathname==='/api/model-presets/clone'&&req.method==='POST')return sendJson(res,200,{ok:true,preset:presetStore.clone(await readJsonBody(req))});
         if(pathname==='/api/model-presets'&&req.method==='DELETE')return sendJson(res,200,{ok:true,...presetStore.remove(await readJsonBody(req))});
         if(pathname==='/api/model-presets/bindings'&&req.method==='POST')return sendJson(res,200,{ok:true,...presetStore.bind(await readJsonBody(req))});
         return sendJson(res,405,{ok:false,error:'不支持的请求方法'});

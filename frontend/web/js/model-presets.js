@@ -33,7 +33,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  <fieldset class="preset-retry-fieldset"><legend>按错误类型设置重试次数</legend><div data-retry-rules></div><button type="button" data-add-retry>＋ 添加错误规则</button></fieldset>
  </section>
  <section id="presetJsonPanel" role="tabpanel" class="preset-json" data-json-panel hidden><div class="preset-json-toolbar"><strong>完整预设文件</strong><button type="button" data-format>格式化</button><span id="presetCursorMeta">LN 1, COL 1</span></div><p class="preset-help">包括 version、kind、name 和全部 settings。api_key: null 保留现有密钥；填入新值可替换，空字符串清除。</p><div class="ide-code-surface preset-json-surface"><textarea id="presetJsonEditor" spellcheck="false" aria-label="完整预设 JSON"></textarea></div></section>
- <footer class="preset-editor-footer"><span data-dirty></span><button type="button" data-discard hidden>放弃草稿</button><button type="submit" data-save hidden>重试保存</button><button type="button" data-delete>删除预设</button></footer></form></div></section>
+ <footer class="preset-editor-footer"><span data-dirty></span><button type="button" data-discard hidden>放弃草稿</button><button type="button" data-clone>${PRESET_EDITOR.actions.clone}</button><button type="submit" data-save>${PRESET_EDITOR.actions.create}</button><button type="button" data-delete>删除预设</button></footer></form></div></section>
  <div class="preset-confirm" hidden><p data-confirm-text></p><button type="button" data-cancel>取消</button><button type="button" data-confirm>确认</button></div>`;
  document.body.append(dialog);decorateSettings(dialog);
  const q=selector=>dialog.querySelector(selector),drafts=new Map();
@@ -41,6 +41,8 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  const state=registry.state;
  let confirmation=null,editor;
  const isDirty=d=>d&&fingerprint(d)!==d.original;
+ function nextId(){let i=1;while(state.catalog?.items.some(p=>p.id===state.kind+'/'+PRESET_EDITOR.newFilePrefix+'-'+i))i++;return state.kind+'/'+PRESET_EDITOR.newFilePrefix+'-'+i;}
+ function validateDraft(d){const doc=parseDraft(d);const missing=PRESET_EDITOR.requiredFields.filter(([key])=>!String(key==='id'?d.id:readPath(doc,key)||'').trim());if(missing.length){const error=Error('请填写'+missing.map(([,label])=>label).join('、')+'，草稿已保留。');error.field=missing[0][0];throw error;}return doc;}
  const dirtyDrafts=()=>[...drafts.values()].filter(isDirty);
  const routeDirty=()=>state.catalog&&(state.primary!==state.catalog.bindings[state.kind]||JSON.stringify(state.backups)!==JSON.stringify(state.catalog.fallbacks?.[state.kind]||[]));
  const dirty=()=>dirtyDrafts().length>0||routeDirty();
@@ -66,7 +68,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
   const item=state.catalog?.items.find(p=>p.id===id&&p.kind===state.kind);
   const key=item?.id||'new:'+state.kind;
   let draft=drafts.get(key);
-  if(!draft){draft={id:item?.id||'',selected:item?.id||null,kind:state.kind,revision:item?.revision,raw:pretty(documentOf(item,state.kind))};draft.original=fingerprint(draft);}
+  if(!draft){draft={id:item?.id||nextId(),selected:item?.id||null,kind:state.kind,revision:item?.revision,raw:pretty(documentOf(item,state.kind))};draft.original=fingerprint(draft);}
   state.draft=draft;drafts.set(key,state.draft);state.screen='editor';
   state.error='';state.notice='';renderForm();renderLibrary();renderControls();q('[data-form-panel]').scrollTop=0;q('[data-json-panel]').scrollTop=0;
  }
@@ -147,11 +149,13 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
   q('[data-dirty]').textContent=d.selected?'修改自动保存 · 下次调用生效':'填写文件路径、名称与连接信息后自动创建';
   if(dirtyDrafts().length>1)q('[data-dirty]').textContent+=' · 另有 '+(dirtyDrafts().length-1)+' 份草稿';
   for(const control of dialog.querySelectorAll('button,input,select,textarea'))control.disabled=state.busy;
-  q('[data-field=id]').disabled=state.busy||Boolean(d.selected);
-  q('[data-save]').hidden=state.saveState!=='error';q('[data-discard]').hidden=state.saveState!=='error';
-  q('[data-save]').disabled=state.busy;q('[data-discard]').disabled=state.busy;
+  q('[data-field=id]').disabled=state.busy||Boolean(d.selected)||state.saveState==='saving';
+  q('[data-save]').hidden=false;q('[data-save]').textContent=state.saveState==='error'?PRESET_EDITOR.actions.retry:d.selected?PRESET_EDITOR.actions.save:PRESET_EDITOR.actions.create;
+  q('[data-clone]').disabled=state.busy||!item||state.saveState==='saving';
+  q('[data-discard]').hidden=!isDirty(d);
+  q('[data-save]').disabled=state.busy||state.saveState==='saving'||Boolean(d.selected&&!isDirty(d));q('[data-discard]').disabled=state.busy||state.saveState==='saving';
   q('[data-delete]').disabled=state.busy||!item||references(item.id);
-  q('[data-autosave]').textContent=state.busy?'加载中…':({pending:'等待保存…',saving:'保存中…',saved:'已保存',error:'未保存'})[state.saveState];
+  q('[data-autosave]').textContent=state.busy?'加载中…':!d.selected&&state.saveState==='saved'?'待创建':({pending:'等待保存…',saving:'保存中…',saved:'已保存',error:'未保存'})[state.saveState];
   q('[data-refresh]').hidden=state.saveState!=='error';
   q('.preset-route').hidden=state.screen!=='routing';q('[data-form]').hidden=state.screen!=='editor';q('[data-routing]').classList.toggle('active',state.screen==='routing');
   const ids=state.backups;
@@ -217,8 +221,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  q('[data-discard]').onclick=()=>ask('撤销当前预设的未保存修改？',()=>{const key=state.draft.selected||'new:'+state.kind;drafts.delete(key);selectPreset(state.draft.selected);});
  const autosave=createAutosave(async()=>{
   for(const d of dirtyDrafts()){
-   const doc=parseDraft(d),id=d.id.trim();
-   if(!id||!doc.name.trim()||!doc.settings.base_url||!doc.settings.model)throw Error('请填写文件路径、名称、请求地址与模型标识，草稿会保留。');
+   const doc=validateDraft(d),id=d.id.trim();
    const sent=fingerprint(d),key=d.selected||'new:'+d.kind;
    const result=await api(MODEL_PRESETS.api,{method:'POST',body:{id,revision:d.revision,preset:doc}});
    d.revision=result.preset.revision;d.selected=id;
@@ -236,7 +239,8 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
   }
   renderLibrary();updateSummary(state.catalog);void Promise.resolve(onApplied()).catch(()=>{});
  },{delay:PRESET_EDITOR.autosaveMs,onState:(value,error)=>{state.saveState=value;state.error=error?.message||'';}});
- q('[data-form]').onsubmit=e=>{e.preventDefault();void autosave.flush();};
+ q('[data-form]').onsubmit=e=>{e.preventDefault();try{validateDraft(state.draft);}catch(error){state.error=error.message;state.saveState='error';const selector=error.field==='id'?'[data-field=id]':error.field==='name'?'[data-field=name]':error.field?'[data-setting="'+error.field.replace('settings.','')+'"]':null;const input=selector&&q(selector);if(input&&!input.closest('[hidden]')){input.scrollIntoView({block:'center'});input.focus();}return;}void autosave.flush();};
+ q('[data-clone]').onclick=()=>guard(()=>run(async()=>{const source=state.draft.selected;if(!source)return;const item=state.catalog.items.find(p=>p.id===source);const result=await api(MODEL_PRESETS.api+'/clone',{method:'POST',body:{source,revision:item.revision}});await refresh(result.preset.id);state.notice='已克隆为 '+result.preset.id+'.json';}));
  q('[data-delete]').onclick=()=>{const id=state.draft.selected,item=state.catalog.items.find(p=>p.id===id);if(!item)return;ask('删除预设「'+item.name+'」及其当前草稿？',()=>run(async()=>{if(!await autosave.flush())throw Error('请先处理未保存的修改，再删除预设。');const current=state.catalog.items.find(p=>p.id===id);await api(MODEL_PRESETS.api,{method:'DELETE',body:{id,revision:current.revision}});drafts.delete(id);await refresh();state.notice='预设已删除。';}));};
  q('[data-folder]').onclick=()=>guard(()=>{closeDialog(dialog);openDirectory();});
  async function open(){showDialog(dialog);if(!state.catalog||!dirty()&&state.saveState!=='saving')await run(()=>refresh());else renderControls();if(state.mode==='json')requestAnimationFrame(()=>editor.refresh());}

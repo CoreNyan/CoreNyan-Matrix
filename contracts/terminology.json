@@ -119,7 +119,7 @@
     "settings.account.label": "账号管理",
     "settings.account.detail": "管理员与访问权限",
     "settings.assistant.label": "小可",
-    "settings.assistant.detail": "聊天头像",
+    "settings.assistant.detail": "聊天头像、模型预设",
     "settings.system.label": "系统配置",
     "settings.system.detail": "服务与工具",
     "settings.profile.label": "我的账号",

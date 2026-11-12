@@ -43,8 +43,8 @@ export function mountExplorerSelection({list,getSelection,setSelection,select,op
   const row=rowAt(e);if(!row){if(!e.target.closest('button,input,a'))setSelection(new Set());return;}
   if(e.target.closest('button,input,a'))return;e.stopPropagation();select(target(row),e);
   if(e.ctrlKey||e.metaKey||e.shiftKey)return;
-  if(e.pointerType==='touch'||e.pointerType==='pen'||target(row).isDir&&e.target.closest('.tree-caret'))void open(target(row),e);
+  if(e.detail<2&&(target(row).isDir||e.pointerType==='touch'||e.pointerType==='pen'))void open(target(row),e);
  });
- list.addEventListener('dblclick',e=>{const row=rowAt(e);if(row&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.target.closest('.tree-caret')){e.preventDefault();void open(target(row),e);}});
+ list.addEventListener('dblclick',e=>{const row=rowAt(e);if(row&&!target(row).isDir&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey&&!e.target.closest('.tree-caret')){e.preventDefault();void open(target(row),e);}});
  return {clear};
 }
