@@ -181,7 +181,7 @@ export const ENTITY = freeze({
   layerModels: { 'corenyan-brain':'command', 'corenyan-gateway':'sensor', 'onebot-qq':'courier', 'corenyan-redis':'relay', 'corenyan-web':'ark' },
   assetVersion: 9, assetRoot: '/assets/entity-v9/', surfaceDensity: 2200, maxPoints: 75000, fallbackPoints: 5200, maxDpr: 2,
   defaultYaw: -1.05, defaultPitch: -.38, defaultZoom: 1, zoomMin: .38, zoomMax: 8, zoomStep: .18,
-  transitionPoints: 150000, scatterFit: 1, defaultFocus: 1, scatterRadius: 3.2, focusEaseMs: 180, scatterMs: 430, assembleMs: 680, pointSize: 1.25, rotSpeed: .045, revealMs: 650, gridGain: .32
+  transitionPoints: 150000, snapshotBatch: 8192, defaultFocus: 1, focusSpread: 1.6, switchSpread: 1.5, scatterStretch: .4, scatterFlow: .22, scatterCurl: .3, outwardDrift: .22, scatterDepth: .12, cloudAlpha: .55, defocusAlpha: .55, edgeFadeStart: .8, focusEaseMs: 180, scatterMs: 430, assembleMs: 680, pointSize: 1.25, rotSpeed: .045, revealMs: 650, gridGain: .32
 });
 export const FILE_VIEW = freeze({
   "TREE": "tree",

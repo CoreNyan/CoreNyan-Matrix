@@ -17,31 +17,33 @@ export function mountEntityView(root,registry,layers=()=>[]){
  function draw(now){
   frame=0;if(disposed||!visible())return;
   const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
-  const auto=registry.state.motionEnabled&&rotSpeed>0&&!pointers.size;
+  if(transition&&!transition.prepared)return;
+  const wantsRotation=registry.state.motionEnabled&&rotSpeed>0&&!pointers.size,auto=wantsRotation&&!transition;
   if(auto)camera.yaw+=rotSpeed*dt;
-  let focusing=false;
+  let focusing=Math.abs(camera.focus-focusTarget)>.001;
+  camera.focus=focusing&&registry.state.motionEnabled?camera.focus+(focusTarget-camera.focus)*(1-Math.exp(-dt*1000/ENTITY.focusEaseMs)):focusTarget;
+  let phase='idle',progress=0;
   const t=transition;
   if(t){
    t.elapsed+=dt*1000;
    const duration=t.phase==='scatter'?ENTITY.scatterMs:ENTITY.assembleMs;
-   const progress=registry.state.motionEnabled?Math.min(1,t.elapsed/duration):1;
-   const eased=progress*progress*(3-2*progress);
-   camera.focus=t.phase==='scatter'?t.fromFocus*(1-eased):focusTarget*eased;
-   if(t.phase==='scatter'&&progress===1&&t.ready&&!t.swapping){
+   const amount=registry.state.motionEnabled?Math.min(1,t.elapsed/duration):1;
+   const eased=amount*amount*(3-2*amount);
+   phase=t.phase;progress=eased;
+   if(t.phase==='scatter'&&amount===1&&t.ready&&!t.swapping){
     t.swapping=true;
-    renderer.setModel(t.kind,{isCurrent:()=>transition===t&&!disposed}).then(model=>{
+    renderer.setModel(t.kind,{isCurrent:()=>transition===t&&!disposed}).then(async model=>{
      if(!model||transition!==t||disposed)return;
      text('[data-entity-points]',model.count.toLocaleString());status.textContent='';
      camera.yaw=ENTITY_MODELS[t.kind].yaw;camera.pitch=ENTITY_MODELS[t.kind].pitch;camera.reveal=1;
+     if(!t.hasSource){t.prepared=false;await renderer.beginTransition(camera,{isCurrent:()=>transition===t&&!disposed});t.prepared=true;}
+     if(transition!==t||disposed)return;
      t.phase='assemble';t.elapsed=0;t.swapping=false;canvas.dataset.transition='assemble';dirty=true;wake();
     }).catch(error=>failTransition(t,error));
-   }else if(t.phase==='assemble'&&progress===1){transition=null;canvas.dataset.transition='idle';}
-  }else{
-   focusing=Math.abs(camera.focus-focusTarget)>.001;
-   camera.focus=focusing&&registry.state.motionEnabled?camera.focus+(focusTarget-camera.focus)*(1-Math.exp(-dt*1000/ENTITY.focusEaseMs)):focusTarget;
+   }else if(t.phase==='assemble'&&amount===1){transition=null;phase='idle';progress=0;canvas.dataset.transition='idle';}
   }
-  if(dirty||auto||focusing||t){renderer.draw(camera);dirty=false;}
-  if(auto||focusing||transition&&!transition.swapping&&(transition.ready||transition.elapsed<ENTITY.scatterMs))frame=requestAnimationFrame(draw);
+  if(dirty||auto||focusing||t){renderer.draw({...camera,phase,progress});dirty=false;}
+  if(wantsRotation&&!transition||focusing||transition&&!transition.swapping&&(transition.ready||transition.elapsed<ENTITY.scatterMs))frame=requestAnimationFrame(draw);
  }
  function resize(){const rect=canvas.getBoundingClientRect();if(rect.width&&rect.height){renderer.resize(rect.width,rect.height);dirty=true;wake();}}
  const observer=new ResizeObserver(resize);observer.observe(canvas);
@@ -57,7 +59,8 @@ export function mountEntityView(root,registry,layers=()=>[]){
   const layer=list.find(l=>l.key===registry.state.entityLayer)||list[0],nextKind=entityKind(layer),info=ENTITY_MODELS[nextKind];
   if(nextKind!==kind){
    kind=nextKind;status.textContent='正在加载实体点阵…';
-   const t={kind:nextKind,phase:'scatter',elapsed:canvas.dataset.model?0:ENTITY.scatterMs,fromFocus:camera.focus,ready:false,swapping:false};transition=t;canvas.dataset.transition='scatter';
+   const t={kind:nextKind,phase:'scatter',elapsed:canvas.dataset.model?0:ENTITY.scatterMs,hasSource:false,prepared:false,ready:false,swapping:false};transition=t;canvas.dataset.transition='scatter';
+   renderer.beginTransition(camera,{isCurrent:()=>transition===t&&!disposed}).then(hasSource=>{if(transition!==t||disposed)return;t.hasSource=hasSource;t.prepared=true;dirty=true;wake();}).catch(error=>failTransition(t,error));
    buildEntityModel(kind).then(()=>{
     if(transition!==t||disposed)return;t.ready=true;dirty=true;wake();
     if(!warmed){warmed=true;setTimeout(()=>{for(const item of layers())if(entityKind(item)!==kind)buildEntityModel(entityKind(item)).catch(()=>{});},300);}
