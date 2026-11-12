@@ -1,3 +1,4 @@
+import {decorateSettings} from './ui-icons.js';
 import {createAutosave} from './preset-autosave.js';
 import {showDialog,closeDialog,setPanelVisible,reveal} from './ui-motion.js';
 import {StateRegistry} from './state-registry.js';
@@ -20,12 +21,12 @@ const fingerprint=draft=>{try{return JSON.stringify([draft.id,JSON.parse(draft.r
 export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},createEditor,syncEditor}={}){
  const host=document.getElementById('modelPresetSection'),dialog=document.createElement('dialog');
  dialog.id='modelPresetDialog';dialog.className='preset-dialog';dialog.setAttribute('aria-labelledby','presetTitle');
- dialog.innerHTML=`<header class="preset-header"><div><small>MODEL CONFIGURATION</small><h2 id="presetTitle">大模型预设</h2></div><div class="preset-header-actions"><span data-autosave role="status" aria-live="polite">已保存</span><button type="button" data-refresh hidden>读取云端版本</button><button type="button" data-close aria-label="关闭预设管理">×</button></div></header>
+ dialog.innerHTML=`<header class="preset-header"><div><small>模型配置</small><h2 id="presetTitle">大模型预设</h2></div><div class="preset-header-actions"><span data-autosave role="status" aria-live="polite">已保存</span><button type="button" data-refresh hidden>读取云端版本</button><button type="button" data-close aria-label="关闭预设管理">×</button></div></header>
  <nav class="preset-kind-tabs" role="tablist" aria-label="模型类型">${MODEL_PRESETS.kinds.map((kind,i)=>`<button type="button" role="tab" id="presetTab-${kind}" aria-controls="presetKindPanel" data-kind="${kind}"><span>0${i+1}</span><strong>${MODEL_PRESETS.labels[kind]}</strong><small>${PRESET_EDITOR.descriptions[kind]}</small><b data-kind-count="${kind}">0</b></button>`).join('')}</nav>
  <section id="presetKindPanel" role="tabpanel" class="preset-kind-panel">
  <p data-status role="status" aria-live="polite"></p>
  <div class="preset-workspace"><aside><button type="button" data-routing>调用顺序 <span>↗</span></button><div class="preset-list-head"><strong data-library-title>预设库</strong><button type="button" data-new>＋ 新建</button></div><nav data-list aria-label="本类预设"></nav><button type="button" data-folder>在 CORTEX 中打开 ↗</button></aside>
- <section class="preset-route" hidden><header class="preset-route-heading"><small>MODEL ROUTING</small><h3>调用顺序</h3><p>先使用主模型，失败时按顺序切换备用模型。</p></header><div class="preset-route-columns"><label><span data-primary-label>主预设</span><select data-primary aria-label="当前主预设"></select></label><fieldset class="preset-backup-fieldset"><legend>备用预设 · 按顺序尝试</legend><ol data-backups></ol><div class="preset-backup-add"><select data-backup-choice aria-label="添加备用预设"></select><button type="button" data-add-backup>＋ 添加备用</button></div></fieldset></div><div class="preset-route-footer"><p data-route-summary></p></div></section>
+ <section class="preset-route" hidden><header class="preset-route-heading"><small>预设轮换</small><h3>调用顺序</h3><p>失败时依次切换预设，一轮用尽后继续轮换，直到成功或达到次数与时间上限。</p></header><div class="preset-route-columns"><label><span data-primary-label>主预设</span><select data-primary aria-label="当前主预设"></select></label><fieldset class="preset-backup-fieldset"><legend>备用预设 · 按顺序尝试</legend><ol data-backups></ol><div class="preset-backup-add"><select data-backup-choice aria-label="添加备用预设"></select><button type="button" data-add-backup>＋ 添加备用</button></div></fieldset></div><div class="preset-route-footer"><p data-route-summary></p></div></section>
  <form data-form novalidate><header class="preset-editor-heading"><div><small data-file-label>预设文件</small><h3 data-editor-title>选择预设</h3></div><div class="preset-mode-tabs" role="tablist" aria-label="编辑模式"><button type="button" role="tab" data-mode="form" aria-controls="presetFormPanel">表单编辑</button><button type="button" role="tab" data-mode="json" aria-controls="presetJsonPanel">完整 JSON</button></div></header>
  <label class="preset-id-field">预设文件 ID<input data-field="id" maxlength="320" placeholder="例如 text/local 或 text-primary" autocomplete="off"><small>支持子目录路径，例如 text/local；保存为 text/local.json。</small></label>
  <section id="presetFormPanel" role="tabpanel" data-form-panel><div data-fields></div>
@@ -34,7 +35,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  <section id="presetJsonPanel" role="tabpanel" class="preset-json" data-json-panel hidden><div class="preset-json-toolbar"><strong>完整预设文件</strong><button type="button" data-format>格式化</button><span id="presetCursorMeta">LN 1, COL 1</span></div><p class="preset-help">包括 version、kind、name 和全部 settings。api_key: null 保留现有密钥；填入新值可替换，空字符串清除。</p><div class="ide-code-surface preset-json-surface"><textarea id="presetJsonEditor" spellcheck="false" aria-label="完整预设 JSON"></textarea></div></section>
  <footer class="preset-editor-footer"><span data-dirty></span><button type="button" data-discard hidden>放弃草稿</button><button type="submit" data-save hidden>重试保存</button><button type="button" data-delete>删除预设</button></footer></form></div></section>
  <div class="preset-confirm" hidden><p data-confirm-text></p><button type="button" data-cancel>取消</button><button type="button" data-confirm>确认</button></div>`;
- document.body.append(dialog);
+ document.body.append(dialog);decorateSettings(dialog);
  const q=selector=>dialog.querySelector(selector),drafts=new Map();
  const registry=new StateRegistry({catalog:null,kind:'text',draft:null,mode:'form',primary:'',backups:[],busy:false,error:'',notice:'',screen:'editor',saveState:'saved'});
  const state=registry.state;

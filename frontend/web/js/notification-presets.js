@@ -4,7 +4,7 @@ import {mountRuleEditor} from './notification-rules.js';
 const el=(tag,text)=>{const e=document.createElement(tag);if(text)e.textContent=text;return e;};
 export function mountRulePresets(host,{channels,change,request}){
  let value=emptyRuleConfig(),selected='',editor;
- host.innerHTML='<section class="settings-card notification-card preset-rules"><header><div><small>CONDITION PRESETS</small><h4>条件预设</h4></div></header><div class="notification-fields"><label>编辑预设<select data-rule-preset></select></label><label>预设名称<input data-rule-name maxlength="60" placeholder="给条件取个名字"></label></div><div class="notification-actions"><button type="button" data-rule-add>＋ 新建</button><button type="button" data-rule-copy>复制</button><button type="button" data-rule-delete>删除</button></div><p role="status" data-preset-status></p><div data-preset-editor></div></section>';
+ host.innerHTML='<section class="settings-card notification-card preset-rules"><header><div><small>通知筛选</small><h4>条件预设</h4></div></header><div class="notification-fields"><label>编辑预设<select data-rule-preset></select></label><label>预设名称<input data-rule-name maxlength="60" placeholder="给条件取个名字"></label></div><div class="notification-actions"><button type="button" data-rule-add>＋ 新建</button><button type="button" data-rule-copy>复制</button><button type="button" data-rule-delete>删除</button></div><p role="status" data-preset-status></p><div data-preset-editor></div></section>';
  const q=s=>host.querySelector(s),current=()=>value.presets.find(p=>p.id===selected);
  function stash(){if(editor&&current())current().rules=editor.get();}
  function drawChannels(){for(const [key,container] of Object.entries(channels)){

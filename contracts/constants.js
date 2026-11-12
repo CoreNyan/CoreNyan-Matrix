@@ -180,8 +180,8 @@ export const ENTITY_MODELS = freeze({
 export const ENTITY = freeze({
   layerModels: { 'corenyan-brain':'command', 'corenyan-gateway':'sensor', 'onebot-qq':'courier', 'corenyan-redis':'relay', 'corenyan-web':'ark' },
   assetVersion: 9, assetRoot: '/assets/entity-v9/', surfaceDensity: 2200, maxPoints: 75000, fallbackPoints: 5200, maxDpr: 2,
-  defaultYaw: -1.05, defaultPitch: -.38, defaultZoom: 1, zoomMin: .38, zoomMax: 2.7, zoomStep: .18,
-  pointSize: 1.25, rotSpeed: .045, revealMs: 650, gridGain: .32
+  defaultYaw: -1.05, defaultPitch: -.38, defaultZoom: 1, zoomMin: .38, zoomMax: 8, zoomStep: .18,
+  defaultFocus: 1, scatterRadius: 3.2, focusEaseMs: 180, scatterMs: 430, assembleMs: 680, pointSize: 1.25, rotSpeed: .045, revealMs: 650, gridGain: .32
 });
 export const FILE_VIEW = freeze({
   "TREE": "tree",
@@ -301,9 +301,9 @@ export const PRESET_EDITOR=freeze({
  fields:[
   {path:'base_url',label:'API 完整请求地址',type:'url',group:'connection',required:true,wide:true},
   {path:'model',label:'模型 ID',type:'text',group:'connection',required:true},
-  {path:'api_key',label:'API Key',type:'password',group:'connection'},
-  {path:'temperature',label:'Temperature',type:'number',min:0,max:2,step:.05,group:'generation',kinds:['text','vision']},
-  {path:'max_tokens',label:'最大输出 Tokens',type:'number',min:1,max:1000000,group:'generation',kinds:['text','vision']},
+  {path:'api_key',label:'接口密钥',type:'password',group:'connection'},
+  {path:'temperature',label:'随机程度',type:'number',min:0,max:2,step:.05,group:'generation',kinds:['text','vision']},
+  {path:'max_tokens',label:'最大输出词元数',type:'number',min:1,max:1000000,group:'generation',kinds:['text','vision']},
   {path:'fast_model',label:'快速模型 ID（可选）',type:'text',group:'generation',kinds:['text']},
   {path:'fallback_model',label:'同接口备用模型 ID（旧版，可选）',type:'text',group:'generation'},
   {path:'enabled',label:'启用生图',type:'boolean',group:'image',kinds:['image']},
@@ -313,7 +313,7 @@ export const PRESET_EDITOR=freeze({
   {path:'timeout_ms',label:'请求超时（毫秒）',type:'number',min:100,max:900000,group:'timeouts'},
   {path:'fast_timeout_ms',label:'快速请求超时（毫秒）',type:'number',min:100,max:900000,group:'timeouts',kinds:['text']},
   {path:'attention_timeout_ms',label:'注意力判断超时（毫秒）',type:'number',min:100,max:900000,group:'timeouts',kinds:['text']},
-  {path:'retry.max_total_attempts',label:'最大尝试次数',type:'number',min:0,max:30,group:'timeouts'},
+  {path:'retry.max_total_attempts',label:'调用总尝试次数',type:'number',min:1,max:21,group:'timeouts'},
   {path:'retry.delay_ms',label:'重试间隔（毫秒）',type:'number',min:0,max:60000,group:'timeouts'},
   {path:'non_owner_cooldown_seconds',label:'普通用户冷却（秒）',type:'number',min:0,max:86400,group:'image',kinds:['image']},
   {path:'non_owner_hourly_limit',label:'普通用户每小时上限',type:'number',min:0,max:100000,group:'image',kinds:['image']},
@@ -328,3 +328,6 @@ export const CHAT_UI=freeze({api:'/api/v1/chat',assistantName:termText('{{charac
 export const ONEBOT_LOGIN=freeze({api:'/api/onebot/login',layer:'onebot-qq',pollMs:2000,backgroundPollMs:15000,offlineNotice:'QQ 已离线，请到 SYNAPSE → 交流层-QQ 查看登录状态。'});
 
 export const AVATAR_CROP=freeze({types:["image/png","image/jpeg","image/webp"],maxBytes:10*1024*1024,previewSize:512,outputSize:256,maxZoom:5,zoomStep:.01,buttonStep:.25,wheelScale:.0015,panStep:.025,title:"裁剪头像",cancel:"取消",apply:"使用头像",reset:"恢复居中",zoom:"缩放",zoomIn:"放大",zoomOut:"缩小",canvasLabel:"头像裁剪区域，可拖动或使用方向键调整位置",invalidFile:"请选择小于 10 MB 的 PNG、JPEG 或 WebP",invalidImage:"图片无法读取，请换一张图片"});
+
+export const EXPLORER_SELECTION=freeze({row:'.tree-node-row,.grid-slice-card',holdMs:280,dragThreshold:6,edge:30,scrollStep:8});
+export const TEXT_MENU=freeze({inset:8,labels:{undo:'撤销',redo:'重做',cut:'剪切',copy:'复制',paste:'粘贴',selectAll:'全选',copyAll:'复制全部日志',find:'查找',replace:'替换'},changed:'编辑内容已变化，请重新选择后操作。',clipboardDenied:'无法访问剪贴板，请允许剪贴板权限，或使用键盘快捷键。'});

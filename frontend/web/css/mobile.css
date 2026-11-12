@@ -145,3 +145,9 @@
 }
 @keyframes chat-page-enter{from{opacity:.4;transform:translateX(20px)}to{opacity:1;transform:none}}
 @keyframes chat-list-enter{from{opacity:.5;transform:translateX(-12px)}to{opacity:1;transform:none}}
+
+@media(max-width:700px){
+ .settings-dialog .settings-layout>nav button[data-tab]{display:grid;grid-template-columns:24px minmax(0,1fr);column-gap:14px;row-gap:2px;align-content:center;padding:13px 40px 13px 16px}
+ .settings-dialog .settings-layout>nav button[data-tab]>.ui-icon{grid-column:1;grid-row:1/3;align-self:center;margin:0}
+ .settings-dialog .settings-layout>nav button[data-tab]>strong,.settings-dialog .settings-layout>nav button[data-tab]>span{grid-column:2;margin:0}
+}

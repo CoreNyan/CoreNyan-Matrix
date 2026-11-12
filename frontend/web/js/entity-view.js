@@ -7,7 +7,8 @@ export function mountEntityView(root,registry,layers=()=>[]){
  const canvas=root.querySelector('canvas'),status=root.querySelector('[data-entity-status]');
  const renderer=createEntityRenderer(canvas,{fallback:message=>status.textContent=message});
  const renderTelemetry=mountEntityTelemetry(root.querySelector('.entity-flight'));
- const camera={yaw:ENTITY.defaultYaw,pitch:ENTITY.defaultPitch,zoom:ENTITY.defaultZoom,pointSize:ENTITY.pointSize,reveal:1};
+ const camera={yaw:ENTITY.defaultYaw,pitch:ENTITY.defaultPitch,zoom:ENTITY.defaultZoom,pointSize:ENTITY.pointSize,focus:ENTITY.defaultFocus,reveal:1};
+ let focusTarget=ENTITY.defaultFocus,transition=null;
  const pointers=new Map();
  let frame=0,last=0,dirty=true,disposed=false,kind='',layerKey='',tabsSignature='',rotSpeed=ENTITY.rotSpeed,lastClock='',warmed=false;
  const text=(selector,value)=>root.querySelector(selector).textContent=value;
@@ -18,13 +19,33 @@ export function mountEntityView(root,registry,layers=()=>[]){
   const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
   const auto=registry.state.motionEnabled&&rotSpeed>0&&!pointers.size;
   if(auto)camera.yaw+=rotSpeed*dt;
-  const revealing=camera.reveal<1;
-  camera.reveal=registry.state.motionEnabled?Math.min(1,camera.reveal+dt*1000/ENTITY.revealMs):1;
-  if(dirty||revealing||auto){renderer.draw(camera);dirty=false;}
-  if(auto||camera.reveal<1)frame=requestAnimationFrame(draw);
+  let focusing=false;
+  const t=transition;
+  if(t){
+   t.elapsed+=dt*1000;
+   const duration=t.phase==='scatter'?ENTITY.scatterMs:ENTITY.assembleMs;
+   const progress=registry.state.motionEnabled?Math.min(1,t.elapsed/duration):1;
+   const eased=progress*progress*(3-2*progress);
+   camera.focus=t.phase==='scatter'?t.fromFocus*(1-eased):focusTarget*eased;
+   if(t.phase==='scatter'&&progress===1&&t.ready&&!t.swapping){
+    t.swapping=true;
+    renderer.setModel(t.kind,{isCurrent:()=>transition===t&&!disposed}).then(model=>{
+     if(!model||transition!==t||disposed)return;
+     text('[data-entity-points]',model.count.toLocaleString());status.textContent='';
+     camera.yaw=ENTITY_MODELS[t.kind].yaw;camera.pitch=ENTITY_MODELS[t.kind].pitch;camera.reveal=1;
+     t.phase='assemble';t.elapsed=0;t.swapping=false;canvas.dataset.transition='assemble';dirty=true;wake();
+    }).catch(error=>failTransition(t,error));
+   }else if(t.phase==='assemble'&&progress===1){transition=null;canvas.dataset.transition='idle';}
+  }else{
+   focusing=Math.abs(camera.focus-focusTarget)>.001;
+   camera.focus=focusing&&registry.state.motionEnabled?camera.focus+(focusTarget-camera.focus)*(1-Math.exp(-dt*1000/ENTITY.focusEaseMs)):focusTarget;
+  }
+  if(dirty||auto||focusing||t){renderer.draw(camera);dirty=false;}
+  if(auto||focusing||transition&&!transition.swapping&&(transition.ready||transition.elapsed<ENTITY.scatterMs))frame=requestAnimationFrame(draw);
  }
  function resize(){const rect=canvas.getBoundingClientRect();if(rect.width&&rect.height){renderer.resize(rect.width,rect.height);dirty=true;wake();}}
  const observer=new ResizeObserver(resize);observer.observe(canvas);
+ function failTransition(t,error){if(transition!==t||disposed)return;status.textContent=error.message;transition=null;kind=canvas.dataset.model||'';canvas.dataset.transition='error';canvas.dataset.loading='false';dirty=true;wake();}
  function select(key){registry.state.entityLayer=key;}
  function sync(){
   const list=layers();if(!list.length)return;
@@ -36,14 +57,13 @@ export function mountEntityView(root,registry,layers=()=>[]){
   const layer=list.find(l=>l.key===registry.state.entityLayer)||list[0],nextKind=entityKind(layer),info=ENTITY_MODELS[nextKind];
   if(nextKind!==kind){
    kind=nextKind;status.textContent='正在加载实体点阵…';
-   renderer.setModel(kind).then(model=>{
-    if(!model)return;
-    status.textContent='';text('[data-entity-points]',model.count.toLocaleString());
+   const t={kind:nextKind,phase:'scatter',elapsed:canvas.dataset.model?0:ENTITY.scatterMs,fromFocus:camera.focus,ready:false,swapping:false};transition=t;canvas.dataset.transition='scatter';
+   buildEntityModel(kind).then(()=>{
+    if(transition!==t||disposed)return;t.ready=true;dirty=true;wake();
     if(!warmed){warmed=true;setTimeout(()=>{for(const item of layers())if(entityKind(item)!==kind)buildEntityModel(entityKind(item)).catch(()=>{});},300);}
-    camera.reveal=registry.state.motionEnabled?0:1;dirty=true;wake();
-   }).catch(error=>{if(kind===nextKind){status.textContent=error.message;kind='';}});
+   }).catch(error=>failTransition(t,error));
   }
-  if(layer.key!==layerKey){layerKey=layer.key;camera.yaw=info.yaw;camera.pitch=info.pitch;dirty=true;}
+  if(layer.key!==layerKey){layerKey=layer.key;dirty=true;}
   text('[data-entity-name]',layer.name);text('[data-entity-code]',layer.organCode||'');
   text('[data-entity-sub]',layer.sub||'');text('[data-entity-description]',layer.desc||'');
   text('[data-entity-model]',info.code);text('[data-entity-index]',String(list.indexOf(layer)+1).padStart(2,'0')+' / '+String(list.length).padStart(2,'0'));
@@ -60,6 +80,10 @@ export function mountEntityView(root,registry,layers=()=>[]){
  function update(){camera.pitch=Math.max(-1.3,Math.min(1.3,camera.pitch));camera.zoom=Math.max(ENTITY.zoomMin,Math.min(ENTITY.zoomMax,camera.zoom));text('[data-entity-zoom]',Math.round(camera.zoom*100)+'%');dirty=true;wake();}
  for(const [selector,delta] of [['[data-entity-zoom-in]',ENTITY.zoomStep],['[data-entity-zoom-out]',-ENTITY.zoomStep]])root.querySelector(selector).addEventListener('click',()=>{camera.zoom+=delta;update();});
  root.querySelector('[data-entity-reset]').addEventListener('click',()=>{Object.assign(camera,{yaw:ENTITY_MODELS[kind]?.yaw??ENTITY.defaultYaw,pitch:ENTITY_MODELS[kind]?.pitch??ENTITY.defaultPitch,zoom:ENTITY.defaultZoom});update();});
+ const focusInput=root.querySelector('[data-entity-focus]');focusInput.value=String(focusTarget);
+ const syncFocus=()=>{text('[data-entity-focus-value]',Math.round(focusTarget*100)+'%');focusInput.setAttribute('aria-valuetext',Math.round(focusTarget*100)+'%');update();};
+ focusInput.addEventListener('input',()=>{focusTarget=Math.max(0,Math.min(1,Number(focusInput.value)));syncFocus();});
+ root.querySelector('[data-entity-reset]').addEventListener('click',()=>{focusTarget=ENTITY.defaultFocus;focusInput.value=String(focusTarget);syncFocus();});
  const pointInput=root.querySelector('[data-entity-point-size]');pointInput.value=String(camera.pointSize);
  pointInput.addEventListener('input',()=>{camera.pointSize=Number(pointInput.value);update();});
  const rotationInput=root.querySelector('[data-entity-rotation]');rotationInput.value=String(rotSpeed);

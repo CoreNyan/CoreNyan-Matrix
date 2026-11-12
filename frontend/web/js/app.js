@@ -1,3 +1,6 @@
+import {mountExplorerSelection} from './explorer-selection.js';
+import {mountTextContextMenu} from './text-context-menu.js';
+import {nextDoodle} from './random-doodle.js';
 import {mountApiRecords} from './api-records.js';
 import {platformClipboard,copyImage,notifyReply,notificationPermission} from './platform.js';
 const editorShortcutLabel=id=>binding('files.'+id).replace('Mod',/Mac/.test(navigator.platform)?'⌘':'Ctrl');
@@ -48,7 +51,7 @@ import { entityPreview } from './entity-models.js';
     busyOrgan: null,
     entityLayer: 'corenyan-brain',
     motionEnabled: !matchMedia('(prefers-reduced-motion: reduce)').matches,
-    doodleIdx: 1,
+    doodleIdx: nextDoodle(0, DOODLE_TOTAL),
     vitalsFilter: FILTER.ALL, // FILTER.ALL | FILTER.BONDS | FILTER.ARTWORKS
     lastVitalsPayload: null,
     healthDetail: null,
@@ -466,7 +469,7 @@ import { entityPreview } from './entity-models.js';
     setInterval(tickClock, TIMING.clock);
 
 
-    const cycleDoodle = () => { state.doodleIdx = state.doodleIdx % DOODLE_TOTAL + 1; };
+    const cycleDoodle = () => { state.doodleIdx = nextDoodle(state.doodleIdx, DOODLE_TOTAL); };
     $('spineAvatarFrame')?.addEventListener('click', cycleDoodle);
     $('heroDoodleTrigger')?.addEventListener('click', cycleDoodle);
     document.querySelectorAll('.chapter-tab').forEach(btn => {
@@ -1423,18 +1426,6 @@ import { entityPreview } from './entity-models.js';
       const isDir = row.getAttribute('data-is-dir') === '1';
       const name = row.getAttribute('data-name') || '';
 
-      row.addEventListener('click', (e) => {
-        e.stopPropagation();
-        selectExplorerTarget({ relPath, isDir, name }, e);
-        if (e.ctrlKey || e.metaKey || e.shiftKey) return;
-        if (isDir) {
-          if (state.fm.expandedDirs.has(relPath)) state.fm.expandedDirs.delete(relPath);
-          else state.fm.expandedDirs.add(relPath);
-        } else {
-          openCortexFile(state.fm.currentScope, relPath);
-        }
-      });
-
       row.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -1525,19 +1516,6 @@ import { entityPreview } from './entity-models.js';
       const relPath = card.getAttribute('data-rel-path') || '';
       const isDir = card.getAttribute('data-is-dir') === '1';
       const name = card.getAttribute('data-name') || '';
-
-      card.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        selectExplorerTarget({ relPath, isDir, name }, e);
-        if (e.ctrlKey || e.metaKey || e.shiftKey) return;
-        if (isDir) {
-          // In Icon Mode, clicking a folder navigates into that dedicated folder page
-          navigateIconGridFolder(relPath);
-        } else {
-          await openCortexFile(state.fm.currentScope, relPath);
-          if (e.target.closest('.grid-slice-icon')?.querySelector('img')) openCortexImage();
-        }
-      });
 
       card.addEventListener('contextmenu', (e) => {
         e.preventDefault();
@@ -2400,6 +2378,11 @@ import { entityPreview } from './entity-models.js';
     mountAmbientEffects(registry);
     initFileShortcuts();
     onPreferences(()=>{for(const id of ['open','rename','copy','cut','paste','delete']){const label=document.querySelector('[data-ctx="'+id+'"] span:last-child');if(label)label.textContent=editorShortcutLabel(id);}});
+    mountExplorerSelection({list:$('fmFileList'),getSelection:()=>state.fm.selection,select:selectExplorerTarget,closeMenu:closeFmContextMenu,
+      setSelection:paths=>{state.fm.selection=new Set(paths);const row=[...$('fmFileList').querySelectorAll('[data-rel-path]')].find(row=>paths.has(row.dataset.relPath));state.fm.selected=row?{scope:state.fm.currentScope,relPath:row.dataset.relPath,name:row.dataset.name,isDir:row.dataset.isDir==='1'}:null;},
+      open:async(target,event)=>{if(target.isDir){if(state.fm.viewMode===FILE_VIEW.GRID)await navigateIconGridFolder(target.relPath);else{if(state.fm.expandedDirs.has(target.relPath))state.fm.expandedDirs.delete(target.relPath);else state.fm.expandedDirs.add(target.relPath);}}else{await openCortexFile(state.fm.currentScope,target.relPath);if(event.target.closest('.grid-slice-icon')?.querySelector('img'))openCortexImage();}}
+    });
+    mountTextContextMenu({onError:message=>showToast(message,true)});
     initFileDragging();
     mountRecycleBin(registry, apiFetch, refreshCurrentScopeFiles);
     layerEditor=mountLayerEditor(apiFetch,async()=>{await loadFileScopes(false);await pollVitals();});

@@ -8,7 +8,7 @@ export function createTerminalView(element,{onDeferred=()=>{}}={}){
   if(!latest)return;
   const {html,key}=latest;
   if(key!==renderedKey){if(selected())doc.getSelection().removeAllRanges();dragging=false;}
-  else if(dragging||selected()){onDeferred(html!==renderedHtml);return;}
+  else if(dragging||selected()||element.dataset.contextMenuOpen==='true'){onDeferred(html!==renderedHtml);return;}
   onDeferred(false);
   if(html===renderedHtml&&key===renderedKey)return;
   const bottom=element.scrollHeight-element.scrollTop-element.clientHeight<UI.logBottomThreshold;
