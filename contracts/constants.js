@@ -294,8 +294,8 @@ export const UI_MOTION=freeze({
 });
 
 export const PRESET_EDITOR=freeze({
- autosaveMs:900,
- actions:{create:'创建预设',save:'保存修改',retry:'重试保存',clone:'克隆预设',copySuffix:'副本'},newFilePrefix:'new-preset',
+ autosaveMs:900,reorder:{edge:36,scrollStep:8},
+ actions:{create:'创建预设',save:'保存修改',retry:'重试保存',clone:'克隆预设',rename:'重命名文件',copySuffix:'副本'},newFilePrefix:'new-preset',
  requiredFields:[['id','文件路径'],['name','名称'],['settings.base_url','请求地址'],['settings.model','模型标识']],
  version:1,maxBackups:15,storageKey:'corenyan.preset-editor.kind',modes:{form:'表单编辑',json:'完整 JSON'},
  descriptions:{text:'对话、推理与工具决策',vision:'图片理解与参考图分析',image:'图像生成与参考图编辑'},
