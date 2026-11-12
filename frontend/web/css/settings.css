@@ -69,4 +69,11 @@ html[data-text-size=large] .ide-code-surface .CodeMirror{font-size:calc(14px * v
 @keyframes text-menu-in{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.text-context-menu:popover-open{animation:none}}
 
-.settings-layout>nav button[data-tab]>.settings-assistant-avatar{width:26px;height:26px;object-fit:contain;filter:none}
+
+
+.settings-dialog .settings-layout>nav button[data-tab]{flex-shrink:0;grid-template-rows:auto auto;align-content:center;transform:none;min-height:64px}
+.settings-dialog .settings-layout>nav button[data-tab]>.ui-icon{grid-column:1;grid-row:1/3;align-self:center}
+.settings-dialog .settings-layout>nav button[data-tab]>strong{grid-column:2;grid-row:1;margin:0;line-height:1.4}
+.settings-dialog .settings-layout>nav button[data-tab]>span{grid-column:2;grid-row:2;margin:0;line-height:1.5}
+.settings-dialog .settings-layout>nav button[data-tab]:is(:hover,:active,[aria-selected=true]){transform:none}
+.settings-dialog .settings-layout>nav button[data-tab][aria-selected=true]{box-shadow:inset 2px 0 #eee}

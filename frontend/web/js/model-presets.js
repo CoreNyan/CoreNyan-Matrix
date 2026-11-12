@@ -25,10 +25,10 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  <nav class="preset-kind-tabs" role="tablist" aria-label="模型类型">${MODEL_PRESETS.kinds.map((kind,i)=>`<button type="button" role="tab" id="presetTab-${kind}" aria-controls="presetKindPanel" data-kind="${kind}"><span>0${i+1}</span><strong>${MODEL_PRESETS.labels[kind]}</strong><small>${PRESET_EDITOR.descriptions[kind]}</small><b data-kind-count="${kind}">0</b></button>`).join('')}</nav>
  <section id="presetKindPanel" role="tabpanel" class="preset-kind-panel">
  <p data-status role="status" aria-live="polite"></p>
- <div class="preset-workspace"><aside><button type="button" data-routing>调用顺序 <span>↗</span></button><div class="preset-list-head"><strong data-library-title>预设库</strong><button type="button" data-new>＋ 新建</button></div><nav data-list aria-label="本类预设"></nav><button type="button" data-folder>在 CORTEX 中打开 ↗</button></aside>
+ <div class="preset-workspace"><aside><button type="button" data-routing>调用顺序 <span>↗</span></button><div class="preset-list-head"><strong data-library-title>预设库</strong><button type="button" data-new>＋ 新建</button></div><nav data-list aria-label="本类预设"></nav><button type="button" data-folder>在文件管理器中打开 ↗</button></aside>
  <section class="preset-route" hidden><header class="preset-route-heading"><small>预设轮换</small><h3>调用顺序</h3><p>失败时依次切换预设，一轮用尽后继续轮换，直到成功或达到次数与时间上限。</p></header><div class="preset-route-columns"><label><span data-primary-label>主预设</span><select data-primary aria-label="当前主预设"></select></label><fieldset class="preset-backup-fieldset"><legend>备用预设 · 按顺序尝试</legend><ol data-backups></ol><div class="preset-backup-add"><select data-backup-choice aria-label="添加备用预设"></select><button type="button" data-add-backup>＋ 添加备用</button></div></fieldset></div><div class="preset-route-footer"><p data-route-summary></p></div></section>
  <form data-form novalidate><header class="preset-editor-heading"><div><small data-file-label>预设文件</small><h3 data-editor-title>选择预设</h3></div><div class="preset-mode-tabs" role="tablist" aria-label="编辑模式"><button type="button" role="tab" data-mode="form" aria-controls="presetFormPanel">表单编辑</button><button type="button" role="tab" data-mode="json" aria-controls="presetJsonPanel">完整 JSON</button></div></header>
- <label class="preset-id-field">预设文件 ID<input data-field="id" maxlength="320" placeholder="例如 text/local 或 text-primary" autocomplete="off"><small>支持子目录路径，例如 text/local；保存为 text/local.json。</small></label>
+ <label class="preset-id-field">预设文件路径<input data-field="id" maxlength="320" placeholder="例如 text/local 或 text-primary" autocomplete="off"><small>支持子目录路径，例如 text/local；保存为 text/local.json。</small></label>
  <section id="presetFormPanel" role="tabpanel" data-form-panel><div data-fields></div>
  <fieldset class="preset-retry-fieldset"><legend>按错误类型设置重试次数</legend><div data-retry-rules></div><button type="button" data-add-retry>＋ 添加错误规则</button></fieldset>
  </section>
@@ -47,7 +47,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  function parseDraft(draft=state.draft){
   let doc;try{doc=JSON.parse(draft.raw);}catch{throw Error('完整 JSON 语法错误，请修正后再切换表单或保存。');}
   if(!doc||Array.isArray(doc)||typeof doc!=='object'||doc.version!==PRESET_EDITOR.version||doc.kind!==draft.kind||typeof doc.name!=='string'||!doc.settings||Array.isArray(doc.settings)||typeof doc.settings!=='object')throw Error('预设必须包含 version: 1、当前类型 kind、name 和 settings 对象。');
-  if(Object.keys(doc).some(key=>!['version','kind','name','settings'].includes(key)))throw Error('预设顶层仅支持 version、kind、name、settings；文件 ID 使用上方输入框。');
+  if(Object.keys(doc).some(key=>!['version','kind','name','settings'].includes(key)))throw Error('预设顶层仅支持 version、kind、name、settings；文件路径使用上方输入框。');
   if('fallback_preset' in doc.settings||'fallback_presets' in doc.settings)throw Error('备用预设请在上方本类调用配置中设置，不属于单个预设 JSON。');
   if(doc.settings.retry!==undefined&&(!doc.settings.retry||Array.isArray(doc.settings.retry)||typeof doc.settings.retry!=='object'))throw Error('retry 必须是对象。');
   if(doc.settings.retry?.retries_by_error!==undefined&&(!doc.settings.retry.retries_by_error||Array.isArray(doc.settings.retry.retries_by_error)||typeof doc.settings.retry.retries_by_error!=='object'))throw Error('retries_by_error 必须是对象。');
@@ -144,7 +144,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
   q('[data-form-panel]').hidden=state.mode!=='form';q('[data-json-panel]').hidden=state.mode!=='json';
   for(const button of dialog.querySelectorAll('[data-mode]'))button.setAttribute('aria-selected',String(button.dataset.mode===state.mode));
   syncEditor(editor,d.raw,'json',state.busy);
-  q('[data-dirty]').textContent=d.selected?'修改自动保存 · 下次调用生效':'填写文件 ID、名称与连接信息后自动创建';
+  q('[data-dirty]').textContent=d.selected?'修改自动保存 · 下次调用生效':'填写文件路径、名称与连接信息后自动创建';
   if(dirtyDrafts().length>1)q('[data-dirty]').textContent+=' · 另有 '+(dirtyDrafts().length-1)+' 份草稿';
   for(const control of dialog.querySelectorAll('button,input,select,textarea'))control.disabled=state.busy;
   q('[data-field=id]').disabled=state.busy||Boolean(d.selected);
@@ -218,7 +218,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  const autosave=createAutosave(async()=>{
   for(const d of dirtyDrafts()){
    const doc=parseDraft(d),id=d.id.trim();
-   if(!id||!doc.name.trim()||!doc.settings.base_url||!doc.settings.model)throw Error('请填写文件 ID、名称、请求地址与模型 ID，草稿会保留。');
+   if(!id||!doc.name.trim()||!doc.settings.base_url||!doc.settings.model)throw Error('请填写文件路径、名称、请求地址与模型标识，草稿会保留。');
    const sent=fingerprint(d),key=d.selected||'new:'+d.kind;
    const result=await api(MODEL_PRESETS.api,{method:'POST',body:{id,revision:d.revision,preset:doc}});
    d.revision=result.preset.revision;d.selected=id;

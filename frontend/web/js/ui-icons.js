@@ -1,7 +1,8 @@
+import {MOBILE_UI} from './mobile-layout-config.js';
 const paths={
  models:'M4 4h16v16H4z M8 1v6m8-6v6M8 17v6m8-6v6M1 8h6m10 0h6M1 16h6m10 0h6',
  account:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2 M17 4a4 4 0 0 1 0 8m3 4a4 4 0 0 1 2 4 M13 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
- assistant:'M5 9 3 3l7 3h4l7-3-2 6v6a7 7 0 0 1-14 0z M8 12h.01M16 12h.01m-6 4 2 1 2-1',
+ assistant:MOBILE_UI.nav.neural[1],
  system:'M3 3h18v7H3z M3 14h18v7H3z M7 6h.01M7 17h.01m5-11h6m-6 11h6',
  profile:'M20 21a8 8 0 0 0-16 0 M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
  website:'M12 3a9 9 0 1 0 9 9c0-2-2-3-4-2s-3-1-2-3-1-4-3-4 M7 9h.01M7 14h.01M11 17h.01',

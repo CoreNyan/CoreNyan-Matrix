@@ -181,7 +181,7 @@ export const ENTITY = freeze({
   layerModels: { 'corenyan-brain':'command', 'corenyan-gateway':'sensor', 'onebot-qq':'courier', 'corenyan-redis':'relay', 'corenyan-web':'ark' },
   assetVersion: 9, assetRoot: '/assets/entity-v9/', surfaceDensity: 2200, maxPoints: 75000, fallbackPoints: 5200, maxDpr: 2,
   defaultYaw: -1.05, defaultPitch: -.38, defaultZoom: 1, zoomMin: .38, zoomMax: 8, zoomStep: .18,
-  defaultFocus: 1, scatterRadius: 3.2, focusEaseMs: 180, scatterMs: 430, assembleMs: 680, pointSize: 1.25, rotSpeed: .045, revealMs: 650, gridGain: .32
+  transitionPoints: 150000, scatterFit: 1, defaultFocus: 1, scatterRadius: 3.2, focusEaseMs: 180, scatterMs: 430, assembleMs: 680, pointSize: 1.25, rotSpeed: .045, revealMs: 650, gridGain: .32
 });
 export const FILE_VIEW = freeze({
   "TREE": "tree",
@@ -299,15 +299,15 @@ export const PRESET_EDITOR=freeze({
  descriptions:{text:'对话、推理与工具决策',vision:'图片理解与参考图分析',image:'图像生成与参考图编辑'},
  groups:[{id:'connection',label:'连接与模型'},{id:'generation',label:'生成参数'},{id:'timeouts',label:'超时与重试'},{id:'image',label:'绘图行为'}],
  fields:[
-  {path:'base_url',label:'API 完整请求地址',type:'url',group:'connection',required:true,wide:true},
-  {path:'model',label:'模型 ID',type:'text',group:'connection',required:true},
+  {path:'base_url',label:'接口完整请求地址',type:'url',group:'connection',required:true,wide:true},
+  {path:'model',label:'模型标识',type:'text',group:'connection',required:true},
   {path:'api_key',label:'接口密钥',type:'password',group:'connection'},
   {path:'temperature',label:'随机程度',type:'number',min:0,max:2,step:.05,group:'generation',kinds:['text','vision']},
   {path:'max_tokens',label:'最大输出词元数',type:'number',min:1,max:1000000,group:'generation',kinds:['text','vision']},
-  {path:'fast_model',label:'快速模型 ID（可选）',type:'text',group:'generation',kinds:['text']},
-  {path:'fallback_model',label:'同接口备用模型 ID（旧版，可选）',type:'text',group:'generation'},
+  {path:'fast_model',label:'快速模型标识（可选）',type:'text',group:'generation',kinds:['text']},
+  {path:'fallback_model',label:'同接口备用模型标识（旧版，可选）',type:'text',group:'generation'},
   {path:'enabled',label:'启用生图',type:'boolean',group:'image',kinds:['image']},
-  {path:'api_mode',label:'接口模式',type:'select',options:[['auto','自动'],['chat','Chat Completions'],['images','Images']],group:'image',kinds:['image']},
+  {path:'api_mode',label:'接口模式',type:'select',options:[['auto','自动'],['chat','对话接口'],['images','图像接口']],group:'image',kinds:['image']},
   {path:'size',label:'图片尺寸',type:'text',group:'image',kinds:['image']},
   {path:'character_reference_path',label:'角色参考图路径',type:'text',wide:true,group:'image',kinds:['image']},
   {path:'timeout_ms',label:'请求超时（毫秒）',type:'number',min:100,max:900000,group:'timeouts'},
