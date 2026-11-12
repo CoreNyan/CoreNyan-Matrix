@@ -1,3 +1,4 @@
+import {attachmentHeaders} from './attachment-headers.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {createRequire} from 'node:module';
@@ -24,9 +25,9 @@ export function createChatApi({sharedRoot,gatewayRoot}){
     c.threadId=uuid(parts[1]);
     if(parts[2]==='files'){
      if(parts[3]&&req.method==='GET'){
-      const id=uuid(parts[3]),m=await call('file.metadata',{id});const inline=/^(image\/(png|jpeg|webp|gif)|audio\/(mpeg|wav|ogg)|video\/(mp4|webm))$/.test(m.mime);
+      const id=uuid(parts[3]),m=await call('file.metadata',{id});if(parts[4]==='preview'&&parts.length===5){const image=await call('file.preview',{id}),bytes=Buffer.from(image.base64,'base64');res.writeHead(200,{'Content-Type':'image/jpeg','Content-Length':bytes.length,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'});res.end(bytes);return true;}if(parts.length!==4)throw Error('CHAT_NOT_FOUND');
       const range=req.headers.range;let start=0,end=m.bytes-1;if(range){const match=/^bytes=(\d+)-(\d*)$/.exec(range);if(!match||Number(match[1])>=m.bytes) {res.writeHead(416,{'Content-Range':'bytes */'+m.bytes});res.end();return true;}start=Number(match[1]);end=match[2]?Math.min(Number(match[2]),end):end;if(end<start)throw Error('CHAT_INVALID_RANGE');}
-      res.writeHead(range?206:200,{'Content-Type':inline?m.mime:'application/octet-stream','Content-Length':Math.max(0,end-start+1),'Accept-Ranges':'bytes',...(range?{'Content-Range':`bytes ${start}-${end}/${m.bytes}`} : {}),'Content-Disposition':(inline&&!url.searchParams.has('download')?'inline':'attachment')+"; filename*=UTF-8''"+encodeURIComponent(m.name),'Content-Security-Policy':"default-src 'none'; sandbox",'Cache-Control':'private, no-store'});
+      res.writeHead(range?206:200,{...attachmentHeaders(m,url.searchParams.has('download')),'Content-Length':Math.max(0,end-start+1),'Accept-Ranges':'bytes',...(range?{'Content-Range':`bytes ${start}-${end}/${m.bytes}`} : {})});
       for(let offset=start;offset<=end;){if(res.destroyed)break;const chunk=await call('file.read',{id,offset}),bytes=Buffer.from(chunk.base64,'base64').subarray(0,end-offset+1);if(!bytes.length)break;if(!res.write(bytes))await new Promise(resolve=>{res.once('drain',resolve);res.once('close',resolve);});offset+=bytes.length;}res.end();return true;
      }
      if(req.method!=='POST')throw Error('CHAT_METHOD_NOT_ALLOWED');const a=await body(req),op=parts[3]||'begin';if(!['begin','chunk','finish'].includes(op))throw Error('UNKNOWN_CHAT_OPERATION');json(res,200,{ok:true,file:await call('file.'+op,a)});return true;

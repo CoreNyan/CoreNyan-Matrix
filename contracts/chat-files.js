@@ -1,0 +1,1 @@
+export const CHAT_FILES=Object.freeze({previewExtensions:['pdf','doc','docx','ppt','pptx','xls','xlsx','odt','ods','odp','rtf'],revokeAfterMs:60000,previewLabel:'预览第一页',loading:'正在生成第一页预览…',unavailable:'预览暂不可用，点击重试',downloadError:'下载未完成，请重试',sessionExpired:'登录已失效，请重新登录后下载'});
