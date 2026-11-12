@@ -1,0 +1,10 @@
+package cn.corenyan.matrix;
+import android.content.*;import android.database.*;import android.net.Uri;import android.os.ParcelFileDescriptor;import android.provider.OpenableColumns;import java.io.*;
+public final class DownloadProvider extends ContentProvider {
+ @Override public boolean onCreate(){return true;}
+ private File file(Uri uri)throws FileNotFoundException{String name=uri.getLastPathSegment();if(name==null||!name.matches("[a-f0-9-]{36}\\.img"))throw new FileNotFoundException();File file=new File(new File(getContext().getCacheDir(),"clipboard"),name);if(!file.isFile())throw new FileNotFoundException();return file;}
+ @Override public String getType(Uri uri){try{File file=file(uri);android.graphics.BitmapFactory.Options o=new android.graphics.BitmapFactory.Options();o.inJustDecodeBounds=true;android.graphics.BitmapFactory.decodeFile(file.getPath(),o);return o.outMimeType==null?"image/png":o.outMimeType;}catch(Exception e){return "application/octet-stream";}}
+ @Override public ParcelFileDescriptor openFile(Uri uri,String mode)throws FileNotFoundException{if(!"r".equals(mode))throw new FileNotFoundException();return ParcelFileDescriptor.open(file(uri),ParcelFileDescriptor.MODE_READ_ONLY);}
+ @Override public Cursor query(Uri uri,String[] projection,String selection,String[] args,String order){try{File f=file(uri);String[] columns=projection==null?new String[]{OpenableColumns.DISPLAY_NAME,OpenableColumns.SIZE}:projection;MatrixCursor c=new MatrixCursor(columns);Object[] row=new Object[columns.length];for(int i=0;i<columns.length;i++)row[i]=OpenableColumns.SIZE.equals(columns[i])?f.length():OpenableColumns.DISPLAY_NAME.equals(columns[i])?"matrix-image."+(getType(uri).equals("image/jpeg")?"jpg":"png"):null;c.addRow(row);return c;}catch(Exception e){return null;}}
+ @Override public Uri insert(Uri uri,ContentValues values){throw new UnsupportedOperationException();}@Override public int update(Uri uri,ContentValues values,String s,String[] a){throw new UnsupportedOperationException();}@Override public int delete(Uri uri,String s,String[] a){throw new UnsupportedOperationException();}
+}

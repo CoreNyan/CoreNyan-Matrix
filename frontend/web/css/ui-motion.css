@@ -1,0 +1,18 @@
+/* Motion changes opacity/transform only; visibility is committed after exit. */
+:root{--motion-fast:160ms;--motion-enter:460ms;--motion-exit:240ms;--motion-ease:cubic-bezier(.2,.9,.25,1)}
+.motion-surface,.motion-surface>.modal-card,.motion-surface>.lightbox-frame{animation:none!important}
+dialog[data-motion-phase=opening]::backdrop{animation:veil-enter var(--motion-enter) ease-out both}
+dialog[data-motion-phase=closing]::backdrop{animation:veil-exit var(--motion-exit) ease-in both}
+@keyframes veil-enter{from{opacity:0}to{opacity:1}}
+@keyframes veil-exit{from{opacity:1}to{opacity:0}}
+:where(.wire-action-btn,.modal-close-btn,.chapter-tab,.ledger-filter-btn,.fm-module-button,.preset-dialog button,.settings-dialog button,.workspace-dialog button,.health-dial){
+ transition:transform var(--motion-fast) var(--motion-ease),background-color var(--motion-fast),border-color var(--motion-fast),color var(--motion-fast),box-shadow var(--motion-fast)}
+@media(hover:hover){:where(.wire-action-btn,.modal-close-btn,.preset-dialog button,.settings-dialog button,.workspace-dialog button):not(:disabled):hover{transform:translateY(-2px);box-shadow:0 3px 0 #ffffff20}}
+:where(.wire-action-btn,.modal-close-btn,.chapter-tab,.preset-dialog button,.settings-dialog button,.workspace-dialog button):not(:disabled):active{transform:translateY(1px) scale(.96)}
+.chapter-view.active{animation:chapter-arrival 540ms var(--motion-ease) both}
+@keyframes chapter-arrival{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.preset-confirm:not([hidden]){animation:confirm-arrival 280ms var(--motion-ease) both}
+@keyframes confirm-arrival{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+body.motion-off .motion-surface::backdrop{animation:none!important}
+body.motion-off :is(button,.chapter-view){transition:none!important}
+@media(prefers-reduced-motion:reduce){dialog::backdrop,.chapter-view.active,.preset-confirm{animation:none!important}:is(button,.chapter-tab){transition:none!important}}

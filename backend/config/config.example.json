@@ -1,0 +1,8 @@
+{
+  "paths": {
+    "brainRoot": "/opt/corenyan/corenyan-brain",
+    "gatewayRoot": "/opt/corenyan/corenyan-gateway",
+    "redisRoot": "/opt/corenyan/corenyan-redis",
+    "onebotRoot": "/opt/onebot-data"
+  }
+}

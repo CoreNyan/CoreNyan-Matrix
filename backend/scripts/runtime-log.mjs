@@ -1,0 +1,11 @@
+import {createRequire} from 'node:module';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const require=createRequire(import.meta.url);
+const shared=require(process.env.CORENYAN_SHARED_ROOT||path.join(root,'../../shared'));
+const log=shared.createLogger({root,service:'Matrix',policy:()=>shared.config().logs});
+console.log=(...args)=>log(...args);
+console.info=(...args)=>log(...args);
+console.warn=(...args)=>log('[Matrix] WARN',...args);
+console.error=(...args)=>log('[Matrix] ERROR',...args);

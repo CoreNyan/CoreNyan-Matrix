@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-terms-pending>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>CoreNyan</title>
+    <link rel="icon" href="/assets/doodle/doodle_1.png" type="image/png" />
+    <link rel="stylesheet" href="/vendor/codemirror.css" />
+    <link rel="stylesheet" href="/css/doodle.css?v=10.6" />
+    <link rel="stylesheet" href="/css/responsive-fix.css?v=10.6" />
+<link rel="stylesheet" href="/css/explorer.css?v=10.7" />
+<link rel="stylesheet" href="/css/recycle-bin.css?v=1" />
+<link rel="stylesheet" href="/css/workspace-tools.css?v=1">
+    <link rel="stylesheet" href="/css/entity.css?v=1">
+<link rel="stylesheet" href="/css/model-presets.css?v=1">
+<link rel="stylesheet" href="/css/settings.css?v=1">
+<link rel="stylesheet" href="/css/chat.css?v=1">
+<link rel="stylesheet" href="/css/onebot-login.css?v=1">
+<link rel="stylesheet" href="/css/ui-motion.css?v=1">
+<link rel="stylesheet" href="/css/mobile.css?v=1">
+<link rel="stylesheet" href="/css/surfaces.css?v=1">
+    <script type="module" src="/js/platform.js"></script>
+<link rel="icon" href="/assets/favicon.ico"><link rel="apple-touch-icon" href="/assets/app-icon.png">    <link rel="stylesheet" href="/css/avatar-crop.css">
+    <link rel="stylesheet" href="/css/notifications.css">
+</head>
+<body class="editorial-body">
+    <!-- Global Top Editorial Navigation Bar (billcreates.tech + havu.cc + mikewilcockdesign.com synthesis) -->
+    <header class="editorial-topbar">
+        <div class="topbar-left">
+            <a href="#vitals" class="brand-mark" id="brandHomeTrigger">
+                <span class="brand-asterisk">*</span>
+                <span class="brand-name">{{brand.display}}</span>
+                <span class="brand-tag">// DIGITAL LIFEFORM</span>
+            </a>
+            <div class="topbar-divider"></div>
+            <div class="topbar-clock">
+                <span class="clock-loc">SHANGHAI, CN</span>
+                <span class="clock-sep">/</span>
+                <span class="clock-time" id="topbarLiveClock">00:00:00</span>
+            </div>
+        </div>
+
+        <!-- Center Notch Avatar Badge (billcreates.tech Lucky Guide homage) -->
+        <div class="topbar-center">
+            <button class="notch-avatar-pill" id="spineAvatarFrame" type="button" title="点击切换{{character.name}}白线{{concept.doodle.zh}}形态 (1–37)">
+                <span class="notch-dot" id="spinePulseDot"></span>
+                <img src="/assets/doodle/doodle_1.png" alt="{{brand.name}} Doodle" class="notch-avatar-img" id="spineAvatarImg" />
+                <span class="notch-label" id="spineLifeStatusText">PULSE // SYNCHRONIZING</span>
+                <span class="notch-code" id="doodleIndexTag">#01</span>
+            </button>
+        </div>
+
+        <!-- Right Navigation & System Toggles -->
+        <div class="topbar-right">
+            <nav class="chapter-nav" id="mainNav" aria-label="Primary Chapters">
+                <button class="chapter-tab active" data-view="vitals">
+                    <span class="tab-num">01</span>
+                    <span class="tab-text">{{chapter.vitals.en}}</span>
+                </button>
+                <button class="chapter-tab" data-view="organs">
+                    <span class="tab-num">02</span>
+                    <span class="tab-text">{{chapter.organs.en}}</span>
+                </button>
+                <button class="chapter-tab" data-view="memory">
+                    <span class="tab-num">03</span>
+                    <span class="tab-text">{{chapter.memory.en}}</span>
+                </button>
+                <button class="chapter-tab" data-view="neural">
+                    <span class="tab-num">04</span>
+                    <span class="tab-text">{{chapter.neural.en}}</span>
+                </button>
+                <button class="chapter-tab" data-view="entity"><span class="tab-num">05</span><span class="tab-text">{{chapter.entity.en}}</span></button>
+                <button class="chapter-tab" data-view="chat"><span class="tab-num">06</span><span class="tab-text">{{chapter.chat.en}}</span></button>
+            </nav>
+
+            <div class="topbar-RichToggles">
+<button class="pill-cta-btn" id="btnSettings" type="button" aria-haspopup="dialog"><span>{{settings.title}}</span><span class="cta-arrow" aria-hidden="true">→</span></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sub-header Telemetry Bar (mikewilcockdesign.com + havu.cc overline strip) -->
+    <div class="telemetry-overline-strip">
+        <div class="overline-cell">
+            <span class="ov-parenthetical" id="stageHeaderChapter">(CHAPTER 01 / ©2026)</span>
+            <span class="ov-title" id="stageHeaderTitle">{{concept.somatic.en}} VITAL INDEX</span>
+            <span class="ov-sub" id="stageHeaderSub">REAL-TIME BIO-SIGNAL OSCILLOSCOPE &amp; {{concept.bond.en}} ARCHIVE</span>
+        </div>
+        <div class="overline-metrics">
+            <div class="ov-metric">
+                <span class="ov-k">CPU LOAD</span>
+                <span class="ov-v" id="topCpuVal">--%</span>
+            </div>
+            <div class="ov-metric">
+                <span class="ov-k">RAM ALLOC</span>
+                <span class="ov-v" id="topMemVal">--%</span>
+            </div>
+            <div class="ov-metric">
+                <span class="ov-k">DISK VOL</span>
+                <span class="ov-v" id="topDiskVal">--%</span>
+            </div>
+            <div class="ov-metric">
+                <span class="ov-k">{{chapter.neural.en}} IO</span>
+                <span class="ov-v" id="topNetVal">-- KB/S</span>
+            </div>
+            <div class="ov-metric">
+                <span class="ov-k">AWAKE</span>
+                <span class="ov-v" id="topUptimeVal">--</span>
+            </div>
+            <div class="ov-metric">
+                <span class="ov-k">HEART</span>
+                <span class="ov-v" id="spineBpmValue">72 BPM</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Editorial Viewport -->
+    <main class="editorial-viewport" id="editorialViewport">
+        <!-- ===================================================================
+             CHAPTER 01: SOMATIC VITAL INDEX (billcreates.tech + havu.cc + mikewilcock)
+             =================================================================== -->
+        <section class="chapter-view active" id="view-vitals">
+
+            <!-- 3-Column Bento HUD Hero -->
+            <div class="bento-hero-grid">
+                <!-- Col 1: Monumental Display Typography & Subconscious Diary -->
+                <div class="bento-cell hero-col-identity">
+                    <span class="corner-mark tl">+</span>
+                    <span class="corner-mark tr">+</span>
+                    <span class="corner-mark bl">+</span>
+                    <span class="corner-mark br">+</span>
+
+                    <div class="cell-topline">
+                        <span>01 / {{brand.display}} · {{character.name}}</span>
+                        <span id="hostPlatformTag">ARCHIVE // 2026</span>
+                    </div>
+
+                    <div class="identity-heading-row">
+                        <h1 class="monumental-headline">
+                            <span class="hl-line">Still here.</span>
+                            <span class="hl-line hl-outline">Still curious.</span>
+                        </h1>
+                        <button class="portrait-stamp" id="heroDoodleTrigger" type="button" title="点击切换{{character.name}}{{concept.doodle.zh}}" aria-label="切换{{character.name}}{{concept.doodle.zh}}头像">
+                            <img src="/assets/doodle/doodle_1.png" alt="{{character.name}}的白线{{concept.doodle.zh}}" class="portrait-stamp-img" id="vitalAvatarImg" />
+                            <span class="portrait-stamp-cap" id="heroDoodleBadge">{{concept.doodle.en}} #01 ↻</span>
+                        </button>
+                    </div>
+
+                    <p class="hero-manifesto" id="thoughtBubbleText">
+                        正在同步{{character.name}}{{concept.subconscious.zh}}脉冲与长期{{concept.memory.zh}}{{concept.synapse.zh}}...
+                    </p>
+
+                    <!-- Subconscious Recent Logs Ticker (restored from life_state.json recentLogs) -->
+                    <div class="subconscious-diary-box">
+                        <div class="diary-head">
+                            <span>RECENT THOUGHTS / 最近在想</span>
+                            <span id="lastHeartbeatTag">HEARTBEAT // LIVE</span>
+                        </div>
+                        <div class="diary-stream" id="subconsciousLogList">
+                            <div class="diary-item"><span class="diary-dot"></span><span>等待{{concept.subconscious.zh}}活动信号...</span></div>
+                        </div>
+                    </div>
+
+                    <div class="hero-bottom-bar">
+                        <div class="mood-tag-cluster">
+                            <span class="meta-chip" id="vitalMoodText">{{health.mood.en}} // 80%</span>
+                            <span class="meta-chip" id="vitalActivityText">MODE // SURFING</span>
+                            <span class="meta-chip" id="vitalPuddingText">{{health.energy.en}} // 85%</span>
+                        </div>
+                        <button class="pill-action-inverted" type="button" id="btnHeroJumpCortex">
+                            <span>EXPLORE {{chapter.memory.en}}</span>
+                            <span>→</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Col 2: FIG. 01 Live Bio-Oscilloscope & Somatic Schematic -->
+                <div class="bento-cell hero-col-loom">
+                    <span class="corner-mark tl">+</span>
+                    <span class="corner-mark tr">+</span>
+                    <span class="corner-mark bl">+</span>
+                    <span class="corner-mark br">+</span>
+
+                    <div class="cell-topline">
+                        <span>SIGNAL STUDY</span>
+                        <span class="live-indicator"></i> CONTINUOUS SIGNAL</span>
+                    </div>
+
+                    <div class="signal-loom-stage">
+                        <canvas id="ecgCanvas" width="680" height="240"></canvas>
+                        <div class="loom-overlay-telemetry">
+                            <span>WAVE: <strong id="ecgWaveMode">SINUS_RHYTHM</strong></span>
+                            <span>SYNC: <strong id="ecgSyncTime">--:--:--</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Cognitive Models & Archive Counts Matrix -->
+                    <div class="loom-cognitive-matrix">
+                        <div class="cog-cell">
+                            <span class="cog-k">{{model.text.label}}</span>
+                            <span class="cog-v" id="modelCognitionVal">--</span>
+                        </div>
+                        <div class="cog-cell">
+                            <span class="cog-k">{{model.vision.label}}</span>
+                            <span class="cog-v" id="modelVisionVal">--</span>
+                        </div>
+                        <div class="cog-cell">
+                            <span class="cog-k">{{model.painter.label}}</span>
+                            <span class="cog-v" id="modelPainterVal">--</span>
+                        </div>
+                        <div class="cog-cell">
+                            <span class="cog-k">{{chapter.memory.en}} {{concept.files.en}}</span>
+                            <span class="cog-v" id="statCountsSummary">-- MEM / -- SKILLS</span>
+                        </div>
+                    </div>
+
+                    <div class="loom-footer-bar">
+                        <span>CONTEXT · PULSATION</span>
+                        <div class="loom-quick-actions">
+                            <button class="micro-link-btn" type="button" id="btnQuickRestartBrain">RESTART {{concept.brain.en}} →</button>
+                            <button class="micro-link-btn" type="button" id="btnQuickViewLogs">STREAM LOGS →</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Col 3: Somatic Parameters & Numbered Capabilities -->
+                <div class="bento-cell hero-col-specs">
+                    <span class="corner-mark tl">+</span>
+                    <span class="corner-mark tr">+</span>
+                    <span class="corner-mark bl">+</span>
+                    <span class="corner-mark br">+</span>
+
+                    <div class="cell-topline">
+                        <span>02 / {{health.heading}}</span>
+                        <span id="hostCpuModel">HOST // {{concept.telemetry.en}}</span>
+                    </div>
+
+                    <p class="specs-intro">
+                        {{health.status}}
+                    </p>
+
+                    <div class="health-dials" id="healthDials" aria-label="{{character.name}}健康仪表盘"></div>
+
+                    <div class="specs-mini-strip" id="vitalOrgansStrip">
+                        <!-- Dynamic organ pills injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter & Index Control Bar -->
+            <div class="ledger-filter-strip">
+                <div class="filter-tabs" id="vitalsSubFilterTabs">
+                    <button class="ledger-filter-btn active" data-section="all" type="button">
+                        <span>ALL RECORDS</span>
+                        <span class="count-pill" id="filterCountAll">00</span>
+                    </button>
+                    <button class="ledger-filter-btn" data-section="bonds" type="button">
+                        <span>{{concept.bond.en}}</span>
+                        <span class="count-pill" id="bondsCountBadge">00</span>
+                    </button>
+                    <button class="ledger-filter-btn" data-section="artworks" type="button">
+                        <span>{{concept.artwork.en}} {{concept.specimens.en}}</span>
+                        <span class="count-pill" id="artworksCountBadge">00</span>
+                    </button>
+                </div>
+
+                
+            </div>
+
+            <!-- 60/40 Split Ledger & Inspect Deck -->
+            <div class="split-ledger-deck" id="vitalsSplitDeck">
+                <!-- Left 60%: Tabular Soul Bonds Index + Retina Specimen Matrix -->
+                <div class="ledger-main-pane">
+                    <!-- Sub-block A: Soul Bonds Tabular Index -->
+                    <div class="ledger-block" id="ledgerBlockBonds">
+                        <div class="bond-list-controls"><input id="bondSearchInput" type="search" placeholder="搜索姓名、ID、QQ" aria-label="搜索羁绊档案" /><span id="bondPageStatus" role="status"></span><button id="bondPrevPage" class="wire-action-btn" type="button">上一页</button><button id="bondNextPage" class="wire-action-btn" type="button">下一页</button></div>
+                        <div class="ledger-block-header">
+                            <span>01 // {{concept.bond.en}} REGISTRY</span>
+                        </div>
+                        <div class="ledger-table-head">
+                            <span class="col-no">NO.</span>
+                            <span class="col-entity">ENTITY / ALIAS</span>
+                            <span class="col-role">IMPRESSION &amp; LINK</span>
+                            <span class="col-metrics">FAV / FAM</span>
+                            <span class="col-sync">{{concept.dossier.en}}</span>
+                        </div>
+                        <div class="bonds-list" id="bondsListContainer">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Sub-block B: Retina Artworks Gallery -->
+                    <div class="ledger-block" id="ledgerBlockArtworks">
+                        <div class="ledger-block-header">
+                            <span>02 // WORKS</span>
+                        </div>
+                        <div class="artworks-gallery" id="artworksGalleryContainer">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right 40%: Live Inspect Preview Record -->
+                <aside class="ledger-inspect-pane" id="ledgerInspectPane">
+                    <div class="inspect-topline">
+                        <span>SELECTED RECORD INSPECTOR</span>
+                        <span id="inspectRecordIndex">[01 / LIVE]</span>
+                    </div>
+
+                    <div class="inspect-media-stage" id="inspectMediaStage">
+                        <img src="/assets/doodle/doodle_12.png" alt="Selected Specimen" class="inspect-preview-img" id="inspectPreviewImg" />
+                        <div class="inspect-stage-badge" id="inspectStageBadge">{{concept.specimen.en}} // READY</div>
+                    </div>
+
+                    <div class="inspect-meta-body">
+                        <div class="inspect-kicker" id="inspectKicker">{{brand.display}} {{concept.neural.en}} RECORD</div>
+                        <h3 class="inspect-title" id="inspectTitle">尚未选择</h3>
+                        <p class="inspect-desc" id="inspectDesc"></p>
+
+                        <div class="inspect-kv-grid" id="inspectKvGrid">
+                            <div class="inspect-kv">
+                                <span class="kv-k">{{organ.brain.en}}</span>
+                                <span class="kv-v" id="vitalBrainText">PROBING...</span>
+                            </div>
+                            <div class="inspect-kv">
+                                <span class="kv-k">{{organ.qq.en}}</span>
+                                <span class="kv-v" id="vitalQqText">PROBING...</span>
+                            </div>
+                            <div class="inspect-kv">
+                                <span class="kv-k">HOST KERNEL</span>
+                                <span class="kv-v" id="sysOsSummary">--</span>
+                            </div>
+                            <div class="inspect-kv">
+                                <span class="kv-k">{{concept.memory.en}} ALLOC</span>
+                                <span class="kv-v" id="sysMemSummary">--</span>
+                            </div>
+                        </div>
+
+                        <div class="inspect-actions" id="inspectActionsBar">
+                            <button class="wire-action-btn is-hidden" id="btnInspectSecondary" type="button">DOWNLOAD {{concept.specimen.en}} →</button>
+                            <button class="wire-action-btn is-hidden" id="btnManageArtworks" type="button">在 {{chapter.memory.en}} 中管理画作 ↗</button>
+                            <button class="wire-action-btn primary-bone" id="btnInspectPrimary" type="button">OPEN FULL RECORD →</button>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+        <!-- ===================================================================
+             CHAPTER 02: LAYER MATRIX (BESPOKE SVG SCHEMATICS & LIFECYCLE)
+             =================================================================== -->
+        <section class="chapter-view" id="view-organs">
+            <div class="chapter-hero-banner">
+                <div class="ch-banner-left">
+                    <span class="ch-kicker">02 / DISTRIBUTED SUBSYSTEMS</span>
+                    <h2 class="ch-display-title">LAYER MATRIX.</h2>
+                </div>
+                <div class="ch-banner-right">
+                    <p class="ch-lead">
+                        {{character.name}}的全部模块信息                   </p>
+                </div>
+            </div>
+
+            <div class="layer-editor-actions"><button class="wire-action-btn" id="btnAddLayer" type="button">{{action.createLayer}}</button></div>
+            <div class="organs-grid" id="organsGridContainer">
+                <!-- Injected by JS with bespoke architectural SVG schematics per organ -->
+            </div>
+        </section>
+
+        <!-- ===================================================================
+             CHAPTER 03: CORTEX FILES (FILE TREE / ICON MATRIX & CODING IDE)
+             =================================================================== -->
+        <section class="chapter-view" id="view-memory">
+            <div class="cortex-TopToolbar"><div class="fm-workspace-title">{{chapter.memory.en}} <span>文件工作台</span></div>
+                <div class="cortex-toolbar-right">
+                    <span class="cortex-crumb" id="fmCurrentScopeDesc">SELECT {{chapter.memory.en}} PARTITION</span>
+                    <div class="view-mode-switch" role="group" aria-label="View Mode Switch">
+                        <button class="mode-switch-btn active" id="fmBtnViewTree" type="button" title="列表树状模式：点击文件夹原地展开/折叠">
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <line x1="2" y1="3" x2="14" y2="3"></line>
+                                <line x1="5" y1="8" x2="14" y2="8"></line>
+                                <line x1="5" y1="13" x2="14" y2="13"></line>
+                                <circle cx="2" cy="8" r="1"></circle>
+                                <circle cx="2" cy="13" r="1"></circle>
+                            </svg>
+                            <span>列表</span>
+                        </button>
+                        <button class="mode-switch-btn" id="fmBtnViewGrid" type="button" title="图标矩阵模式：点击文件夹进入独立目录视图">
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="1.5" y="1.5" width="5" height="5"></rect>
+                                <rect x="9.5" y="1.5" width="5" height="5"></rect>
+                                <rect x="1.5" y="9.5" width="5" height="5"></rect>
+                                <rect x="9.5" y="9.5" width="5" height="5"></rect>
+                            </svg>
+                            <span>图标</span>
+                        </button>
+                        <button class="mode-switch-btn" id="fmBtnTrash" data-navigation-independent type="button" aria-haspopup="dialog" title="打开回收站窗口，预览和管理全部分区"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5h14M7 5V2h6v3M5 5l1 13h8l1-13M8 8v7M12 8v7"/></svg><span>{{file.trash.zh}}</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cortex-workbench-grid"><nav class="fm-module-sidebar" aria-label="模块与目录"><div class="fm-sidebar-caption">工作区</div><div id="fmModuleNav"></div><div class="fm-sidebar-caption">目录</div><div class="scope-tabs" id="fmScopeTabs"></div></nav>
+                <!-- Left Explorer Sidebar (Tree + Icon Grid) -->
+                <aside class="cortex-explorer-pane">
+                    <div class="explorer-action-bar">
+                        <input type="text" class="explorer-filter-input" id="fmFilterInput" placeholder="FILTER {{concept.files.en}}..." />
+                        <button class="explorer-icon-btn" id="fmBtnSearch" type="button" title="搜索文件名与内容">全局搜索</button>
+                        <button class="explorer-icon-btn" id="fmBtnExpandAll" type="button" title="展开/折叠全部目录">[+]</button>
+                        <button class="explorer-icon-btn" id="fmBtnNewFolder" type="button" title="新建目录">新建目录</button>
+                        <button class="explorer-icon-btn" id="fmBtnNewFile" type="button" title="新建文件">新建文件</button>
+                        <button class="explorer-icon-btn" id="fmBtnPasteRoot" type="button" title="粘贴剪贴板{{concept.file.zh}}" disabled>粘贴</button>
+                        
+                        <button class="explorer-icon-btn" id="fmBtnRefresh" type="button" title="刷新目录">→</button>
+                    </div>
+
+                    <!-- Dedicated Folder Page Navigation Bar for ICON GRID Mode -->
+                    <div class="fm-grid-nav-bar is-hidden" id="fmGridNavBar">
+                        <button class="grid-up-btn" id="fmBtnGridUp" type="button" title="返回上级目录">↑ UP</button>
+                        <div class="grid-breadcrumbs" id="fmGridBreadcrumbs"></div>
+                    </div>
+
+                    <div class="fm-selection-bar"><span id="fmSelectionCount" role="status">0 项已选</span><button id="fmSelectAll" type="button">全选</button><button id="fmClearSelection" type="button">取消</button><button id="fmDownloadSelection" type="button">下载</button><button id="fmDeleteSelection" type="button">删除</button></div><div class="fm-tree-container" id="fmFileList">
+                        <!-- Tree or Icon Grid rendered here by JS -->
+                    </div>
+                </aside>
+
+                <!-- Right High-Contrast Code IDE & Live Markdown Split Preview -->
+                <div class="cortex-preview-column"><div id="fmConfigPanel" class="is-hidden">
+            <div class="endocrine-frame">
+                <div class="ide-header-bar">
+                    <div class="ide-file-meta">
+                        <span class="ide-filepath">CoreNyan-Brain / config.json</span>
+                        <span class="ide-lang-tag">JSON IDE</span>
+                        <span class="ide-dirty-tag" id="brainCfgStatus">READY</span>
+                        <span class="ide-cursor-tag" id="brainCfgCursorMeta">LN 1, COL 1</span>
+                    </div>
+                    <div class="ide-toolbar-actions">
+                        <button class="wire-action-btn" id="btnFormatBrainCfg" type="button">FORMAT &amp; VALIDATE JSON</button>
+                        <button class="wire-action-btn" id="btnReloadBrainCfg" type="button">RELOAD FROM DISK</button>
+                        <button class="wire-action-btn primary-bone" id="btnSaveBrainCfg" type="button">SAVE {{chapter.endocrine.en}} CONFIG [CTRL+S]</button>
+                    </div>
+                </div>
+
+                <!-- Quick Endocrine Parameter Overview Cards -->
+                <div class="endocrine-summary-strip" id="endocrineSummaryStrip">
+                    <div class="endo-chip"><span class="endo-k">PRIMARY LLM</span><span class="endo-v" id="endoModelPrimary">--</span></div>
+                    <div class="endo-chip"><span class="endo-k">{{concept.vision.en}} CORE</span><span class="endo-v" id="endoModelVision">--</span></div>
+                    <div class="endo-chip"><span class="endo-k">IMAGE {{concept.painter.en}}</span><span class="endo-v" id="endoModelPainter">--</span></div>
+                    <div class="endo-chip"><span class="endo-k">{{concept.painter.en}} RATIO</span><span class="endo-v" id="endoPainterSize">--</span></div>
+                </div>
+
+                <div class="ide-code-surface endocrine-surface" id="brainCfgWorkbench">
+                    <div class="ide-gutter" id="brainCfgGutter"><span>1</span></div>
+                    <div class="ide-editor-stack" id="brainCfgEditorStack">
+                        <pre class="ide-highlight-layer" id="brainCfgHighlight" aria-hidden="true"><code id="brainCfgHighlightCode"></code></pre>
+                        <textarea class="ide-textarea" id="brainConfigEditor" spellcheck="false" wrap="off" placeholder="Loading CoreNyan-Brain/config.json..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div><div class="cortex-ide-pane" id="fmFilePanel">
+                    <div class="ide-header-bar">
+                        <div class="ide-file-meta">
+                            <span class="ide-filepath" id="fmEditorPath">NO {{concept.file.en}} SELECTED</span>
+                            <span class="ide-lang-tag" id="fmLangBadge">IDLE</span>
+                            <span class="ide-dirty-tag" id="fmEditorStatus">READY</span>
+                            <span class="ide-cursor-tag" id="fmCursorMeta">LN 1, COL 1</span>
+                        </div>
+                        <div class="ide-toolbar-actions">
+                            <button class="wire-action-btn is-hidden" id="fmBtnFormatJson" type="button">FORMAT JSON</button>
+                            <button class="wire-action-btn is-hidden" id="fmBtnToggleMdPreview" type="button">MD SPLIT PREVIEW: ON</button>
+                            <button class="wire-action-btn" id="fmBtnDownloadCurrent" type="button" disabled>下载</button>
+                            <button class="wire-action-btn danger-accent" id="fmBtnDeleteFile" type="button" disabled>删除</button>
+                            <button class="wire-action-btn primary-bone" id="fmBtnSaveFile" type="button" disabled>保存 · Ctrl+S</button>
+                        </div>
+                    </div>
+
+                    <div id="fmFileTimes" class="fm-file-times is-hidden" aria-label="文件时间"><span>创建：<time id="fmCreatedTime"></time></span><span>修改：<time id="fmModifiedTime"></time></span></div>
+                    <div id="fmImagePreview" class="fm-image-preview is-hidden"><img id="fmPreviewImage" alt="文件预览" /><p id="fmPreviewMeta"></p></div><div class="ide-split-body" id="fmEditorBodyWrap">
+                        <div class="ide-code-surface" id="fmIdeWorkbench">
+                            <div class="ide-gutter" id="fmLineGutter"><span>1</span></div>
+                            <div class="ide-editor-stack" id="fmEditorStack">
+                                <pre class="ide-highlight-layer" id="fmHighlightPre" aria-hidden="true"><code id="fmHighlightCode"></code></pre>
+                                <textarea class="ide-textarea" id="fmCodeEditor" spellcheck="false" wrap="off" placeholder="选择文件开始编辑" disabled></textarea>
+                            </div>
+                        </div>
+
+                        <div class="ide-md-preview is-hidden" id="fmMdPreviewPane">
+                            <div class="md-preview-topline">
+                                <span>MARKDOWN</span>
+                                <span id="fmMdWordCount">0 CHARS</span>
+                            </div>
+                            <div class="md-preview-content" id="fmMdPreviewBody"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================
+             CHAPTER 04: SYNAPSE STREAM (ANSI COLOR TELEMETRY TERMINAL)
+             =================================================================== -->
+        <section class="chapter-view" id="view-neural">
+            <div class="synapse-terminal-frame">
+                <div class="terminal-topbar">
+                    <div class="terminal-controls-left">
+                        <span class="term-kicker">04 // {{chapter.neural.en}} STREAM</span>
+                        <label class="term-select-label">
+                            <span>{{concept.layer.en}} SOURCE:</span>
+                            <select id="logOrganSelect" class="wire-select">
+                                <option value="corenyan-brain">{{organ.brain.en}} (corenyan-brain)</option>
+                                <option value="corenyan-brain-file">{{concept.brain.en}} APP.LOG (local file)</option>
+                                <option value="corenyan-gateway">{{organ.gateway.en}} (corenyan-gateway)</option>
+                                <option value="onebot-qq">{{organ.qq.en}} (SnowLuma)</option>
+                                <option value="corenyan-redis">{{organ.redis.en}} (corenyan-redis)</option>
+                            </select>
+                        </label>
+                        <label class="term-select-label">
+                            <span>TAIL LINES:</span>
+                            <select id="logLinesSelect" class="wire-select">
+                                <option value="80">80 LINES</option>
+                                <option value="150" selected>150 LINES</option>
+                                <option value="300">300 LINES</option>
+                                <option value="500">500 LINES</option>
+                            </select>
+                        </label>
+                        <input type="text" class="explorer-filter-input term-filter-input" id="logFilterInput" placeholder="FILTER LOGS..." />
+                    </div>
+                    <div class="terminal-controls-right">
+                        <span id="logSourceStatus" class="log-source-status" role="status"></span>
+                        <label class="wire-check-label">
+                            <input type="checkbox" id="logAutoRefreshCheck" checked />
+                            <span>AUTO-POLL (3S)</span>
+                        </label>
+                        <button class="wire-action-btn" id="btnScrollLogBottom" type="button">BOTTOM →</button>
+                        <button class="wire-action-btn primary-bone" id="btnFetchLogsNow" type="button">POLL NOW →</button>
+                    </div>
+                </div>
+
+                <div class="terminal-service-bar">
+                    <span id="logServiceState" role="status">读取进程状态…</span>
+                    <time id="logServiceStarted" hidden></time>
+                    <div class="terminal-service-actions">
+                        <button class="wire-action-btn" id="btnLogPower" type="button" disabled>启动 / 关闭</button>
+                        <button class="wire-action-btn" id="btnLogRestart" type="button" disabled>重启 ↻</button>
+                        <button class="wire-action-btn primary-bone" id="btnLogCortex" type="button" disabled>主目录 · CORTEX →</button>
+                    </div>
+                    <span id="logSelectionStatus" class="log-source-status" role="status"></span>
+                </div>
+                <div class="neural-log-terminal" id="neuralLogTerminal" role="log" aria-live="polite">Awaiting synapse stream...</div>
+            </div>
+        </section>
+
+        <!-- ===================================================================
+             CHAPTER 05: ENDOCRINE CONFIG (CORE JSON PARAMETER TUNING IDE)
+             =================================================================== -->
+
+
+        <section class="chapter-view" id="view-chat" aria-label="CHAT"></section>
+        <section class="chapter-view entity-view" id="view-entity" aria-label="ENTITY 3D models">
+          <div class="entity-stage"><div class="entity-grid"></div><canvas tabindex="0" aria-label="3D point cloud model"></canvas>
+            <div class="entity-topline"><div class="entity-tabs" data-entity-tabs></div><div class="entity-clock"><span>SHANGHAI / CN</span><b id="entityClock">00:00:00</b></div></div>
+            <aside class="entity-flight" aria-label="当前层资源仪表"></aside><aside class="entity-telemetry"><h2>MODEL TELEMETRY</h2><div><span>MODEL</span><b data-entity-model>—</b></div><div><span>INDEX</span><b data-entity-index>—</b></div><div><span>POINTS</span><b data-entity-points>—</b></div><label>POINT SIZE <input data-entity-point-size type="range" min="0.7" max="2.8" step="0.1"></label><label>ROT SPEED <input data-entity-rotation type="range" min="0" max="0.5" step="0.01"></label><label>GRID GAIN <input data-entity-grid type="range" min="0" max="0.8" step="0.01"></label><div class="entity-zoom"><button data-entity-zoom-out>−</button><span data-entity-zoom>100%</span><button data-entity-zoom-in>+</button><button data-entity-reset>RESET</button></div><small data-entity-status></small></aside>
+            <div class="entity-controls"><button data-entity-prev>←</button><button data-entity-next>→</button><span>E.P.S · MODEL</span></div>
+            <div class="entity-caption"><small data-entity-code>ENTITY</small><h1 data-entity-name>ENTITY</h1><p data-entity-sub></p><span data-entity-description></span></div>
+          </div>
+        </section>
+    </main>
+
+<section class="model-preset-section" id="modelPresetSection" hidden aria-label="大模型预设">
+<div><small>MODEL PRESETS</small><h2>大模型预设</h2><div data-preset-summary>正在读取文字、视觉与生图配置…</div></div>
+<div class="preset-actions"><button type="button" data-manage-presets>管理预设</button><button type="button" data-preset-folder>在 CORTEX 中打开</button><button type="button" data-reload-presets aria-label="刷新模型预设">刷新</button></div>
+</section>
+
+    <!-- Bottom Ambient Telemetry Ticker -->
+    <footer class="editorial-footer-ticker">
+        <div class="ticker-fixed-badge">
+            <span class="ticker-dot"></span>
+            <span id="telemetryStatus" role="status">CONNECTING {{concept.telemetry.en}}</span>
+        </div>
+        <div class="kinetic-marquee-bar">
+            <div class="kinetic-marquee-track" id="kineticMarqueeTrack">
+                <span>{{brand.display}} {{concept.bioConsole.en}} V10.0</span>
+                <span class="sep">//</span>
+                <span id="marqueeStatLlm">{{chapter.memory.en}} LLM: PROBING...</span>
+                <span class="sep">//</span>
+                <span id="marqueeStatPainter">{{concept.painter.en}} CORE: PROBING...</span>
+                <span class="sep">//</span>
+                <span id="marqueeStatNet">{{concept.neural.en}} BUS: ACTIVE</span>
+                <span class="sep">//</span>
+                <span>SIMULATED WAVEFORM · LIVE HOST {{concept.telemetry.en}}</span>
+                <span class="sep">//</span>
+                <span>{{brand.display}} {{concept.bioConsole.en}} V10.0</span>
+                <span class="sep">//</span>
+                <span id="marqueeStatLlmDup">{{chapter.memory.en}} LLM: ONLINE</span>
+                <span class="sep">//</span>
+                <span id="marqueeStatPainterDup">{{concept.painter.en}} CORE: READY</span>
+                <span class="sep">//</span>
+                <span>AWWWARDS MONOCHROME WIREFRAME EDITION</span>
+            </div>
+        </div>
+        <div class="ticker-right-meta">
+            <span>BLACK &amp; WHITE {{concept.doodle.en}} ARCHITECTURE</span>
+        </div>
+    </footer>
+
+    <!-- ===================================================================
+         MODALS & OVERLAYS (SOUL BOND MODAL, LIGHTBOX, CONTEXT MENU, DIALOG)
+         =================================================================== -->
+
+    <!-- Soul Bond Dossier Modal -->
+    <div class="modal-backdrop is-hidden" id="bondModalBackdrop">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bondModalTitle">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <span class="modal-kicker" id="bondModalIdTag">BOND // {{concept.dossier.en}}</span>
+                    <h3 class="modal-title" id="bondModalTitle">{{concept.bond.en}} RECORD</h3>
+                </div>
+                <button class="modal-close-btn" id="bondModalCloseBtn" type="button">[ESC / CLOSE]</button>
+            </div>
+            <div class="modal-body" id="bondModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Retina Specimen Lightbox (Wheel Zoom, Drag Pan, Prev/Next, Copy, Download, Delete) -->
+    <div class="lightbox-backdrop is-hidden" id="artLightboxBackdrop">
+        <div class="lightbox-frame" role="dialog" aria-modal="true">
+            <div class="lightbox-header">
+                <div class="lightbox-meta">
+                    <span class="lightbox-kicker">{{concept.artwork.en}} {{concept.specimen.en}} LENS</span>
+                    <span class="lightbox-title" id="lightboxFileName">specimen.png</span>
+                    <span class="lightbox-sub" id="lightboxFileDetails">-- KB · ZOOM 100%</span>
+                </div>
+                <button class="modal-close-btn" id="lightboxBtnClose" type="button" aria-label="关闭图片">×</button>
+                <div class="lightbox-toolbar">
+                    <button class="wire-action-btn" id="lightboxBtnPrev" type="button" title="上一张">← PREV</button>
+                    <button class="wire-action-btn" id="lightboxBtnNext" type="button" title="下一张">NEXT →</button>
+                    <button class="wire-action-btn" id="lightboxBtnZoomOut" type="button">[-]</button>
+                    <button class="wire-action-btn" id="lightboxBtnZoomReset" type="button">100%</button>
+                    <button class="wire-action-btn" id="lightboxBtnZoomIn" type="button">[+]</button>
+                    <button class="wire-action-btn" id="lightboxBtnCopyImg" type="button">COPY IMAGE</button>
+                    <button class="wire-action-btn" id="lightboxBtnDownload" type="button">DOWNLOAD</button>
+
+
+                </div>
+            </div>
+            <div class="lightbox-stage" id="lightboxStage">
+                <img src="" alt="Retina Specimen" class="lightbox-img" id="lightboxImg" draggable="false" />
+            </div>
+
+        </div>
+    </div>
+
+    <!-- File Manager Right-Click Context Menu -->
+    <div class="fm-context-menu is-hidden" id="fmContextMenu">
+        <div class="ctx-head" id="ctxMenuTargetName">TARGET</div>
+        <button class="ctx-item" data-ctx="open" type="button"><span>OPEN / EXPAND</span><span>RET</span></button>
+        <button class="ctx-item" data-ctx="new-file" type="button"><span>NEW FILE</span><span>+F</span></button>
+        <button class="ctx-item" data-ctx="new-folder" type="button"><span>NEW FOLDER</span><span>+D</span></button>
+        <div class="ctx-sep"></div>
+        <button class="ctx-item" data-ctx="rename" type="button"><span>RENAME</span><span>F2</span></button>
+        <button class="ctx-item" data-ctx="cut" type="button"><span>{{action.cut}}</span><span>^X</span></button>
+        <button class="ctx-item" data-ctx="copy" type="button"><span>{{action.copy}}</span><span>^C</span></button>
+        <button class="ctx-item" data-ctx="paste" id="ctxMenuPasteBtn" type="button" disabled><span>{{action.paste}}</span><span>^V</span></button>
+        <div class="ctx-sep"></div>
+        <button class="ctx-item" data-ctx="download" type="button"><span>EXPORT / DOWNLOAD</span><span>DL</span></button>
+        <button class="ctx-item danger-text" data-ctx="delete" type="button"><span>{{action.delete}}</span><span>DEL</span></button>
+    </div>
+
+    <!-- Custom Wireframe Prompt / Confirm Dialog -->
+    <div class="modal-backdrop is-hidden" id="wireDialogBackdrop">
+        <div class="modal-card modal-dialog-sm" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <span class="modal-kicker">SYSTEM PROMPT</span>
+                    <h3 class="modal-title" id="wireDialogTitle">CONFIRM ACTION</h3>
+                </div>
+            </div>
+            <div class="modal-body">
+                <p class="dialog-msg" id="wireDialogMessage"></p>
+                <input type="text" class="wire-input is-hidden" id="wireDialogInput" />
+                <div class="dialog-actions">
+                    <button class="wire-action-btn" id="wireDialogCancelBtn" type="button">CANCEL</button>
+                    <button class="wire-action-btn primary-bone" id="wireDialogConfirmBtn" type="button">CONFIRM</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Stack -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/js/marked.min.js"></script>
+    <script src="/vendor/codemirror.js"></script>
+<script src="/vendor/foldcode.js"></script>
+<script src="/vendor/foldgutter.js"></script>
+<script src="/vendor/brace-fold.js"></script>
+<script src="/vendor/dialog.js"></script>
+<script src="/vendor/searchcursor.js"></script>
+<script src="/vendor/search.js"></script>
+<script src="/vendor/runmode.js"></script>
+<script src="/vendor/javascript.js"></script>
+<script src="/vendor/markdown.js"></script>
+<script src="/vendor/xml.js"></script>
+<script src="/vendor/css.js"></script>
+<script src="/vendor/htmlmixed.js"></script>
+<script src="/vendor/yaml.js"></script>
+<script src="/vendor/shell.js"></script>
+<script src="/vendor/purify.min.js"></script>
+<script src="/pages-bootstrap.js"></script>
+<script type="module" src="/js/startup.js?v=10.6"></script>
+</body>
+</html>

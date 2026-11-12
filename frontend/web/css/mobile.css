@@ -1,0 +1,120 @@
+/* Phone layouts use the same data and controls, with a separate spatial layout. */
+.mobile-dock,.mobile-nav-face,.mobile-toolbar-face,.mobile-workspace-toggle,.mobile-editor-back,.mobile-editor-resume,.settings-dialog [data-settings-back]{display:none}
+@media(max-width:700px),(max-width:950px) and (max-height:500px) and (pointer:coarse){
+ :root{--ui-default-scale:1;--phone-dock:calc(64px + env(safe-area-inset-bottom));--page-gutter:18px}
+ body.mobile-layout{padding-bottom:var(--phone-dock)}
+ .mobile-layout .editorial-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 18px;min-height:64px}
+ .mobile-layout .topbar-left{flex:1;min-width:0}.mobile-layout .topbar-right{display:contents}
+ .mobile-layout .topbar-center,.mobile-layout .topbar-clock,.mobile-layout .topbar-divider,.mobile-layout .brand-tag{display:none}
+ .mobile-layout .brand-name{font-size:21px}.mobile-layout .brand-asterisk{font-size:27px}
+ .mobile-layout .topbar-RichToggles{display:flex;gap:6px;width:auto;flex:none;flex-wrap:nowrap}
+ .mobile-layout .topbar-RichToggles #btnToggleMotion{display:none}
+ .mobile-layout .topbar-RichToggles button{flex:none;width:42px;height:42px;padding:0;border:1px solid #333;background:transparent;color:#eee;font-size:0;border-radius:12px}
+ .mobile-layout .topbar-RichToggles button>span:not(.mobile-toolbar-face){display:none}
+ .mobile-layout .mobile-toolbar-face{display:grid;place-items:center}
+ .mobile-toolbar-face svg,.mobile-nav-face svg,.mobile-editor-back svg,.settings-dialog [data-settings-back] svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+ .mobile-dock{display:block;position:fixed;bottom:0;inset-inline:0;height:var(--phone-dock);padding:4px 8px calc(4px + env(safe-area-inset-bottom));box-sizing:border-box;background:#101010f5;border-top:1px solid #333;z-index:80}
+ .mobile-dock .chapter-nav{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));width:100%;height:100%;gap:2px;overflow:visible}
+ .mobile-dock .chapter-tab{display:flex;align-items:center;justify-content:center;padding:0;margin:0;min-width:0;border:0;border-radius:10px;color:#888;background:transparent}
+ .mobile-dock .chapter-tab::after{display:none}.mobile-dock .chapter-tab.active{background:#ffffff0c;color:#fff}
+ .mobile-dock .tab-num,.mobile-dock .tab-text{display:none}
+ .mobile-dock .mobile-nav-face{display:flex;flex-direction:column;align-items:center;gap:5px;font:11px/1 var(--font-sans);letter-spacing:0}
+ .mobile-layout .editorial-footer-ticker{display:none}
+ .mobile-layout .editorial-viewport{padding:24px 18px 32px}
+ .mobile-layout .telemetry-overline-strip{padding:16px 18px 0;gap:18px}
+ .mobile-layout:has(#view-memory.active,#view-neural.active,#view-organs.active) .overline-metrics{display:none}
+ .mobile-layout .overline-metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 12px}.mobile-layout .ov-metric{font-size:10px}.mobile-layout .ov-v{font-size:13px}
+ .mobile-layout .bento-hero-grid{gap:32px;margin-bottom:40px}.mobile-layout .hero-manifesto{font-size:15px;line-height:1.9}
+ .mobile-layout .diary-item{font-size:13px;line-height:1.8}.mobile-layout .diary-head{flex-wrap:wrap;gap:8px}
+ .mobile-layout .hero-bottom-bar{flex-wrap:wrap;gap:16px}.mobile-layout .health-dials{gap:26px 18px}.mobile-layout .dial-reading strong{font-size:30px}
+ .mobile-layout .ledger-filter-btn,.mobile-layout .bond-list-controls button{min-height:42px;font-size:12px}
+ .mobile-layout .split-ledger-deck{gap:24px}.mobile-layout .ledger-inspect-pane{padding:18px}.mobile-layout .bond-row{padding:16px 12px}
+ .mobile-layout .organs-grid{grid-template-columns:minmax(0,1fr);gap:22px}.mobile-layout .organ-card{min-width:0}.mobile-layout .organ-desc{font-size:13px;line-height:1.8}
+ .mobile-layout .organ-banner-img{max-height:190px}.mobile-layout .organ-header{flex-wrap:wrap;gap:12px}
+
+ /* Full-width settings index -> full-width detail, retaining drafts on back. */
+ :root .settings-dialog{width:100%;max-width:100%;height:calc(100dvh / var(--ui-scale,var(--ui-default-scale,1)));max-height:calc(100dvh / var(--ui-scale,var(--ui-default-scale,1)));margin:0;border:0;border-radius:0}
+ .settings-dialog>header{display:flex;gap:10px;padding:12px 16px;min-height:70px}.settings-dialog>header>div{flex:1}
+ .settings-dialog>header small{display:none}.settings-dialog h2{font-size:23px;margin:0}
+ .settings-dialog [data-close]{width:44px;height:44px;border-radius:12px;background:transparent;font-size:27px}
+ .settings-dialog.settings-detail [data-settings-back]{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:none;flex:none}
+ .settings-dialog .settings-layout{display:block;min-height:0;overflow:hidden}
+ .settings-dialog .settings-layout>nav{display:flex;flex-direction:column;flex-wrap:nowrap;gap:5px;height:100%;padding:10px 18px 26px;border:0;overflow:auto}
+ .settings-dialog .settings-layout>nav .settings-nav-label{display:block;padding:16px 8px 9px;font-size:12px;color:#999;letter-spacing:.04em}
+ .settings-dialog .settings-layout>nav button{position:relative;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;flex:none;width:100%;min-height:66px;padding:13px 40px 13px 16px;background:#161616;border:1px solid #292929;border-radius:12px;text-align:left;box-shadow:none}
+ .settings-dialog .settings-layout>nav button::after{content:'›';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:25px;color:#888}
+ .settings-dialog .settings-layout>nav button strong{font-size:16px;font-weight:550}.settings-dialog .settings-layout>nav button span{display:block;font-size:12px;line-height:1.6;margin-top:4px}
+ .settings-dialog .settings-content{display:none;height:100%;padding:22px 18px 32px;scrollbar-gutter:auto}
+ .settings-dialog.settings-detail .settings-layout>nav{display:none}.settings-dialog.settings-detail .settings-content{display:block}
+ .settings-dialog .settings-panel-heading{margin-bottom:22px;align-items:center;flex-wrap:nowrap}.settings-dialog .settings-panel-heading h3{display:none}.settings-dialog .settings-panel-heading small{font-size:12px}.settings-dialog .settings-scope{font-size:11px;padding:4px 10px}
+ .settings-dialog .settings-card{padding:18px;border-radius:12px;margin-bottom:20px}.settings-dialog .settings-card h4{font-size:15px;margin-bottom:15px}
+ .settings-dialog .settings-row{font-size:15px;gap:12px;padding:18px 0;flex-wrap:nowrap}.settings-dialog .settings-row small{font-size:12px}
+ .settings-dialog button,.settings-dialog select{font-size:14px;min-height:44px;padding:10px 14px;border-radius:9px}
+ .settings-dialog input:not([type=checkbox]){font-size:16px;min-height:44px;padding:11px;box-sizing:border-box}.settings-dialog input[type=checkbox]{width:23px;height:23px}
+ .settings-dialog .settings-form-grid,.settings-dialog .account-create{grid-template-columns:minmax(0,1fr);gap:18px}.settings-dialog label,.settings-dialog .settings-form-grid label{font-size:13px}
+ .settings-dialog .account-card{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:18px;border-radius:12px;position:relative}
+ .settings-dialog .account-card>img{position:absolute;left:18px;top:20px;width:48px;height:48px}
+ .settings-dialog .account-card>div{grid-column:1/-1;min-height:56px;padding-left:64px;margin-bottom:8px;min-width:0;overflow-wrap:anywhere}
+ .settings-dialog .account-card strong{font-size:18px}.settings-dialog .account-card small{font-size:12px;line-height:1.7}
+ .settings-dialog .account-card button{font-size:14px!important;padding:10px!important;width:100%;min-height:44px}
+ .settings-dialog summary{font-size:15px;min-height:24px}.settings-dialog details{padding:18px}.settings-dialog .settings-card-actions{gap:14px}.settings-dialog .settings-card-actions small,.settings-dialog .settings-card-actions p{font-size:12px;line-height:1.7}
+ .settings-dialog .system-config-links{grid-template-columns:1fr;gap:16px}.settings-dialog .system-config-links button{padding:20px}.settings-dialog .system-config-links strong{font-size:15px}.settings-dialog .system-config-links span{font-size:12px}
+ .settings-dialog .shortcut-row{grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:16px 0;font-size:14px}.settings-dialog .shortcut-row [data-shortcut]{font-size:13px;max-width:none}.settings-dialog .shortcut-reset{font-size:12px}
+ .settings-dialog .settings-signout{font-size:13px;gap:16px}.settings-dialog .preset-overview>button{padding:20px;gap:12px}.settings-dialog .preset-overview span{font-size:13px}
+ .settings-dialog [data-assistant-host]>.settings-row{flex-wrap:wrap;gap:16px}.settings-dialog .account-avatar-preview{width:56px;height:56px}
+
+ /* CHAT reserves room for thumb navigation without shrinking message content. */
+ body.mobile-layout.chat-active{box-sizing:border-box;padding-bottom:var(--phone-dock)}
+ .mobile-layout.chat-active .editorial-viewport{padding:0;min-height:0}.mobile-layout .chat-header{padding:14px 16px;min-height:60px}.mobile-layout .chat-header h2{font-size:17px}.mobile-layout .chat-header small{display:none}
+ .mobile-layout .chat-messages{padding:20px 14px 12px}.mobile-layout .chat-message{gap:10px;margin-bottom:28px}.mobile-layout .chat-avatar{width:30px;height:30px}.mobile-layout .chat-message-content{max-width:calc(100% - 40px)}
+ .mobile-layout .chat-message .chat-markdown{font-size:15px;line-height:1.85;padding:12px 14px}.mobile-layout .chat-bottom{padding:0 12px 12px}.mobile-layout .chat-composer textarea{font-size:16px;min-height:58px;padding:14px}
+ .mobile-layout .chat-composer button{min-height:42px}.mobile-layout .chat-sidebar>header button,.mobile-layout .chat-header button{min-height:42px;min-width:42px}
+ .mobile-layout .chat-thread{padding:14px 12px}.mobile-layout .chat-thread strong{font-size:14px}.mobile-layout .chat-thread span{font-size:12px}.mobile-layout .chat-toast{bottom:calc(var(--phone-dock) + 12px)}
+
+ /* CORTEX: workspace selector, file list, then a full-width editor. */
+ .mobile-layout .cortex-TopToolbar{gap:12px;margin-bottom:12px}.mobile-layout .cortex-toolbar-right{width:100%;justify-content:space-between;gap:8px}.mobile-layout .mode-switch-btn{min-height:44px;font-size:12px}
+ .mobile-layout .cortex-workbench-grid,.mobile-layout .cortex-workbench-grid.config-open{display:flex;flex-direction:column;height:auto;min-height:0;overflow:visible}
+ .mobile-layout .fm-module-sidebar{padding:0;border:0;border-bottom:1px solid #333;max-height:none;height:auto}
+ .mobile-layout .mobile-workspace-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:16px;border:0;background:#161616;color:#eee;text-align:left;font:14px var(--font-sans)}
+ .mobile-layout .fm-module-sidebar:not(.mobile-workspace-open)>:not(.mobile-workspace-toggle){display:none!important}
+ .mobile-layout #fmModuleNav,.mobile-layout #fmScopeTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:8px}
+ .mobile-layout .fm-module-button,.mobile-layout #fmScopeTabs .scope-tab-btn{font-size:12px;min-height:48px;padding:12px}
+ .mobile-layout .cortex-explorer-pane{height:calc(100dvh - 260px);min-height:340px;width:100%;border:0}.mobile-layout .explorer-action-bar{padding:14px;gap:8px}
+ .mobile-layout .explorer-action-bar .explorer-icon-btn{min-height:42px;font-size:12px}.mobile-layout .explorer-action-bar .explorer-filter-input{height:44px;font-size:14px}
+ .mobile-layout .tree-node-row{min-height:48px}.mobile-layout .tree-label{font-size:14px}.mobile-layout .fm-icon-grid{grid-template-columns:repeat(2,minmax(0,1fr));padding:14px;gap:14px}
+ .mobile-layout .cortex-preview-column{display:none;height:calc(100dvh - 210px);min-height:460px;border-top:0;flex-direction:column;scroll-margin-top:18px}
+ .mobile-layout .mobile-editor-open .cortex-preview-column,.mobile-layout .config-open .cortex-preview-column{display:flex}
+ .mobile-layout .mobile-editor-open .cortex-explorer-pane,.mobile-layout .mobile-editor-open .fm-module-sidebar{display:none}
+ .mobile-layout .mobile-editor-back,.mobile-layout .mobile-editor-resume{display:flex;align-items:center;gap:10px;min-height:44px;padding:12px 14px;border:0;background:#181818;color:#eee;font:14px var(--font-sans);flex:none}
+ .mobile-layout .mobile-editor-resume[hidden],.mobile-layout .config-open .mobile-editor-back{display:none}
+ .mobile-layout .cortex-ide-pane,.mobile-layout #fmConfigPanel{flex:1;min-height:0;height:auto}.mobile-layout .ide-toolbar-actions{gap:8px}.mobile-layout .ide-toolbar-actions .wire-action-btn{font-size:12px;min-height:40px}
+
+ /* Console and model controls flow vertically; no miniature desktop columns. */
+ .mobile-layout .terminal-controls-left,.mobile-layout .terminal-controls-right{display:flex;flex-wrap:wrap;gap:12px;width:100%}.mobile-layout .terminal-controls-left>label{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px}
+ .mobile-layout .wire-select{height:44px;font-size:13px}.mobile-layout .terminal-controls-right button,.mobile-layout .terminal-service-actions button{min-height:44px;font-size:12px}
+ .mobile-layout .terminal-service-actions{display:flex;flex-wrap:wrap;gap:8px}.mobile-layout .neural-log-terminal{font-size:12px;line-height:1.85;min-height:400px;overflow:auto}.mobile-layout .terminal-service-bar{padding:16px;gap:14px}
+ .mobile-layout .entity-stage{min-height:0;height:auto;padding:76px 16px 24px;display:flex;flex-direction:column;gap:24px}
+ .mobile-layout .entity-stage canvas{position:relative;inset:auto;width:100%;height:360px;flex:none}.mobile-layout .entity-topline{top:16px;inset-inline:16px}.mobile-layout .entity-tabs{flex-wrap:nowrap;overflow:auto;max-width:100%;padding-bottom:8px}.mobile-layout .entity-tabs button{min-height:40px;white-space:nowrap;flex:none;font-size:11px}
+ .mobile-layout .entity-flight,.mobile-layout .entity-telemetry{position:relative;inset:auto;width:100%;box-sizing:border-box;padding:20px;font-size:12px}
+ .mobile-layout .entity-caption,.mobile-layout .entity-controls{position:relative;inset:auto;max-width:none}.mobile-layout .entity-caption{order:1;margin-bottom:0}.mobile-layout .entity-controls{order:2}.mobile-layout .entity-flight{order:3}.mobile-layout .entity-telemetry{order:4}
+ .mobile-layout .entity-caption>span{font-size:13px;line-height:1.8}.mobile-layout .entity-controls button,.mobile-layout .entity-zoom button{min-height:44px;min-width:44px}.mobile-layout .entity-flight dl{gap:12px}.mobile-layout .entity-telemetry label{font-size:11px}
+ .preset-dialog input,.preset-dialog select,.preset-dialog button{font-size:14px;min-height:42px}.preset-dialog fieldset{padding:18px}.preset-field-grid{grid-template-columns:minmax(0,1fr)}
+ .preset-dialog .preset-kind-tabs strong{font-size:15px}.preset-dialog .preset-workspace nav[data-list]{max-height:150px}.preset-dialog .preset-workspace nav[data-list] button{padding:13px;font-size:14px}
+}
+
+.desktop-toolbar-label{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.settings-dialog [data-close]{display:grid;place-items:center;line-height:1}
+.settings-dialog [data-close] svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+@media(max-width:700px),(max-width:950px) and (max-height:500px) and (pointer:coarse){
+ .mobile-dock .mobile-nav-face{font-size:9px;letter-spacing:.015em;line-height:1.2;gap:6px;width:100%;text-align:center}
+ .mobile-layout .topbar-RichToggles button{display:grid;place-items:center;line-height:1;gap:0}
+ .mobile-layout .topbar-RichToggles .desktop-toolbar-label{display:none}
+ .mobile-layout .mobile-toolbar-face{display:grid;place-items:center;width:100%;height:100%;line-height:1}
+ .mobile-layout :is(.chat-attach,.chat-header>button,.chat-sidebar>header button,.entity-zoom button,.entity-controls button,.mode-switch-btn,.explorer-icon-btn,.modal-close-btn){display:inline-flex;align-items:center;justify-content:center;gap:6px;line-height:1;margin-block:0}
+ .mobile-layout :is(.chat-attach,.chat-header>button,.chat-sidebar>header button,.mobile-editor-back,.mode-switch-btn,.explorer-icon-btn) svg{display:block;flex:none;vertical-align:middle;margin:0}
+ .mobile-layout :is(.chat-attach,.chat-header>button,.chat-sidebar>header button)>svg{width:20px;height:20px}
+ .settings-dialog :is([data-close],[data-settings-back]){display:grid;place-items:center;line-height:1;gap:0}
+ .settings-dialog:not(.settings-detail) [data-settings-back]{display:none}
+ .settings-dialog :is([data-close],[data-settings-back]) svg{display:block;margin:0;flex:none}
+ .settings-dialog h2{font-size:20px;line-height:1.3;overflow-wrap:anywhere}.settings-dialog .settings-layout>nav button strong{font-size:14px}
+}

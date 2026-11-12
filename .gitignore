@@ -1,0 +1,55 @@
+# Local-only development and validation
+node_modules/
+.git/
+.review/
+tests/
+validation/
+backups/
+test-results/
+playwright-report/
+__pycache__/
+*.log
+*.tmp
+*.bak*
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+.corenyan-trash/
+
+logs/
+
+# Native build outputs and private signing material stay local.
+.build/
+.signing/
+release/
+frontend/windows/node_modules/
+frontend/android/.gradle/
+frontend/android/local.properties
+**/*.jks
+**/*.keystore
+**/*.p12
+**/*-password.txt
+
+# Private persistent login sessions
+*.sessions.json
+*.sessions.json.tmp
+
+# Notification SMTP secrets are private server state.
+notifications.json
+notifications.key
+
+# Private account sound state
+sound-settings.json
+sounds/
+
+# Private backend settings and user content never belong in source publication.
+backend/config/*.json
+!backend/config/*.example.json
+backend/data/
+credentials*.json
+*.sessions.json
+*.sqlite*
+*.db*
+.corenyan-private/

@@ -1,0 +1,52 @@
+services:
+  matrix-api:
+    image: ${MATRIX_RUNTIME_IMAGE:-corenyan-web:cloud}
+    container_name: corenyan-matrix-api
+    restart: unless-stopped
+    working_dir: /opt/corenyan/corenyan-matrix
+    command: ["node", "backend/server.js"]
+    environment:
+      MATRIX_SECURITY_DIR: /run/corenyan-web-security
+      MATRIX_API_HOST: 0.0.0.0
+      MATRIX_API_PORT: 26000
+    volumes:
+      - /opt/corenyan:/opt/corenyan
+      - /opt/onebot-data:/opt/onebot-data
+      - /etc/corenyan-web:/run/corenyan-web-security
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: [core]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:26000/healthz',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  matrix-frontend:
+    image: ${MATRIX_RUNTIME_IMAGE:-corenyan-web:cloud}
+    container_name: corenyan-matrix
+    restart: unless-stopped
+    working_dir: /opt/corenyan/corenyan-matrix
+    command: ["node", "frontend/server.mjs"]
+    environment:
+      MATRIX_TLS_DIR: /run/matrix-tls
+      MATRIX_API_URL: http://corenyan-matrix-api:26000
+      MATRIX_PORT: 25999
+    ports: ["0.0.0.0:25999:25999"]
+    volumes:
+      - /opt/corenyan/corenyan-matrix/frontend:/opt/corenyan/corenyan-matrix/frontend:ro
+      - /opt/corenyan/corenyan-matrix/contracts:/opt/corenyan/corenyan-matrix/contracts:ro
+      - /opt/corenyan/corenyan-matrix/package.json:/opt/corenyan/corenyan-matrix/package.json:ro
+      - /etc/corenyan-web/server.key:/run/matrix-tls/server.key:ro
+      - /etc/corenyan-web/server.crt:/run/matrix-tls/server.crt:ro
+    networks: [core]
+    depends_on:
+      matrix-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('https').get({hostname:'127.0.0.1',port:25999,path:'/healthz',checkServerIdentity:(_,cert)=>require('tls').checkServerIdentity('123.56.150.177',cert)},r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+networks:
+  core:
+    external: true
+    name: corenyan_corenyan-net
