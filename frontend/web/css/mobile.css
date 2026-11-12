@@ -67,7 +67,7 @@
  body.mobile-layout.chat-active{box-sizing:border-box;padding-bottom:var(--phone-dock)}
  .mobile-layout.chat-active .editorial-viewport{padding:0;min-height:0}.mobile-layout .chat-header{padding:14px 16px;min-height:60px}.mobile-layout .chat-header h2{font-size:17px}.mobile-layout .chat-header small{display:none}
  .mobile-layout .chat-messages{padding:20px 14px 12px}.mobile-layout .chat-message{gap:10px;margin-bottom:28px}.mobile-layout .chat-avatar{width:30px;height:30px}.mobile-layout .chat-message-content{max-width:calc(100% - 40px)}
- .mobile-layout .chat-message .chat-markdown{font-size:15px;line-height:1.85;padding:12px 14px}.mobile-layout .chat-bottom{padding:0 12px 12px}.mobile-layout .chat-composer textarea{font-size:16px;min-height:58px;padding:14px}
+ .mobile-layout .chat-message .chat-markdown{padding:14px 16px}.mobile-layout .chat-bottom{padding:0 12px 12px}.mobile-layout .chat-composer textarea{font-size:16px;min-height:58px;padding:14px}
  .mobile-layout .chat-composer button{min-height:42px}.mobile-layout .chat-sidebar>header button,.mobile-layout .chat-header button{min-height:42px;min-width:42px}
  .mobile-layout .chat-thread{padding:14px 12px}.mobile-layout .chat-thread strong{font-size:14px}.mobile-layout .chat-thread span{font-size:12px}.mobile-layout .chat-toast{bottom:calc(var(--phone-dock) + 12px)}
 

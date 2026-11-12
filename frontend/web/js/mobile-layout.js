@@ -25,7 +25,8 @@ export function mountMobileLayout(registry){
  }
  registry.subscribe(['mobile','fm.module','fm.scopes','fm.activeFile'],render);
  registry.subscribe(['fm.activeFile.path'],()=>{state.mobile.editorOpen=!!state.fm.activeFile;if(state.fm.activeFile&&compact.matches){requestAnimationFrame(()=>{editor.scrollIntoView({block:'start',behavior:'smooth'});window.dispatchEvent(new Event('resize'));});}render();});
- registry.subscribe(['fm.currentScope'],()=>{state.mobile.workspaceOpen=false;state.mobile.editorOpen=false;});
+ // Workspace disclosure follows the user's toggle, independently of the selected scope.
+ registry.subscribe(['fm.currentScope'],()=>{state.mobile.editorOpen=false;});
  registry.subscribe(['mobile.editorOpen'],()=>{if(state.mobile.editorOpen){reveal(editor);window.dispatchEvent(new Event('resize'));}});
  function layout(){
   document.body.classList.toggle('mobile-layout',compact.matches);

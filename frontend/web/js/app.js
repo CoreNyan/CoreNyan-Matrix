@@ -1,3 +1,4 @@
+import {mountApiRecords} from './api-records.js';
 import {platformClipboard,copyImage,notifyReply,notificationPermission} from './platform.js';
 const editorShortcutLabel=id=>binding('files.'+id).replace('Mod',/Mac/.test(navigator.platform)?'⌘':'Ctrl');
 import {shortcut,editorKeys,onPreferences,binding} from './preferences.js';
@@ -2213,6 +2214,7 @@ import { entityPreview } from './entity-models.js';
     return state.lastVitalsPayload?.organs?.find(o=>o.id===id);
   }
   function renderLogControls(){
+    $('btnBrainRequests').hidden=!['corenyan-brain',SERVICE_CONTROL.brainFile].includes(state.logs.organ);
     const layer=currentLogLayer(),busy=Boolean(state.busyOrgan),controllable=layer?.kind==='container';
     $('btnLogPower').textContent=layer?.online?'关闭 ■':'启动 ▷';
     $('btnLogPower').disabled=!controllable||busy;
@@ -2233,6 +2235,7 @@ import { entityPreview } from './entity-models.js';
   }
 
   function initNeuralTerminal() {
+    mountApiRecords({button:$('btnBrainRequests'),apiFetch});
     terminalView=createTerminalView($('neuralLogTerminal'),{onDeferred:paused=>{
       $('logSelectionStatus').textContent=paused?'选区已保留 · 取消选择后显示最新日志':'';
     }});

@@ -1,3 +1,4 @@
+import {createApiRecords} from './scripts/api-records.mjs';
 import {createSounds} from './scripts/sounds.mjs';
 import './scripts/runtime-log.mjs';
 import {createAccountStore} from './scripts/account-store.mjs';
@@ -50,6 +51,7 @@ function resolveRoot(configuredPath, fallbackRel) {
 }
 
 const BRAIN_ROOT = resolveRoot(config.paths?.brainRoot, '../../corenyan-brain');
+const apiRecords=createApiRecords(path.join(BRAIN_ROOT,'data/api-records'));
 const GATEWAY_ROOT = resolveRoot(config.paths?.gatewayRoot, '../../corenyan-gateway');
 const WEB_ROOT = path.resolve(__dirname,'..');
 const REDIS_ROOT = resolveRoot(config.paths?.redisRoot, '../../Redis');
@@ -568,6 +570,13 @@ const server = http.createServer(async (req, res) => {
     }
 
     // 4. Neural Pulse Logs API (Preserves ANSI color codes for frontend renderer)
+    if(pathname==='/api/brain/requests'||pathname.startsWith('/api/brain/requests/')){
+      if(req.auth?.role!=='owner')return sendJson(res,403,{ok:false,error:'完整调用记录仅主管理员可查看'});
+      if(req.method!=='GET')return sendJson(res,405,{ok:false,error:'METHOD_NOT_ALLOWED'});
+      res.setHeader('Cache-Control','no-store');
+      if(pathname==='/api/brain/requests')return sendJson(res,200,{ok:true,...await apiRecords.list({q:url.searchParams.get('q')||'',kind:url.searchParams.get('kind')||'',before:url.searchParams.get('before')||Infinity})});
+      try{return sendJson(res,200,{ok:true,record:await apiRecords.read(pathname.split('/').at(-1))});}catch{return sendJson(res,404,{ok:false,error:'记录不存在或已过保留期'});}
+    }
     if(pathname==='/api/onebot/login'&&req.method==='GET')return sendJson(res,200,{ok:true,...await readOnebotLogin(path.join(ONEBOT_ROOT,'data/qq-login-state.json'))});
     if (pathname === '/api/logs' && req.method === 'GET') {
       const organId = url.searchParams.get('organ') || 'corenyan-brain';
