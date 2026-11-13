@@ -13,7 +13,7 @@ export async function downloadChatFile(file,url){
 export function createChatFileCard(file,{url,open,onError}){
  const card=el('div','chat-file'),isImage=file.mime?.startsWith('image/'),isDocument=documentPreview(file);
  if(isImage||isDocument){
-  const button=el('button',isDocument?'chat-document-open':'chat-image-open'),img=el('img'),note=el('span','chat-document-state',C.loading),source=isDocument?url+'/preview':url;
+  const button=el('button',isDocument?'chat-document-open':'chat-image-open'),img=el('img'),note=el('span','chat-document-state',C.loading),source=isDocument?url+'/preview?page=1':url;
   button.type='button';button.setAttribute('aria-label',(isDocument?C.previewLabel:'预览图片')+' '+file.name);img.alt=file.name;img.loading='lazy';img.decoding='async';
   let ready=false;const load=()=>{ready=false;img.hidden=false;note.hidden=false;note.textContent=C.loading;img.src=source;};
   img.onload=()=>{ready=true;note.hidden=true;};img.onerror=()=>{ready=false;img.hidden=true;note.hidden=false;note.textContent=C.unavailable;};button.append(img);if(isDocument)button.append(note);button.onclick=()=>ready?open(file,source):load();load();card.append(button);

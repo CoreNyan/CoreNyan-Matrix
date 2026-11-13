@@ -49,7 +49,13 @@ export function mountChat(host,registry){
   if(!state.chat.threads.length)nav.append(el('p','chat-empty',state.chat.query?'没有匹配的聊天记录':'从一个新对话开始。'));
  }
  const fileUrl=(f,download=false)=>C.api+threadUrl(f.thread||state.chat.threadId)+'/files/'+encodeURIComponent(f.id)+(download?'?download=1':'');
- function preview(f,source=fileUrl(f)){const d=el('dialog','chat-dialog chat-preview'),close=el('button','chat-preview-close','×'),img=el('img'),header=el('header','chat-preview-header'),stage=el('div','chat-preview-stage'),name=el('span','',f.name);close.setAttribute('aria-label','关闭预览');img.src=source;img.alt=f.name;name.title=f.name;header.append(name,close);stage.append(img);d.append(header,stage);document.body.append(d);let closing=false;const done=async()=>{if(closing)return;closing=true;await closeDialog(d);d.remove();};close.onclick=done;d.addEventListener('cancel',e=>{e.preventDefault();void done();});showDialog(d);}
+ function preview(f,source=fileUrl(f)){
+  const isDocument=documentPreview(f),d=el('dialog','chat-dialog chat-preview'),close=el('button','chat-preview-close','×'),img=el('img'),header=el('header','chat-preview-header'),stage=el('div','chat-preview-stage'),name=el('span','',f.name),tools=el('div','chat-preview-tools');
+  close.setAttribute('aria-label','关闭预览');img.src=source;img.alt=f.name;name.title=f.name;
+  let page=Number(new URL(source,location.href).searchParams.get('page')||1),base=source.replace(/\?page=\d+.*$/,'').replace(/\/preview(?:\?.*)?$/,'/preview');
+  if(isDocument){const previous=el('button','','上一页'),next=el('button','','下一页'),label=el('span','','第 '+page+' 页');previous.type=next.type='button';previous.disabled=page<=1;previous.onclick=()=>{page=Math.max(1,page-1);label.textContent='第 '+page+' 页';previous.disabled=page<=1;img.src=base+'?page='+page;};next.onclick=()=>{page++;label.textContent='第 '+page+' 页';previous.disabled=false;img.src=base+'?page='+page;};tools.append(previous,label,next);}
+  const download=el('button','','下载');download.type='button';download.onclick=()=>void downloadChatFile(f,fileUrl(f)+'?download=1').catch(error=>status(error.message));tools.append(download);header.append(name,tools,close);stage.append(img);d.append(header,stage);document.body.append(d);let closing=false;const done=async()=>{if(closing)return;closing=true;await closeDialog(d);d.remove();};close.onclick=done;d.addEventListener('cancel',e=>{e.preventDefault();void done();});showDialog(d);
+ }
 
  function fileNode(f){return createChatFileCard(f,{url:fileUrl(f),open:preview,onError:status});}
  function messageButton(action,label=A[action]){const button=el('button','chat-message-action');button.type='button';button.title=label;button.setAttribute('aria-label',label);button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+A.icons[action]+'"/></svg>';return button;}
