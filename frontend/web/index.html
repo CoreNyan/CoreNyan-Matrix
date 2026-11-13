@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-terms-pending>
+<html lang="zh-CN" data-terms-pending data-terminal-boot data-terminal-app>
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -92,27 +92,27 @@
         <div class="overline-metrics">
             <div class="ov-metric">
                 <span class="ov-k">CPU LOAD</span>
-                <span class="ov-v" id="topCpuVal">--%</span>
+                <span class="ov-v" id="topCpuVal" data-vitals-content>--%</span>
             </div>
             <div class="ov-metric">
                 <span class="ov-k">RAM ALLOC</span>
-                <span class="ov-v" id="topMemVal">--%</span>
+                <span class="ov-v" id="topMemVal" data-vitals-content>--%</span>
             </div>
             <div class="ov-metric">
                 <span class="ov-k">DISK VOL</span>
-                <span class="ov-v" id="topDiskVal">--%</span>
+                <span class="ov-v" id="topDiskVal" data-vitals-content>--%</span>
             </div>
             <div class="ov-metric">
                 <span class="ov-k">{{chapter.neural.en}} IO</span>
-                <span class="ov-v" id="topNetVal">-- KB/S</span>
+                <span class="ov-v" id="topNetVal" data-vitals-content>-- KB/S</span>
             </div>
             <div class="ov-metric">
                 <span class="ov-k">AWAKE</span>
-                <span class="ov-v" id="topUptimeVal">--</span>
+                <span class="ov-v" id="topUptimeVal" data-vitals-content>--</span>
             </div>
             <div class="ov-metric">
                 <span class="ov-k">HEART</span>
-                <span class="ov-v" id="spineBpmValue">72 BPM</span>
+                <span class="ov-v" id="spineBpmValue" data-vitals-content>72 BPM</span>
             </div>
         </div>
     </div>
@@ -159,16 +159,16 @@
                             <span>RECENT THOUGHTS / 最近在想</span>
                             <div class="diary-actions"><span id="lastHeartbeatTag">HEARTBEAT // LIVE</span><button type="button" id="btnThoughts" aria-haspopup="dialog">展开 ↗</button></div>
                         </div>
-                        <div class="diary-stream" id="subconsciousLogList">
+                        <div class="diary-stream" id="subconsciousLogList" data-vitals-content>
                             <div class="diary-item"><span class="diary-dot"></span><span>等待{{concept.subconscious.zh}}活动信号...</span></div>
                         </div>
                     </div>
 
                     <div class="hero-bottom-bar">
                         <div class="mood-tag-cluster">
-                            <span class="meta-chip" id="vitalMoodText">{{health.mood.en}} // 80%</span>
-                            <span class="meta-chip" id="vitalActivityText">MODE // SURFING</span>
-                            <span class="meta-chip" id="vitalPuddingText">{{health.energy.en}} // 85%</span>
+                            <span class="meta-chip" id="vitalMoodText" data-vitals-content>{{health.mood.en}} // 80%</span>
+                            <span class="meta-chip" id="vitalActivityText" data-vitals-content>MODE // SURFING</span>
+                            <span class="meta-chip" id="vitalPuddingText" data-vitals-content>{{health.energy.en}} // 85%</span>
                         </div>
                         <button class="pill-action-inverted" type="button" id="btnHeroJumpCortex">
                             <span>EXPLORE {{chapter.memory.en}}</span>
@@ -201,19 +201,19 @@
                     <div class="loom-cognitive-matrix">
                         <div class="cog-cell">
                             <span class="cog-k">{{model.text.label}}</span>
-                            <span class="cog-v" id="modelCognitionVal">--</span>
+                            <span class="cog-v" id="modelCognitionVal" data-vitals-content>--</span>
                         </div>
                         <div class="cog-cell">
                             <span class="cog-k">{{model.vision.label}}</span>
-                            <span class="cog-v" id="modelVisionVal">--</span>
+                            <span class="cog-v" id="modelVisionVal" data-vitals-content>--</span>
                         </div>
                         <div class="cog-cell">
                             <span class="cog-k">{{model.painter.label}}</span>
-                            <span class="cog-v" id="modelPainterVal">--</span>
+                            <span class="cog-v" id="modelPainterVal" data-vitals-content>--</span>
                         </div>
                         <div class="cog-cell">
                             <span class="cog-k">{{chapter.memory.en}} {{concept.files.en}}</span>
-                            <span class="cog-v" id="statCountsSummary">-- MEM / -- SKILLS</span>
+                            <span class="cog-v" id="statCountsSummary" data-vitals-content>-- MEM / -- SKILLS</span>
                         </div>
                     </div>
 
@@ -242,7 +242,7 @@
                         {{health.status}}
                     </p>
 
-                    <div class="health-dials" id="healthDials" aria-label="{{character.name}}健康仪表盘"></div>
+                    <div class="health-dials" id="healthDials" data-vitals-content aria-label="{{character.name}}健康仪表盘"></div>
 
                     <div class="specs-mini-strip" id="vitalOrgansStrip">
                         <!-- Dynamic organ pills injected by JS -->
@@ -287,7 +287,7 @@
                             <span class="col-metrics">FAV / FAM</span>
                             <span class="col-sync">{{concept.dossier.en}}</span>
                         </div>
-                        <div class="bonds-list" id="bondsListContainer">
+                        <div class="bonds-list" id="bondsListContainer" data-vitals-content>
                             <!-- Injected by JS -->
                         </div>
                     </div>
@@ -297,7 +297,7 @@
                         <div class="ledger-block-header">
                             <span>02 // WORKS</span>
                         </div>
-                        <div class="artworks-gallery" id="artworksGalleryContainer">
+                        <div class="artworks-gallery" id="artworksGalleryContainer" data-vitals-content>
                             <!-- Injected by JS -->
                         </div>
                     </div>

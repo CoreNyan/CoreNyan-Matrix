@@ -1,5 +1,19 @@
-.terminal-shutter{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:transparent;overflow:hidden;z-index:2147483647;pointer-events:none;contain:strict;visibility:visible}
-.terminal-shutter::backdrop{background:transparent;pointer-events:none}
-.terminal-veil{position:absolute;inset:0;background:#090909}
-.terminal-shutter.is-closed{background:#090909}.terminal-shutter.is-closed>*{display:none}
-@media(prefers-reduced-motion:reduce){.terminal-shutter{display:none}}
+/* The page background stays continuous. Only surfaces and their contents move. */
+html{background:#090909}
+html[data-terminal-boot] body>:is(main,.editorial-topbar,.telemetry-overline-strip,.editorial-footer-ticker),
+html[data-terminal-phase=closed] body>:is(main,.editorial-topbar,.telemetry-overline-strip,.editorial-footer-ticker,dialog,.modal-backdrop,.lightbox-backdrop){opacity:0;pointer-events:none}
+html[data-terminal-phase=closing] body{pointer-events:none}
+html[data-terminal-phase]:not([data-terminal-phase=open]) .chapter-view.active{animation:none!important}
+.chapter-view[data-terminal-initial]{animation:none!important}
+html[data-terms-pending] .terminal-loading{visibility:visible}
+.terminal-loading{position:fixed;left:50%;top:46%;transform:translate(-50%,-50%);color:#aaa;font:12px/1.8 system-ui;letter-spacing:.12em;pointer-events:none;animation:terminal-wait-in 400ms ease both}
+.terminal-loading::after{content:'';display:block;height:1px;margin-top:14px;background:linear-gradient(90deg,transparent,#ddd,transparent);animation:terminal-wait-breathe 1.8s ease-in-out infinite alternate;transform-origin:center}
+@keyframes terminal-wait-in{from{opacity:0}to{opacity:1}}
+@keyframes terminal-wait-breathe{from{opacity:.25;transform:scaleX(.45)}to{opacity:.8;transform:scaleX(1)}}
+html[data-terminal-app] :is([data-vitals-content],#ecgCanvas){transition:opacity 560ms cubic-bezier(.22,.75,.25,1)}
+html[data-terminal-app]:not([data-vitals-ready]) [data-vitals-content],#ecgCanvas:not([data-signal-ready]){opacity:0}
+html[data-terminal-phase=closing] dialog[open]::backdrop{animation:terminal-backdrop-out 620ms ease both}
+html[data-terminal-phase=closed] dialog[open]::backdrop{opacity:0;animation:none}
+@keyframes terminal-backdrop-out{to{opacity:0}}
+@media(prefers-reduced-motion:reduce){.terminal-loading,.terminal-loading::after{animation:none}html[data-terminal-app] :is([data-vitals-content],#ecgCanvas){transition:none}}
+.motion-disabled [data-vitals-content],.motion-disabled #ecgCanvas{transition:none!important}

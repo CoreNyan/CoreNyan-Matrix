@@ -15,7 +15,7 @@ internal sealed class MatrixShell : Form {
     static readonly string Root=AppDomain.CurrentDomain.BaseDirectory;
     readonly JavaScriptSerializer json=new JavaScriptSerializer { MaxJsonLength=13000000 };
     WebView2 web=new WebView2();
-    bool rendererFailed,closingAnimation,closeReady;
+    bool rendererFailed,closingAnimation,closeReady,windowPresented;
     const int CloseFallbackMs=160,CloseScriptTimeoutMs=180,MaxCloseAnimationMs=900;
     readonly Panel titlebar=new Panel(),offline=new Panel(),viewport=new Panel();
     readonly NotifyIcon notification=new NotifyIcon();
@@ -63,6 +63,7 @@ internal sealed class MatrixShell : Form {
         certificate=CleanPem(File.ReadAllText(Path.Combine(Root,(string)config["certificate"])));
         Text="CoreNyan";Icon=new Icon(Path.Combine(Root,"icon.ico"));BackColor=Color.FromArgb(9,9,9);ForeColor=Color.White;
         FormBorderStyle=FormBorderStyle.None;MinimumSize=new Size(480,600);Size=new Size(1440,950);StartPosition=FormStartPosition.CenterScreen;
+        if(ClientAnimationsEnabled())Opacity=0;
         Padding=new Padding(5,0,5,5);Font=new Font("Microsoft YaHei UI",10);
         var layout=new TableLayoutPanel {Dock=DockStyle.Fill,ColumnCount=1,RowCount=2,Margin=Padding.Empty,Padding=Padding.Empty};
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,42));layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));Controls.Add(layout);
@@ -78,7 +79,20 @@ internal sealed class MatrixShell : Form {
         var label=new Label {Text="暂时连接不上小可",AutoSize=true,Font=new Font(Font.FontFamily,15,FontStyle.Bold)};
         offline.Controls.Add(label);offline.Controls.Add(retry);offline.Resize+=(s,e)=>{label.Location=new Point((offline.Width-label.Width)/2,offline.Height/2-50);retry.Location=new Point((offline.Width-retry.Width)/2,offline.Height/2+10);};viewport.Controls.Add(offline);offline.BringToFront();
         notification.Icon=Icon;notification.Text="CoreNyan";notification.Visible=true;notification.BalloonTipClicked+=(s,e)=>{Show();WindowState=FormWindowState.Normal;Activate();if(web.CoreWebView2!=null)web.CoreWebView2.Navigate(new Uri(endpoint,notificationRoute).AbsoluteUri);};
-        FormClosed+=(s,e)=>{notification.Dispose();web.Dispose();};Shown+=async(s,e)=>await Initialize();
+        FormClosed+=(s,e)=>{notification.Dispose();web.Dispose();};Shown+=async(s,e)=>{PresentFallback();await Initialize();};
+    }
+    async void PresentFallback(){await System.Threading.Tasks.Task.Delay(3000);PresentWindow();}
+    async void PresentWindow(){
+        if(windowPresented||closingAnimation||IsDisposed)return;windowPresented=true;
+        if(ClientAnimationsEnabled())await FadeWindow(1,380,true);else Opacity=1;
+    }
+    async System.Threading.Tasks.Task FadeWindow(double target,int duration,bool opening=false){
+        double start=Opacity;var elapsed=Stopwatch.StartNew();
+        while(!IsDisposed&&(!opening||!closingAnimation)){
+            double t=Math.Min(1,(double)elapsed.ElapsedMilliseconds/Math.Max(1,duration));
+            double eased=t*t*(3-2*t);Opacity=start+(target-start)*eased;
+            if(t>=1)break;await System.Threading.Tasks.Task.Delay(16);
+        }
     }
     void AddWindowButton(string text,Action action,bool close){var b=new CaptionButton {Text=text,Dock=DockStyle.Right,Width=48,FlatStyle=FlatStyle.Flat,BackColor=BackColor,ForeColor=ForeColor,HoverColor=close?Color.FromArgb(150,40,40):Color.FromArgb(38,38,38),Font=new Font("Segoe UI",15)};b.FlatAppearance.BorderSize=0;b.Click+=(s,e)=>action();titlebar.Controls.Add(b);b.BringToFront();}
     void Drag(object sender,MouseEventArgs e){if(e.Button==MouseButtons.Left){ReleaseCapture();SendMessage(Handle,0xA1,new IntPtr(2),IntPtr.Zero);}}
@@ -99,11 +113,13 @@ internal sealed class MatrixShell : Form {
                     int value;if(int.TryParse(await script,out value)&&value>=0){duration=Math.Min(value,MaxCloseAnimationMs);animated=true;}
                 }
             }
-            if(animated)await System.Threading.Tasks.Task.Delay(duration);
-            else if(ClientAnimationsEnabled()){
-                var elapsed=Stopwatch.StartNew();
-                while(elapsed.ElapsedMilliseconds<CloseFallbackMs&&!IsDisposed){Opacity=Math.Max(.02,1.0-(double)elapsed.ElapsedMilliseconds/CloseFallbackMs);await System.Threading.Tasks.Task.Delay(16);}
+            if(animated&&duration>0){
+                // The HWND, titlebar and page leave together, before a black frame remains.
+                int lead=duration/3;await System.Threading.Tasks.Task.Delay(lead);
+                if(ClientAnimationsEnabled())await FadeWindow(0,duration-lead);
+                else await System.Threading.Tasks.Task.Delay(duration-lead);
             }
+            else if(!animated&&ClientAnimationsEnabled())await FadeWindow(0,CloseFallbackMs);
         }catch{ /* A failed renderer must never trap the window open. */ }
         finally{closeReady=true;if(!IsDisposed)Close();}
     }
@@ -150,8 +166,8 @@ internal sealed class MatrixShell : Form {
             core.ServerCertificateErrorDetected+=(s,e)=>{e.Action=Trusted(e.RequestUri)&&CleanPem(e.ServerCertificate.ToPemEncoding())==certificate?CoreWebView2ServerCertificateErrorAction.AlwaysAllow:CoreWebView2ServerCertificateErrorAction.Cancel;};
             core.NavigationStarting+=(s,e)=>{offline.Visible=false;if(!Trusted(e.Uri)){e.Cancel=true;External(e.Uri);}};
             core.NewWindowRequested+=(s,e)=>{e.Handled=true;if(Trusted(e.Uri))core.Navigate(e.Uri);else External(e.Uri);};
-            core.NavigationCompleted+=(s,e)=>{if(!e.IsSuccess&&e.WebErrorStatus!=CoreWebView2WebErrorStatus.OperationCanceled){offline.Visible=true;offline.BringToFront();titlebar.BringToFront();}};
-            core.ProcessFailed+=(s,e)=>{rendererFailed=true;offline.Visible=true;offline.BringToFront();titlebar.BringToFront();};
+            core.NavigationCompleted+=(s,e)=>{if(!e.IsSuccess&&e.WebErrorStatus!=CoreWebView2WebErrorStatus.OperationCanceled){offline.Visible=true;offline.BringToFront();titlebar.BringToFront();PresentWindow();}};
+            core.ProcessFailed+=(s,e)=>{rendererFailed=true;offline.Visible=true;offline.BringToFront();titlebar.BringToFront();PresentWindow();};
             core.PermissionRequested+=(s,e)=>{e.State=Trusted(e.Uri)&&(e.PermissionKind==CoreWebView2PermissionKind.Notifications||e.PermissionKind==CoreWebView2PermissionKind.ClipboardRead&&e.IsUserInitiated)?CoreWebView2PermissionState.Allow:CoreWebView2PermissionState.Deny;};
             core.DownloadStarting+=(s,e)=>{if(!Trusted(e.DownloadOperation.Uri)&&!e.DownloadOperation.Uri.StartsWith("blob:"+endpoint.GetLeftPart(UriPartial.Authority)+"/")){e.Cancel=true;return;}using(var picker=new SaveFileDialog {Title="保存文件",FileName=Path.GetFileName(e.ResultFilePath)}){e.Handled=true;if(picker.ShowDialog(this)==DialogResult.OK)e.ResultFilePath=picker.FileName;else e.Cancel=true;}};
             core.WebMessageReceived+=MessageFromPage;
@@ -165,6 +181,7 @@ internal sealed class MatrixShell : Form {
         try {
             if(e.WebMessageAsJson.Length>12000000)throw new Exception("请求过大");var p=json.Deserialize<Dictionary<string,object>>(e.WebMessageAsJson);id=Convert.ToString(p["id"]);var action=Convert.ToString(p["action"]);object input;p.TryGetValue("value",out input);
             switch(action){
+                case "presentWindow":PresentWindow();value=true;break;
                 case "writeClipboard":Clipboard.SetText(Convert.ToString(input)??"");value=true;break;
                 case "readClipboard":value=Clipboard.ContainsText()?Clipboard.GetText():"";break;
                 case "writeImage":using(var stream=new MemoryStream(Convert.FromBase64String(Convert.ToString(input))))using(var image=Image.FromStream(stream)){if((long)image.Width*image.Height>32000000)throw new Exception("图片尺寸过大");using(var bitmap=new Bitmap(image))Clipboard.SetImage(bitmap);}value=true;break;

@@ -21,7 +21,7 @@ import {terminalBlockSegments,renderTerminalBlocks} from './terminal-blocks.js';
 import {mountLayerEditor} from './layer-editor.js';
 import {mountWorkspaceSearch} from './workspace-search.js';
 import { normalizeEditorText, isFileDirty, fileLineEnding, serializedFileContent } from './file-draft.js';
-import { createNavigation } from './navigation.js';
+import { createNavigation, readRoute } from './navigation.js';
 import { bondPage } from './bond-list.js';
 import { configureExplorer, moduleScopes, EXPLORER, isImageFile, isBinaryFile, scopeModule, configScope } from './explorer-model.js';
 import { termText, termHtml, termTextTemplate, termHtmlTemplate, applyStaticTerminology } from './terminology.js';
@@ -49,7 +49,7 @@ import { entityPreview } from './entity-models.js';
 
   // Single Source of Truth (SSOT) State
   const registry = new StateRegistry({
-    activeView: VIEW.VITALS,
+    activeView: readRoute(location.href).view,
     busyOrgan: null,
     entityLayer: 'corenyan-brain',
     motionEnabled: !matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -266,7 +266,12 @@ import { entityPreview } from './entity-models.js';
         btn.classList.toggle('active', active);
         btn.setAttribute('aria-current', active ? 'page' : 'false');
       });
-      document.querySelectorAll('.chapter-view').forEach(section => section.classList.toggle('active', section.id === `view-${state.activeView}`));
+      document.querySelectorAll('.chapter-view').forEach(section => {
+        const active=section.id === `view-${state.activeView}`;
+        section.classList.toggle('active',active);
+        if(!active)section.removeAttribute('data-terminal-initial');
+        else if(document.documentElement.dataset.terminalPhase!=='open')section.setAttribute('data-terminal-initial','');
+      });
       const meta = CHAPTER_META[state.activeView];
       $('stageHeaderChapter').textContent = meta.code;
       $('stageHeaderTitle').textContent = meta.title;
@@ -630,6 +635,7 @@ import { entityPreview } from './entity-models.js';
       }
 
       reconcileLedgerSelection();
+      document.documentElement.setAttribute('data-vitals-ready','');
   }
 
   function renderSubconsciousDiary(logs) { recentThoughtsView?.update(logs); }
@@ -2404,10 +2410,16 @@ import { entityPreview } from './entity-models.js';
         event.preventDefault();workspaceSearch.open();
       }
     });
-    await loadFileScopes(false);
-
-    await pollVitals();
-    await navigation.start();
+    // Start the actual route immediately; unrelated file scopes must not delay VITALS.
+    const firstVitals=pollVitals(),route=readRoute(location.href);
+    await Promise.allSettled([
+      firstVitals,
+      route.image||route.bond?firstVitals.then(()=>navigation.start()):navigation.start(),
+      route.view===VIEW.MEMORY?Promise.resolve():loadFileScopes(false)
+    ]);
+    registry.flush();
+    document.documentElement.setAttribute('data-app-ready','');
+    window.dispatchEvent(new Event('matrix-app-ready'));
 
     // Non-blocking periodic background telemetry
     setInterval(() => {

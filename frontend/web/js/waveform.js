@@ -112,7 +112,9 @@ export function mountWaveform(canvas, registry) {
   let history = null;
   let width = 0, height = 0, last = 0, frame = 0, dirty = true;
   const budget=createFrameBudget(RENDER_BUDGET.waveFps);
-  const visible = () => visualActive() && registry.state.activeView === VIEW.VITALS;
+  // Prepare one real frame even before the native window has gained focus.
+  // Continuing animation still obeys the normal foreground rendering budget.
+  const visible = () => !document.hidden && registry.state.activeView === VIEW.VITALS && (visualActive() || dirty || !history);
   const draw = time => {
     frame = 0;
     if (!visible()) { last = 0; return; }
@@ -152,11 +154,13 @@ export function mountWaveform(canvas, registry) {
       ctx.arc(head, height * trace.baseline - history.get(history.count - 1, trace.channel), trace.width * 1.5, 0, Math.PI * 2);
       ctx.fill();
     }
-    if (registry.state.motionEnabled) frame = budget.request(draw);
+    canvas.setAttribute('data-signal-ready','');
+    if (registry.state.motionEnabled && visualActive()) frame = budget.request(draw);
   };
   const wake = () => {
     if (!visible()) { budget.cancel(frame); frame = 0; last = 0; return; }
-    if (!frame) frame = budget.request(draw);
+    if (!history && registry.state.lastVitalsPayload) { budget.cancel(frame); draw(performance.now()); }
+    else if (!frame) frame = budget.request(draw);
   };
   const observer = new ResizeObserver(() => { dirty = true; wake(); });
   observer.observe(canvas);
