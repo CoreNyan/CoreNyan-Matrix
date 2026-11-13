@@ -1,9 +1,10 @@
 import {PRESET_EDITOR} from './constants.js';
 // Pointer capture stays on the list while rows move, including touch drags.
-export function mountPresetOrder(list,{canStart,commit,cancel}){
+export function mountPresetOrder(list,{canStart,commit,cancel,rowSelector='[data-backup]',handleSelector='[data-backup-drag]',key='backup'}){
+ const controller=new AbortController(),listen=(target,event,fn,options={})=>target.addEventListener(event,fn,{...options,signal:controller.signal});
  let drag=null,frame;
- const rows=()=>[...list.querySelectorAll('[data-backup]')];
- function finish(save){if(!drag)return;const g=drag;drag=null;cancelAnimationFrame(frame);g.row.classList.remove('preset-dragging');list.classList.remove('preset-reordering');if(list.hasPointerCapture(g.id))list.releasePointerCapture(g.id);if(save)commit(rows().map(r=>r.dataset.backup));else cancel();}
+ const rows=()=>[...list.querySelectorAll(rowSelector)];
+ function finish(save){if(!drag)return;const g=drag;drag=null;cancelAnimationFrame(frame);g.row.classList.remove('preset-dragging');list.classList.remove('preset-reordering');if(list.hasPointerCapture(g.id))list.releasePointerCapture(g.id);if(save)commit(rows().map(r=>r.dataset[key]));else cancel();}
  function update(){
   if(!drag)return;const g=drag;if(!g.row.isConnected||!canStart()){finish(false);return;}
   const viewport=g.scroll.getBoundingClientRect(),limit=PRESET_EDITOR.reorder;
@@ -12,10 +13,10 @@ export function mountPresetOrder(list,{canStart,commit,cancel}){
   if(g.row.nextElementSibling!==before&&(before||g.row!==list.lastElementChild))list.insertBefore(g.row,before||null);
   frame=requestAnimationFrame(update);
  }
- list.addEventListener('pointerdown',e=>{const handle=e.target.closest('[data-backup-drag]');if(!handle||e.button!==0||!canStart()||rows().length<2)return;e.preventDefault();finish(false);const row=handle.closest('[data-backup]');drag={id:e.pointerId,row,y:e.clientY,scroll:list.closest('.preset-route')||list};row.classList.add('preset-dragging');list.classList.add('preset-reordering');list.setPointerCapture(e.pointerId);frame=requestAnimationFrame(update);});
- list.addEventListener('pointermove',e=>{if(drag?.id===e.pointerId){drag.y=e.clientY;e.preventDefault();}});
- list.addEventListener('pointerup',e=>{if(drag?.id===e.pointerId)finish(true);});
- list.addEventListener('pointercancel',()=>finish(false));list.addEventListener('lostpointercapture',()=>finish(false));
- window.addEventListener('blur',()=>finish(false));document.addEventListener('keydown',e=>{if(drag&&e.key==='Escape'){e.preventDefault();e.stopPropagation();finish(false);}},true);
- return {cancel:()=>finish(false)};
+ listen(list,'pointerdown',e=>{const handle=e.target.closest(handleSelector);if(!handle||e.button!==0||!canStart()||rows().length<2)return;e.preventDefault();finish(false);const row=handle.closest(rowSelector);drag={id:e.pointerId,row,y:e.clientY,scroll:list.closest('.preset-route,[data-form-panel]')||list};row.classList.add('preset-dragging');list.classList.add('preset-reordering');list.setPointerCapture(e.pointerId);frame=requestAnimationFrame(update);});
+ listen(list,'pointermove',e=>{if(drag?.id===e.pointerId){drag.y=e.clientY;e.preventDefault();}});
+ listen(list,'pointerup',e=>{if(drag?.id===e.pointerId)finish(true);});
+ listen(list,'pointercancel',()=>finish(false));listen(list,'lostpointercapture',()=>finish(false));
+ listen(window,'blur',()=>finish(false));listen(document,'keydown',e=>{if(drag&&e.key==='Escape'){e.preventDefault();e.stopPropagation();finish(false);}},{capture:true});
+ return {cancel:()=>finish(false),destroy:()=>{finish(false);controller.abort();}};
 }

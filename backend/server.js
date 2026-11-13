@@ -1,3 +1,4 @@
+import {discoverPresetModels} from './scripts/preset-model-discovery.mjs';
 import {createApiRecords} from './scripts/api-records.mjs';
 import {createSounds} from './scripts/sounds.mjs';
 import './scripts/runtime-log.mjs';
@@ -454,9 +455,10 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
-    if (pathname === '/api/model-presets' || pathname === '/api/model-presets/bindings' || pathname === '/api/model-presets/clone' || pathname === '/api/model-presets/rename') {
+    if (pathname === '/api/model-presets' || pathname === '/api/model-presets/bindings' || pathname === '/api/model-presets/clone' || pathname === '/api/model-presets/rename' || pathname === '/api/model-presets/models') {
       try {
         if(req.method!=='GET'&&req.headers.origin&&!trustedRequestOrigin(req)) return sendJson(res,403,{ok:false,error:'请从当前管理页面操作'});
+        if(pathname==='/api/model-presets/models'&&req.method==='POST')return sendJson(res,200,{ok:true,...await discoverPresetModels(await readJsonBody(req),presetStore)});
         if(pathname==='/api/model-presets'&&req.method==='GET')return sendJson(res,200,{ok:true,...presetStore.catalog()});
         if(pathname==='/api/model-presets'&&req.method==='POST')return sendJson(res,200,{ok:true,preset:presetStore.save(await readJsonBody(req))});
         if(pathname==='/api/model-presets/rename'&&req.method==='POST')return sendJson(res,200,{ok:true,...presetStore.rename(await readJsonBody(req))});

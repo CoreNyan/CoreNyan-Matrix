@@ -1,3 +1,4 @@
+import {mountModelList,readModelIds,writeModelIds,validateModelIds} from './preset-model-list.js';
 import {mountPresetOrder} from './preset-order.js';
 import {decorateSettings} from './ui-icons.js';
 import {createAutosave} from './preset-autosave.js';
@@ -16,7 +17,7 @@ function writePath(object,path,value){
 function documentOf(item,kind){
  const settings={...(item?.settings||MODEL_PRESETS.defaults[kind]),api_key:null};
  delete settings.fallback_preset;delete settings.fallback_presets;
- settings.fallback_models=[...new Set([...(settings.fallback_models||[]),settings.fallback_model].filter(m=>m&&m!==settings.model))];delete settings.fallback_model;
+ writeModelIds(settings,readModelIds(settings));
  return {version:PRESET_EDITOR.version,kind,name:item?.name||'',settings};
 }
 const fingerprint=draft=>{try{return JSON.stringify([draft.id,JSON.parse(draft.raw)]);}catch{return JSON.stringify([draft.id,draft.raw]);}};
@@ -41,10 +42,10 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  const q=selector=>dialog.querySelector(selector),drafts=new Map();
  const registry=new StateRegistry({catalog:null,kind:'text',draft:null,mode:'form',primary:'',backups:[],busy:false,error:'',notice:'',screen:'editor',saveState:'saved'});
  const state=registry.state;
- let confirmation=null,renameSource=null,editor;
+ let confirmation=null,renameSource=null,editor,modelList,connectionRevision=0;
  const isDirty=d=>d&&fingerprint(d)!==d.original;
  function nextId(){let i=1;while(state.catalog?.items.some(p=>p.id===state.kind+'/'+PRESET_EDITOR.newFilePrefix+'-'+i))i++;return state.kind+'/'+PRESET_EDITOR.newFilePrefix+'-'+i;}
- function validateDraft(d){const doc=parseDraft(d);const missing=PRESET_EDITOR.requiredFields.filter(([key])=>!String(key==='id'?d.id:readPath(doc,key)||'').trim());if(missing.length){const error=Error('请填写'+missing.map(([,label])=>label).join('、')+'，草稿已保留。');error.field=missing[0][0];throw error;}return doc;}
+ function validateDraft(d){const doc=parseDraft(d);const missing=PRESET_EDITOR.requiredFields.filter(([key])=>!String(key==='id'?d.id:readPath(doc,key)||'').trim());if(missing.length){const error=Error('请填写'+missing.map(([,label])=>label).join('、')+'，草稿已保留。');error.field=missing[0][0];throw error;}try{validateModelIds(doc.settings);}catch(error){error.field='settings.model';throw error;}writeModelIds(doc.settings,readModelIds(doc.settings).map(id=>id.trim()));return doc;}
  const dirtyDrafts=()=>[...drafts.values()].filter(isDirty);
  const routeDirty=()=>state.catalog&&(state.primary!==state.catalog.bindings[state.kind]||JSON.stringify(state.backups)!==JSON.stringify(state.catalog.fallbacks?.[state.kind]||[]));
  const dirty=()=>dirtyDrafts().length>0||routeDirty();
@@ -53,6 +54,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
   if(!doc||Array.isArray(doc)||typeof doc!=='object'||doc.version!==PRESET_EDITOR.version||doc.kind!==draft.kind||typeof doc.name!=='string'||!doc.settings||Array.isArray(doc.settings)||typeof doc.settings!=='object')throw Error('预设必须包含 version: 1、当前类型 kind、name 和 settings 对象。');
   if(Object.keys(doc).some(key=>!['version','kind','name','settings'].includes(key)))throw Error('预设顶层仅支持 version、kind、name、settings；文件路径使用上方输入框。');
   if('fallback_preset' in doc.settings||'fallback_presets' in doc.settings)throw Error('备用预设请在上方本类调用配置中设置，不属于单个预设 JSON。');
+  if(doc.settings.model!==undefined&&typeof doc.settings.model!=='string'||doc.settings.fallback_models!==undefined&&(!Array.isArray(doc.settings.fallback_models)||doc.settings.fallback_models.some(id=>typeof id!=='string')))throw Error('模型 ID 必须为文本，备用列表必须为文本数组。');
   if(doc.settings.retry!==undefined&&(!doc.settings.retry||Array.isArray(doc.settings.retry)||typeof doc.settings.retry!=='object'))throw Error('retry 必须是对象。');
   if(doc.settings.retry?.retries_by_error!==undefined&&(!doc.settings.retry.retries_by_error||Array.isArray(doc.settings.retry.retries_by_error)||typeof doc.settings.retry.retries_by_error!=='object'))throw Error('retries_by_error 必须是对象。');
   return doc;
@@ -65,8 +67,9 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  q('[data-close]').onclick=close;dialog.addEventListener('cancel',e=>{if(e.target!==dialog)return;e.preventDefault();close();});
  q('[data-cancel]').onclick=()=>{confirmation=null;renameSource=null;setPanelVisible(q('.preset-confirm'),false);};
  q('[data-confirm]').onclick=()=>{if(renameSource){void renamePreset();return;}const action=confirmation;confirmation=null;setPanelVisible(q('.preset-confirm'),false);action?.();};
- editor=createEditor('presetJsonEditor',value=>{if(state.draft){state.draft.raw=value;state.error='';state.notice='';autosave.schedule();}},()=>q('[data-form]').requestSubmit(),'presetCursorMeta');
+ editor=createEditor('presetJsonEditor',value=>{if(state.draft){connectionRevision++;state.draft.raw=value;state.error='';state.notice='';autosave.schedule();}},()=>q('[data-form]').requestSubmit(),'presetCursorMeta');
  function selectPreset(id){
+  connectionRevision++;
   const item=state.catalog?.items.find(p=>p.id===id&&p.kind===state.kind);
   const key=item?.id||'new:'+state.kind;
   let draft=drafts.get(key);
@@ -105,11 +108,13 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
   q('[data-field=id]').value=state.draft.id;
   let doc;try{doc=parseDraft();}catch{state.mode='json';return;}
   const fields=PRESET_EDITOR.fields.filter(f=>!f.kinds||f.kinds.includes(state.kind)||readPath(doc.settings,f.path)!==undefined);
+  modelList?.destroy();modelList=null;
   function field(f){
+   if(f.type==='model-list')return '<div class="wide preset-models" data-model-list></div>';
    const value=readPath(doc.settings,f.path);
    const attrs=' data-setting="'+f.path+'"'+(f.min!==undefined?' min="'+f.min+'"':'')+(f.max!==undefined?' max="'+f.max+'"':'')+(f.step?' step="'+f.step+'"':'');
    let control;
-   if(f.type==='model-list'){control='<textarea'+attrs+' rows="4" spellcheck="false" placeholder="备用模型 ID，每行一个">'+esc((value||[]).join('\n'))+'</textarea>';}else if(f.type==='select'||f.type==='boolean'){
+   if(f.type==='select'||f.type==='boolean'){
     const options=f.type==='boolean'?[['true','启用'],['false','关闭']]:f.options;
     control='<select'+attrs+'><option value="">使用默认</option>'+options.map(([v,label])=>'<option value="'+v+'"'+(String(value)===v?' selected':'')+'>'+label+'</option>').join('')+'</select>';
    }else control='<input type="'+f.type+'"'+attrs+' value="'+esc(value??'')+'" autocomplete="'+(f.type==='password'?'new-password':'off')+'"'+(f.required?' required':'')+'>';
@@ -118,6 +123,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
   q('[data-fields]').innerHTML='<fieldset><legend>预设信息</legend><label>名称<input data-field="name" maxlength="100" required value="'+esc(doc.name)+'"></label></fieldset>'+PRESET_EDITOR.groups.map(g=>{
    const selected=fields.filter(f=>f.group===g.id);return selected.length?'<fieldset><legend>'+g.label+'</legend><div class="preset-fields">'+selected.map(field).join('')+'</div></fieldset>':'';
   }).join('');
+  modelList=mountModelList(q('[data-model-list]'),{settings:doc.settings,change:ids=>mutate(doc=>writeModelIds(doc.settings,ids)),canStart:()=>!state.busy,loadModels:async()=>{const revision=connectionRevision,doc=parseDraft();const result=await api(MODEL_PRESETS.api+PRESET_EDITOR.discovery.path,{method:'POST',body:{id:state.draft.selected,base_url:doc.settings.base_url,api_key:doc.settings.api_key}});if(revision!==connectionRevision)throw Error('连接信息已修改，请重新获取模型列表。');return result;}});
   renderRetryRules();renderKeyNote();
  }
  function renderKeyNote(){const note=q('[data-key-note]');if(!note)return;try{const key=parseDraft().settings.api_key;note.textContent=key==null?'密钥不回显；保存时保留服务器现有值。':key===''?'保存时将清除密钥。':'保存时将替换密钥。';}catch{}}
@@ -168,7 +174,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
    const id=button.dataset.preset;
    button.querySelector('small').textContent=id+(state.catalog.bindings[state.kind]===id?' · 主预设':'')+(isDirty(drafts.get(id))?' · 未保存':'');
   }
-  renderKeyNote();
+  modelList?.refreshControls();renderKeyNote();
  }
  registry.subscribe(['draft','mode','busy','error','notice','primary','backups','screen','saveState'],renderControls,false);
  async function refresh(preferred=state.draft?.selected){
@@ -203,12 +209,13 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  q('[data-fields]').addEventListener('input',e=>{
   if(e.target.dataset.field==='name')mutate(doc=>{doc.name=e.target.value;});
   else if(e.target.dataset.setting){
+   if(['base_url','api_key'].includes(e.target.dataset.setting)){connectionRevision++;modelList?.invalidateDiscovery();}
    const f=PRESET_EDITOR.fields.find(f=>f.path===e.target.dataset.setting),raw=e.target.value;
-   const value=f.type==='model-list'?raw.split(/\r?\n/).map(v=>v.trim()).filter(Boolean):f.type==='password'?raw:raw===''?undefined:f.type==='number'?Number(raw):f.type==='boolean'?raw==='true':raw;
+   const value=f.type==='password'?raw:raw===''?undefined:f.type==='number'?Number(raw):f.type==='boolean'?raw==='true':raw;
    mutate(doc=>writePath(doc.settings,f.path,value));
   }
  });
- q('[data-fields]').onclick=e=>{if(e.target.closest('[data-keep-key]')){mutate(doc=>{doc.settings.api_key=null;});q('[data-setting=api_key]').value='';}};
+ q('[data-fields]').onclick=e=>{if(e.target.closest('[data-keep-key]')){connectionRevision++;modelList?.invalidateDiscovery();mutate(doc=>{doc.settings.api_key=null;});q('[data-setting=api_key]').value='';}};
  q('[data-field=id]').oninput=e=>{state.draft.id=e.target.value;autosave.schedule();};
  q('[data-add-retry]').onclick=()=>{mutate(doc=>{const rules=doc.settings.retry??={};const entries=rules.retries_by_error??={};let key='error';while(Object.hasOwn(entries,key))key+='_';entries[key]=1;});renderRetryRules();};
  q('[data-retry-rules]').addEventListener('change',e=>{
@@ -243,7 +250,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
   }
   renderLibrary();updateSummary(state.catalog);void Promise.resolve(onApplied()).catch(()=>{});
  },{delay:PRESET_EDITOR.autosaveMs,onState:(value,error)=>{state.saveState=value;state.error=error?.message||'';}});
- q('[data-form]').onsubmit=e=>{e.preventDefault();try{validateDraft(state.draft);}catch(error){state.error=error.message;state.saveState='error';const selector=error.field==='id'?'[data-field=id]':error.field==='name'?'[data-field=name]':error.field?'[data-setting="'+error.field.replace('settings.','')+'"]':null;const input=selector&&q(selector);if(input&&!input.closest('[hidden]')){input.scrollIntoView({block:'center'});input.focus();}return;}void autosave.flush();};
+ q('[data-form]').onsubmit=e=>{e.preventDefault();try{validateDraft(state.draft);}catch(error){state.error=error.message;state.saveState='error';const selector=error.field==='id'?'[data-field=id]':error.field==='name'?'[data-field=name]':error.field==='settings.model'?'[data-model-id]':error.field?'[data-setting="'+error.field.replace('settings.','')+'"]':null;const input=selector&&q(selector);if(input&&!input.closest('[hidden]')){input.scrollIntoView({block:'center'});input.focus();}return;}void autosave.flush();};
  q('[data-rename-preset]').onclick=()=>guard(()=>{
   const item=state.catalog.items.find(p=>p.id===state.draft.selected);if(!item)return;
   ask('重命名源文件后，主预设和备用预设的引用会同步更新。',null);
