@@ -16,6 +16,7 @@ function writePath(object,path,value){
 function documentOf(item,kind){
  const settings={...(item?.settings||MODEL_PRESETS.defaults[kind]),api_key:null};
  delete settings.fallback_preset;delete settings.fallback_presets;
+ settings.fallback_models=[...new Set([...(settings.fallback_models||[]),settings.fallback_model].filter(m=>m&&m!==settings.model))];delete settings.fallback_model;
  return {version:PRESET_EDITOR.version,kind,name:item?.name||'',settings};
 }
 const fingerprint=draft=>{try{return JSON.stringify([draft.id,JSON.parse(draft.raw)]);}catch{return JSON.stringify([draft.id,draft.raw]);}};
@@ -108,7 +109,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
    const value=readPath(doc.settings,f.path);
    const attrs=' data-setting="'+f.path+'"'+(f.min!==undefined?' min="'+f.min+'"':'')+(f.max!==undefined?' max="'+f.max+'"':'')+(f.step?' step="'+f.step+'"':'');
    let control;
-   if(f.type==='select'||f.type==='boolean'){
+   if(f.type==='model-list'){control='<textarea'+attrs+' rows="4" spellcheck="false" placeholder="备用模型 ID，每行一个">'+esc((value||[]).join('\n'))+'</textarea>';}else if(f.type==='select'||f.type==='boolean'){
     const options=f.type==='boolean'?[['true','启用'],['false','关闭']]:f.options;
     control='<select'+attrs+'><option value="">使用默认</option>'+options.map(([v,label])=>'<option value="'+v+'"'+(String(value)===v?' selected':'')+'>'+label+'</option>').join('')+'</select>';
    }else control='<input type="'+f.type+'"'+attrs+' value="'+esc(value??'')+'" autocomplete="'+(f.type==='password'?'new-password':'off')+'"'+(f.required?' required':'')+'>';
@@ -203,7 +204,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
   if(e.target.dataset.field==='name')mutate(doc=>{doc.name=e.target.value;});
   else if(e.target.dataset.setting){
    const f=PRESET_EDITOR.fields.find(f=>f.path===e.target.dataset.setting),raw=e.target.value;
-   const value=f.type==='password'?raw:raw===''?undefined:f.type==='number'?Number(raw):f.type==='boolean'?raw==='true':raw;
+   const value=f.type==='model-list'?raw.split(/\r?\n/).map(v=>v.trim()).filter(Boolean):f.type==='password'?raw:raw===''?undefined:f.type==='number'?Number(raw):f.type==='boolean'?raw==='true':raw;
    mutate(doc=>writePath(doc.settings,f.path,value));
   }
  });

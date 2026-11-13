@@ -1,3 +1,4 @@
+import {mountDocumentPreview} from './document-preview.js';
 import {createChatFileCard,documentPreview,textPreview,downloadChatFile} from './chat-files.js';
 import {renderChatMarkdown} from './chat-markdown.js';
 import {emitSound} from './sound-runtime.js';
@@ -54,12 +55,13 @@ export function mountChat(host,registry){
   kind||=f.mime?.startsWith('image/')?'image':documentPreview(f)?'document':textPreview(f)?'text':/^(audio|video)\//.test(f.mime||'')?'media':'file';
   const isDocument=kind==='document',isText=kind==='text',isMedia=kind==='media',d=el('dialog','chat-dialog chat-preview'),close=el('button','chat-preview-close','×'),header=el('header','chat-preview-header'),stage=el('div','chat-preview-stage'+(isText?' is-text':'')),name=el('span','',f.name),tools=el('div','chat-preview-tools');
   close.setAttribute('aria-label','关闭预览');name.title=f.name;
-  let page=Number(new URL(source,location.href).searchParams.get('page')||1),base=source.replace(/\?page=\d+.*$/,'').replace(/\/preview(?:\?.*)?$/,'/preview');
-  if(kind==='image'||isDocument){const img=el('img');img.src=source;img.alt=f.name;if(isDocument){const previous=el('button','','上一页'),next=el('button','','下一页'),label=el('span','','第 '+page+' 页');previous.type=next.type='button';previous.disabled=page<=1;next.disabled=page>=200;previous.onclick=()=>{page=Math.max(1,page-1);label.textContent='第 '+page+' 页';previous.disabled=page<=1;next.disabled=false;img.src=base+'?page='+page;};next.onclick=()=>{page=Math.min(200,page+1);label.textContent='第 '+page+' 页';previous.disabled=false;next.disabled=page>=200;img.src=base+'?page='+page;};tools.append(previous,label,next);}stage.append(img);}
+  let dispose=()=>{};
+  if(isDocument){dispose=mountDocumentPreview({stage,tools,file:f,url:source});}
+  else if(kind==='image'){const img=el('img');img.src=source;img.alt=f.name;stage.append(img);}
   else if(isText){const pre=el('pre','chat-text-preview'),code=el('code'),message=el('p','chat-text-preview-state',F.textLoading);pre.append(code);stage.append(message,pre);void (async()=>{try{const headers=f.bytes?{Range:'bytes=0-'+(F.maxTextPreviewBytes-1)}:{},response=await fetch(source,{credentials:'same-origin',cache:'no-store',headers});if(response.status===401||response.status===403)throw Error(F.sessionExpired);if(!response.ok)throw Error(F.textUnavailable);const text=await response.text();if(!d.isConnected)return;code.textContent=text;message.textContent=f.bytes>F.maxTextPreviewBytes?F.textTruncated:'';message.hidden=!message.textContent;}catch(error){if(d.isConnected)message.textContent=error.message||F.textUnavailable;}})();}
   else if(isMedia){const media=el(f.mime.startsWith('video')?'video':'audio','chat-preview-media');media.src=source;media.controls=true;media.autoplay=false;media.preload='metadata';stage.append(media);}
   else{stage.append(el('p','chat-text-preview-state','此文件类型无法直接预览，请下载后打开。'));}
-  const download=el('button','','下载');download.type='button';download.onclick=()=>void downloadChatFile(f,fileUrl(f)+'?download=1').catch(error=>status(error.message));tools.append(download);header.append(name,tools,close);d.append(header,stage);document.body.append(d);let closing=false;const done=async()=>{if(closing)return;closing=true;await closeDialog(d);d.remove();};close.onclick=done;d.addEventListener('cancel',e=>{e.preventDefault();void done();});showDialog(d);
+  const download=el('button','','下载');download.type='button';download.onclick=()=>void downloadChatFile(f,fileUrl(f)+'?download=1').catch(error=>status(error.message));tools.append(download);header.append(name,tools,close);d.append(header,stage);document.body.append(d);let closing=false;const done=async()=>{if(closing)return;closing=true;dispose();await closeDialog(d);d.remove();};close.onclick=done;d.addEventListener('cancel',e=>{e.preventDefault();void done();});showDialog(d);
  }
 
  function fileNode(f){return createChatFileCard(f,{url:fileUrl(f),open:preview,onError:status});}
