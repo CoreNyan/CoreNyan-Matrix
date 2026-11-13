@@ -6,7 +6,7 @@ export function modelsEndpoint(value){
  let url;try{url=new URL(value);}catch{fail('请先填写有效的模型端点。');}
  if(!['http:','https:'].includes(url.protocol)||url.username||url.password)fail('模型端点只支持不含账号密码的 HTTP 或 HTTPS 地址。');
  url.hash='';url.search='';
- let pathname=url.pathname.replace(/\/+$/,'').replace(/\/(chat\/completions|completions|responses|images\/(generations|edits)|messages)$/i,'');
+ let pathname=url.pathname.replace(/\/+$/,'').replace(/\/(chat\/completions|completions|responses|images\/(generations|edits)|videos|messages)$/i,'');
  if(!pathname)pathname='/v1';
  url.pathname=pathname.endsWith('/models')?pathname:pathname+'/models';return url;
 }
