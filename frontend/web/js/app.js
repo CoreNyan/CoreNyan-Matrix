@@ -1,3 +1,4 @@
+import {mountRecentThoughts} from './recent-thoughts.js';
 import {renderLogSources} from './log-sources.js';
 import {mountExplorerSelection} from './explorer-selection.js';
 import {mountTextContextMenu} from './text-context-menu.js';
@@ -44,7 +45,7 @@ import { entityPreview } from './entity-models.js';
   'use strict';
   let inspectedKey = null;
   let inspectAnimation = null;
-  let terminalView;
+  let terminalView,recentThoughtsView;
 
   // Single Source of Truth (SSOT) State
   const registry = new StateRegistry({
@@ -552,7 +553,7 @@ import { entityPreview } from './entity-models.js';
         $('thoughtBubbleText').textContent = `“${latestText}”`;
       }
 
-      const nextDiaryHash = JSON.stringify(logs.slice(-TELEMETRY.diaryEntries));
+      const nextDiaryHash = JSON.stringify(logs);
       if (nextDiaryHash !== state.diaryHash) {
         state.diaryHash = nextDiaryHash;
         renderSubconsciousDiary(logs);
@@ -631,25 +632,7 @@ import { entityPreview } from './entity-models.js';
       reconcileLedgerSelection();
   }
 
-  function renderSubconsciousDiary(logs) {
-    const box = $('subconsciousLogList');
-    if (!box) return;
-    if (!Array.isArray(logs) || logs.length === 0) {
-      box.innerHTML = termHtmlTemplate`<div class="diary-item"><span class="diary-dot"></span><span>[AUTONOMIC] {{concept.subconscious.zh}}回路平稳运行中，等待新的环境刺激与群聊脉冲...</span></div>`;
-      return;
-    }
-    const recent = logs.slice(-TELEMETRY.diaryEntries).reverse();
-    box.innerHTML = recent.map((entry) => {
-      if (typeof entry === 'string') {
-        return `<div class="diary-item"><span class="diary-dot"></span><span>${escapeHtml(entry)}</span></div>`;
-      }
-      const timeStr = entry.at || entry.time
-        ? new Date(entry.at || entry.time).toLocaleTimeString(UI.locale, { hour12: false })
-        : 'LIVE';
-      const content = entry.text || entry.msg || entry.action || entry.thought || JSON.stringify(entry);
-      return `<div class="diary-item"><span class="diary-dot"></span><span><strong>[${escapeHtml(timeStr)}]</strong> ${escapeHtml(content)}</span></div>`;
-    }).join('');
-  }
+  function renderSubconsciousDiary(logs) { recentThoughtsView?.update(logs); }
 
   function renderMiniOrganStrip(organs) {
     const strip = $('vitalOrgansStrip');
@@ -2363,6 +2346,7 @@ import { entityPreview } from './entity-models.js';
     applyStaticTerminology();
     mountHealthDials($('healthDials'));
     initEditorialChrome();
+    recentThoughtsView=mountRecentThoughts({trigger:$('btnThoughts'),inline:$('subconsciousLogList')});
 
     initVitalsLedgerControls();
     initFileManagerAndIde();

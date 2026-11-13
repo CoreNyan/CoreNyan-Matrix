@@ -24,11 +24,11 @@ const fingerprint=draft=>{try{return JSON.stringify([draft.id,JSON.parse(draft.r
 export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},createEditor,syncEditor}={}){
  const host=document.getElementById('modelPresetSection'),dialog=document.createElement('dialog');
  dialog.id='modelPresetDialog';dialog.className='preset-dialog';dialog.setAttribute('aria-labelledby','presetTitle');
- dialog.innerHTML=`<header class="preset-header"><div><small>模型配置</small><h2 id="presetTitle">大模型预设</h2></div><div class="preset-header-actions"><span data-autosave role="status" aria-live="polite">已保存</span><button type="button" data-refresh hidden>读取云端版本</button><button type="button" data-close aria-label="关闭预设管理">×</button></div></header>
- <nav class="preset-kind-tabs" role="tablist" aria-label="模型类型">${MODEL_PRESETS.kinds.map((kind,i)=>`<button type="button" role="tab" id="presetTab-${kind}" aria-controls="presetKindPanel" data-kind="${kind}"><span>0${i+1}</span><strong>${MODEL_PRESETS.labels[kind]}</strong><small>${PRESET_EDITOR.descriptions[kind]}</small><b data-kind-count="${kind}">0</b></button>`).join('')}</nav>
+ dialog.innerHTML=`<header class="preset-header"><div><h2 id="presetTitle">大模型预设</h2></div><nav class="preset-kind-tabs" role="tablist" aria-label="模型类型">${MODEL_PRESETS.kinds.map((kind,i)=>`<button type="button" role="tab" id="presetTab-${kind}" aria-controls="presetKindPanel" data-kind="${kind}"><span>0${i+1}</span><strong>${MODEL_PRESETS.labels[kind]}</strong><small>${PRESET_EDITOR.descriptions[kind]}</small><b data-kind-count="${kind}">0</b></button>`).join('')}</nav><div class="preset-header-actions"><span data-autosave role="status" aria-live="polite">已保存</span><button type="button" data-refresh hidden>读取云端版本</button><button type="button" data-close aria-label="关闭预设管理">×</button></div></header>
+
  <section id="presetKindPanel" role="tabpanel" class="preset-kind-panel">
  <p data-status role="status" aria-live="polite"></p>
- <div class="preset-workspace"><aside><button type="button" data-routing>调用顺序 <span>↗</span></button><div class="preset-list-head"><strong data-library-title>预设库</strong><button type="button" data-new>＋ 新建</button></div><nav data-list aria-label="本类预设"></nav><button type="button" data-folder>在文件管理器中打开 ↗</button></aside>
+ <div class="preset-workspace"><aside><button type="button" data-routing>调用顺序 <span>↗</span></button><div class="preset-list-head"><strong data-library-title>预设库</strong><button type="button" data-new>新建</button></div><nav data-list aria-label="本类预设"></nav><button type="button" data-folder>在文件管理器中打开 ↗</button></aside>
  <section class="preset-route" hidden><header class="preset-route-heading"><small>预设轮换</small><h3>调用顺序</h3><p>失败时依次切换预设，一轮用尽后继续轮换，直到成功或达到次数与时间上限。</p></header><div class="preset-route-columns"><label><span data-primary-label>主预设</span><select data-primary aria-label="当前主预设"></select></label><fieldset class="preset-backup-fieldset"><legend>备用预设 · 按顺序尝试</legend><ol data-backups></ol><div class="preset-backup-add"><select data-backup-choice aria-label="添加备用预设"></select><button type="button" data-add-backup>＋ 添加备用</button></div></fieldset></div><div class="preset-route-footer"><p data-route-summary></p></div></section>
  <form data-form novalidate><header class="preset-editor-heading"><div><small data-file-label>预设文件</small><h3 data-editor-title>选择预设</h3></div><div class="preset-mode-tabs" role="tablist" aria-label="编辑模式"><button type="button" role="tab" data-mode="form" aria-controls="presetFormPanel">表单编辑</button><button type="button" role="tab" data-mode="json" aria-controls="presetJsonPanel">完整 JSON</button></div></header>
  <label class="preset-id-field">预设文件路径<input data-field="id" maxlength="320" placeholder="例如 text/local 或 text-primary" autocomplete="off"><small>支持子目录路径，例如 text/local；保存为 text/local.json。</small></label>
@@ -86,7 +86,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
    const button=document.createElement('button');button.type='button';button.dataset.preset=item.id;
    const name=document.createElement('strong'),detail=document.createElement('small'),draft=drafts.get(item.id);
    name.textContent=item.name;detail.textContent=item.id+(state.catalog.bindings[state.kind]===item.id?' · 主预设':'')+(isDirty(draft)?' · 未保存':'');
-   button.append(name,detail);button.classList.toggle('active',state.screen==='editor'&&state.draft?.selected===item.id);button.onclick=()=>{if(!state.busy)guard(()=>selectPreset(item.id));};return button;
+   button.title=item.name+' · '+item.id;button.append(name,detail);button.classList.toggle('active',state.screen==='editor'&&state.draft?.selected===item.id);button.onclick=()=>{if(!state.busy)guard(()=>selectPreset(item.id));};return button;
   }));
   if(!items.length){const empty=document.createElement('p');empty.textContent='本类暂无预设，点击新建。';q('[data-list]').append(empty);}
   for(const kind of MODEL_PRESETS.kinds){
@@ -151,7 +151,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
   if(!state.draft)return;
   const d=state.draft,item=state.catalog?.items.find(p=>p.id===d.selected);
   q('[data-status]').textContent=state.error||state.notice;q('[data-status]').classList.toggle('preset-error',Boolean(state.error));
-  q('[data-file-label]').textContent=(d.id||'新预设')+'.json';
+  q('[data-file-label]').textContent=(d.id||'新预设')+'.json';q('[data-file-label]').title=q('[data-file-label]').textContent;
   try{q('[data-editor-title]').textContent=parseDraft().name||'新建'+MODEL_PRESETS.labels[state.kind]+'预设';}catch{}
   q('[data-form-panel]').hidden=state.mode!=='form';q('[data-json-panel]').hidden=state.mode!=='json';
   for(const button of dialog.querySelectorAll('[data-mode]'))button.setAttribute('aria-selected',String(button.dataset.mode===state.mode));

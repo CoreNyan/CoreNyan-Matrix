@@ -24,6 +24,7 @@
 <link rel="icon" href="/assets/favicon.ico?v=8"><link rel="apple-touch-icon" href="/assets/app-icon.png?v=8">    <link rel="stylesheet" href="/css/avatar-crop.css">
     <link rel="stylesheet" href="/css/notifications.css">
 <link rel="stylesheet" href="/css/api-records.css">
+<link rel="stylesheet" href="/css/recent-thoughts.css">
 </head>
 <body class="editorial-body">
     <!-- Global Top Editorial Navigation Bar (billcreates.tech + havu.cc + mikewilcockdesign.com synthesis) -->
@@ -156,7 +157,7 @@
                     <div class="subconscious-diary-box">
                         <div class="diary-head">
                             <span>RECENT THOUGHTS / 最近在想</span>
-                            <span id="lastHeartbeatTag">HEARTBEAT // LIVE</span>
+                            <div class="diary-actions"><span id="lastHeartbeatTag">HEARTBEAT // LIVE</span><button type="button" id="btnThoughts" aria-haspopup="dialog">展开 ↗</button></div>
                         </div>
                         <div class="diary-stream" id="subconsciousLogList">
                             <div class="diary-item"><span class="diary-dot"></span><span>等待{{concept.subconscious.zh}}活动信号...</span></div>

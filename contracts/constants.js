@@ -201,7 +201,7 @@ export const ORGAN = freeze({
 });
 
 export const FILTER = freeze({ ALL: 'all', BONDS: 'bonds', ARTWORKS: 'artworks' });
-export const TELEMETRY = freeze({ bpm: 72, mood: 80, energy: 85, cpuCores: 4, diaryEntries: 6, topicCount: 4, curiosityFloor: 30, moodWeight: 0.55, energyWeight: 0.45 });
+export const TELEMETRY = freeze({ bpm: 72, mood: 80, energy: 85, cpuCores: 4, diaryEntries: 12, topicCount: 4, curiosityFloor: 30, moodWeight: 0.55, energyWeight: 0.45 });
 export const LANGUAGE_EXTENSIONS = freeze({ json: ['json'], css: ['css'], md: ['md', 'markdown'], js: ['js', 'mjs', 'cjs', 'ts', 'jsx', 'tsx'], yaml: ['yml', 'yaml', 'toml', 'ini', 'conf'], html: ['html', 'htm', 'xml', 'svg'], sh: ['sh', 'bash', 'zsh', 'bat', 'ps1'] });
 
 export const DIAL = freeze({ min: 0, max: 100, startAngle: 45, sweepAngle: 270 });
