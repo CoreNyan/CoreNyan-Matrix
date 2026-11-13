@@ -39,6 +39,12 @@ export async function discoverPresetModels(input,store,{fetchFn=fetch}={}){
   if(!Array.isArray(items))fail('该端点未返回兼容的模型列表，可继续手动填写模型 ID。',502);
   const models=[...new Set(items.map(item=>typeof item==='string'?item:item?.id).filter(id=>typeof id==='string'&&id.trim()&&id.length<=200).map(id=>id.trim()))].slice(0,limits.maxItems);
   return {models};
- }catch(error){if(error.status)throw error;if(controller.signal.aborted)fail('获取模型列表超时，请稍后重试。',504);fail('无法连接模型接口，请检查端点和网络后重试。',502);}
+ }catch(error){
+  if(error.status)throw error;
+  if(controller.signal.aborted)fail('获取模型列表超时，请稍后重试。',504);
+  const code=error.cause?.code||error.cause?.errors?.[0]?.code||error.code;
+  const reasons={ECONNREFUSED:'模型端点拒绝了云端连接（ECONNREFUSED），请检查服务是否启动、监听地址及容器访问权限。',ENOTFOUND:'云端无法解析模型端点的域名（ENOTFOUND），请检查地址。',EAI_AGAIN:'模型端点的 DNS 解析暂时失败，请稍后重试。',ECONNRESET:'模型接口中断了连接（ECONNRESET），请检查反代服务。',UND_ERR_CONNECT_TIMEOUT:'连接模型端点超时，请检查服务、路由和防火墙。',CERT_HAS_EXPIRED:'模型端点的 HTTPS 证书已过期。',DEPTH_ZERO_SELF_SIGNED_CERT:'模型端点使用了不受信任的自签名证书。',ERR_TLS_CERT_ALTNAME_INVALID:'模型端点与 HTTPS 证书中的地址不匹配。'};
+  fail(reasons[code]||'无法连接模型接口，请检查端点和网络后重试。',502);
+ }
  finally{clearTimeout(timer);active--;}
 }

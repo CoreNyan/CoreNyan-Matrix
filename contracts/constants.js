@@ -294,7 +294,7 @@ export const UI_MOTION=freeze({
 });
 
 export const PRESET_EDITOR=freeze({
- autosaveMs:900,reorder:{edge:36,scrollStep:8},
+ autosaveMs:900,reorder:{edge:36,scrollPixelsPerSecond:480,maxFrameMs:32,yieldMs:180,settleMs:180,easing:'cubic-bezier(.2,.8,.2,1)'},
  actions:{create:'创建预设',save:'保存修改',retry:'重试保存',clone:'克隆预设',rename:'重命名文件',copySuffix:'副本'},newFilePrefix:'new-preset',
  requiredFields:[['id','文件路径'],['name','名称'],['settings.base_url','请求地址'],['settings.model','模型标识']],
  version:1,maxBackups:15,maxModelIds:16,storageKey:'corenyan.preset-editor.kind',modes:{form:'表单编辑',json:'完整 JSON'},

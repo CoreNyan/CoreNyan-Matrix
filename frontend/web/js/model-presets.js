@@ -42,7 +42,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  const q=selector=>dialog.querySelector(selector),drafts=new Map();
  const registry=new StateRegistry({catalog:null,kind:'text',draft:null,mode:'form',primary:'',backups:[],busy:false,error:'',notice:'',screen:'editor',saveState:'saved'});
  const state=registry.state;
- let confirmation=null,renameSource=null,editor,modelList,connectionRevision=0;
+ let confirmation=null,renameSource=null,editor,modelList,backupOrder,connectionRevision=0;
  const isDirty=d=>d&&fingerprint(d)!==d.original;
  function nextId(){let i=1;while(state.catalog?.items.some(p=>p.id===state.kind+'/'+PRESET_EDITOR.newFilePrefix+'-'+i))i++;return state.kind+'/'+PRESET_EDITOR.newFilePrefix+'-'+i;}
  function validateDraft(d){const doc=parseDraft(d);const missing=PRESET_EDITOR.requiredFields.filter(([key])=>!String(key==='id'?d.id:readPath(doc,key)||'').trim());if(missing.length){const error=Error('请填写'+missing.map(([,label])=>label).join('、')+'，草稿已保留。');error.field=missing[0][0];throw error;}try{validateModelIds(doc.settings);}catch(error){error.field='settings.model';throw error;}writeModelIds(doc.settings,readModelIds(doc.settings).map(id=>id.trim()));return doc;}
@@ -128,6 +128,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  }
  function renderKeyNote(){const note=q('[data-key-note]');if(!note)return;try{const key=parseDraft().settings.api_key;note.textContent=key==null?'密钥不回显；保存时保留服务器现有值。':key===''?'保存时将清除密钥。':'保存时将替换密钥。';}catch{}}
  function renderBackups(){
+  if(backupOrder?.active)return;
   const ids=state.backups;
   const list=q('[data-backups]');list.replaceChildren(...ids.map((id,i)=>{
    const row=document.createElement('li');row.dataset.backup=id;
@@ -204,7 +205,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  };
  q('[data-backup-choice]').onchange=renderControls;
  q('[data-add-backup]').onclick=()=>{const id=q('[data-backup-choice]').value;if(!id||state.backups.includes(id)||id===state.primary)return;state.backups=[...state.backups,id];renderBackups();renderRouteSummary();autosave.schedule();};
- mountPresetOrder(q('[data-backups]'),{canStart:()=>!state.busy&&state.saveState!=='saving',commit:ids=>{if(ids.length!==state.backups.length||ids.some(id=>!state.backups.includes(id))){renderBackups();return;}if(JSON.stringify(ids)!==JSON.stringify(state.backups)){state.backups=ids;renderBackups();renderRouteSummary();autosave.schedule();}else renderBackups();},cancel:renderBackups});
+ backupOrder=mountPresetOrder(q('[data-backups]'),{canStart:()=>!state.busy,commit:ids=>{if(ids.length!==state.backups.length||ids.some(id=>!state.backups.includes(id))){renderBackups();return;}if(JSON.stringify(ids)!==JSON.stringify(state.backups)){state.backups=ids;renderBackups();renderRouteSummary();autosave.schedule();}else renderBackups();},cancel:renderBackups});
  q('[data-backups]').onclick=e=>{const b=e.target.closest('[data-backup-action]');if(!b)return;const ids=[...state.backups],i=Number(b.dataset.index);if(b.dataset.backupAction==='swap'){if(i!==0||!state.primary)return;const original=state.primary;state.primary=ids[0];ids[0]=original;}else if(b.dataset.backupAction==='remove')ids.splice(i,1);else{const j=i+(b.dataset.backupAction==='up'?-1:1);[ids[i],ids[j]]=[ids[j],ids[i]];}state.backups=ids;renderLibrary();autosave.schedule();};
  q('[data-fields]').addEventListener('input',e=>{
   if(e.target.dataset.field==='name')mutate(doc=>{doc.name=e.target.value;});

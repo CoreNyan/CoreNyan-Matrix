@@ -1,3 +1,4 @@
+import {renderLogSources} from './log-sources.js';
 import {mountExplorerSelection} from './explorer-selection.js';
 import {mountTextContextMenu} from './text-context-menu.js';
 import {nextDoodle} from './random-doodle.js';
@@ -353,7 +354,8 @@ import { entityPreview } from './entity-models.js';
     registry.subscribe(['fm.activeFile', 'fm.mdPreviewOpen', 'fm.validationError'], renderFileEditor);
     registry.subscribe(['logs'], () => {
       terminalView.update(ansiToHtml(state.logs.rawText, state.logs.filter), state.logs.organ+'|'+state.logs.filter+'|'+state.logs.lines);
-      $('logOrganSelect').value = state.logs.organ; $('logLinesSelect').value = String(state.logs.lines);
+      $('logOrganSelect').value = state.logs.organ;
+      $('logOrganSelect').classList.toggle('log-source-offline',Boolean($('logOrganSelect').selectedOptions[0]?.classList.contains('log-source-offline'))); $('logLinesSelect').value = String(state.logs.lines);
       $('logAutoRefreshCheck').checked = state.logs.autoRefresh;
       const sourceLabel=`SOURCE: ${state.logs.source || state.logs.organ}`;
       if($('logSourceStatus').textContent!==sourceLabel)$('logSourceStatus').textContent=sourceLabel;
@@ -611,10 +613,7 @@ import { entityPreview } from './entity-models.js';
         state.organsHash = nextOrgansHash;
         renderMiniOrganStrip(organs);
         renderOrgansMatrix(organs);
-        const selected=state.logs.organ;
-        $('logOrganSelect').innerHTML=organs.map(o=>`<option value="${escapeHtml(o.id)}">${escapeHtml(o.name)} · ${escapeHtml(o.id)}</option>`).join('')+'<option value="corenyan-brain-file">Brain · app.log</option>';
-        state.logs.organ = organs.some(o=>o.id===selected) || selected==='corenyan-brain-file' ? selected : (organs[0]?.id || UI.defaultOrgan);
-        $('logOrganSelect').value=state.logs.organ;
+        state.logs.organ=renderLogSources($('logOrganSelect'),organs,state.logs.organ);
       }
 
       const nextBondsHash = JSON.stringify(topBonds);

@@ -494,3 +494,5 @@ html[data-terms-pending] body { visibility: hidden; }
  .topbar-RichToggles>*{flex:1;min-width:0}.topbar-RichToggles button{height:34px;padding:6px 10px;font-size:10px;justify-content:center}
  .chapter-nav{width:100%;min-width:0}.chapter-tab{min-width:0}
 }
+
+#logOrganSelect.log-source-offline,#logOrganSelect option.log-source-offline{color:rgba(255,255,255,.4)}
