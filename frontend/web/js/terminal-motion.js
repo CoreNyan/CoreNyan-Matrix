@@ -1,35 +1,30 @@
-// Terminal power sequence transforms the actual interface, then restores layout.
-const OPEN_MS=1120,CLOSE_MS=720;
+// One-shot interface motion; no CRT scanlines or non-uniform screen scaling.
+const OPEN_MS=820,CLOSE_MS=460;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let overlay,timer,animations=[],enabled=true;
 function clear(){clearTimeout(timer);animations.forEach(a=>a.cancel());animations=[];overlay?.remove();overlay=null;}
 function animate(element,frames,duration,options={}){
- if(element)animations.push(element.animate(frames,{duration,fill:'both',easing:'linear',...options}));
+ if(element)animations.push(element.animate(frames,{duration,fill:'both',easing:'cubic-bezier(.22,1,.36,1)',...options}));
 }
 function play(closing=false){
  clear();if(reduced.matches||!enabled)return 0;
  const duration=closing?CLOSE_MS:OPEN_MS;
  overlay=document.createElement('div');overlay.className='terminal-shutter';overlay.setAttribute('aria-hidden','true');
- overlay.innerHTML='<div class="terminal-veil"></div><div class="terminal-phosphor"></div><div class="terminal-raster"></div><div class="terminal-beam"></div><div class="terminal-reticle"><i></i><i></i><i></i><i></i></div>';
+ overlay.innerHTML='<div class="terminal-veil"></div>';
  document.documentElement.append(overlay);
  if(typeof overlay.showPopover==='function'){overlay.setAttribute('popover','manual');overlay.showPopover();}
- const part=name=>overlay.querySelector('.terminal-'+name);
- animate(part('veil'),closing?[{opacity:0},{opacity:0,offset:.74},{opacity:1}]:[{opacity:1},{opacity:0,offset:.18},{opacity:0}],duration);
- animate(part('phosphor'),closing?[{opacity:0},{opacity:.7,offset:.72},{opacity:0}]:[{opacity:0},{opacity:.6,offset:.24},{opacity:0,offset:.76},{opacity:0}],duration);
- animate(part('beam'),closing?[
-  {opacity:0,transform:'scaleX(.92)'},{opacity:0,transform:'scaleX(.92)',offset:.5},{opacity:1,transform:'scaleX(.92)',offset:.74},{opacity:.8,transform:'scaleX(.04)',offset:.92},{opacity:0,transform:'scaleX(0)'}
- ]:[{opacity:0,transform:'scaleX(.01)'},{opacity:1,transform:'scaleX(.92)',offset:.24},{opacity:0,transform:'scaleX(.92)',offset:.68},{opacity:0}],duration);
- animate(part('raster'),closing?[{opacity:0},{opacity:.6,offset:.4},{opacity:0}]:[{opacity:.6},{opacity:.4,offset:.65},{opacity:0}],duration);
- const shape=closing?[
-  {transform:'scale(1,1)',opacity:0},{transform:'scale(.97,.94)',opacity:.65,offset:.24},{transform:'scale(.94,.006)',opacity:.8,offset:.74},{transform:'scale(.02,.002)',opacity:0}
- ]:[{transform:'scale(.02,.002)',opacity:0},{transform:'scale(.94,.006)',opacity:.8,offset:.24},{transform:'scale(.97,.94)',opacity:.5,offset:.72},{transform:'scale(1,1)',opacity:0}];
- animate(part('reticle'),shape,duration,{easing:'cubic-bezier(.4,0,.2,1)'});
- // A viewport-centered origin also works when closing a scrolled document.
- const body=document.body,box=body.getBoundingClientRect(),zoom=box.width/body.offsetWidth||1;
- const origin=((innerWidth/2-box.left)/zoom)+'px '+((innerHeight/2-box.top)/zoom)+'px';
- animate(body,closing?[
-  {scale:'1 1',opacity:1,transformOrigin:origin},{scale:'.97 .94',opacity:1,transformOrigin:origin,offset:.24},{scale:'.94 .006',opacity:.7,transformOrigin:origin,offset:.74},{scale:'.02 .002',opacity:0,transformOrigin:origin}
- ]:[{scale:'.02 .002',opacity:0,transformOrigin:origin},{scale:'.94 .006',opacity:.7,transformOrigin:origin,offset:.24},{scale:'.97 .94',opacity:1,transformOrigin:origin,offset:.72},{scale:'1 1',opacity:1,transformOrigin:origin}],duration,{easing:'cubic-bezier(.4,0,.2,1)'});
+ animate(overlay.firstElementChild,closing?[{opacity:0},{opacity:0,offset:.35},{opacity:1}]:[{opacity:1},{opacity:0,offset:.42},{opacity:0}],duration,{easing:'cubic-bezier(.4,0,.2,1)'});
+ // Translate independent layout sections: the header and content settle at
+ // different times. Keep body and canvas coordinate systems untransformed.
+ const surfaces=[...document.querySelectorAll('body > .editorial-topbar,body > main,body > .editorial-footer-ticker')];
+ surfaces.forEach((surface,index)=>{
+  const isMain=surface.tagName==='MAIN',delay=closing?0:index*65;
+  animate(surface,closing?[
+   {opacity:1,translate:'0 0'},{opacity:0,translate:isMain?'0 -28px':'0 -12px'}
+  ]:[{opacity:0,translate:isMain?'0 44px':'0 -18px'},{opacity:1,translate:'0 0'}],duration-delay,{delay,easing:closing?'cubic-bezier(.55,0,1,.45)':'cubic-bezier(.16,1,.3,1)'});
+  // Restrained overshoot on the content panel gives the arrival some weight.
+  if(isMain)animate(surface,closing?[{scale:'1'},{scale:'.965'}]:[{scale:'.94'},{scale:'1.006',offset:.7},{scale:'1'}],duration-delay,{delay});
+ });
  timer=setTimeout(()=>{if(closing){overlay?.classList.add('is-closed');animations.forEach(a=>a.cancel());animations=[];}else clear();},duration);
  return duration;
 }

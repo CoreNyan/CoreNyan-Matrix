@@ -117,8 +117,10 @@ export function mountWaveform(canvas, registry) {
     frame = 0;
     if (!visible()) { last = 0; return; }
     if (dirty) {
-      const rect = canvas.parentElement.getBoundingClientRect();
-      width = rect.width; height = rect.height;
+      // Layout dimensions are stable during ancestor scale/entrance animations.
+      // A transformed bounding rect can round the backing canvas down to zero.
+      width = canvas.clientWidth; height = canvas.clientHeight;
+      if (!width || !height) { last = 0; return; }
       const dpr = Math.min(devicePixelRatio || 1, WAVE.maxDpr);
       canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -157,7 +159,7 @@ export function mountWaveform(canvas, registry) {
     if (!frame) frame = budget.request(draw);
   };
   const observer = new ResizeObserver(() => { dirty = true; wake(); });
-  observer.observe(canvas.parentElement);
+  observer.observe(canvas);
   const unsubscribe = registry.subscribe(['motionEnabled', 'activeView', 'lastVitalsPayload'], wake);
   const offActivity=observeVisualActivity(wake);
   return () => { budget.cancel(frame); observer.disconnect(); unsubscribe(); offActivity(); };
