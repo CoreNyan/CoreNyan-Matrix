@@ -1,4 +1,5 @@
-import { EFFECTS, DOODLE_PARTICLES } from './constants.js';
+import {createFrameBudget,visualActive,observeVisualActivity} from './render-budget.js';
+import { EFFECTS, DOODLE_PARTICLES, RENDER_BUDGET } from './constants.js';
 
 // Build the star once; reuse its geometry for every particle and frame.
 const star = new Path2D();
@@ -44,6 +45,7 @@ export function mountAmbientEffects(registry) {
   };
   const background = create('ambient-canvas'), pointer = create('pointer-fx-canvas');
   if (!background.ctx || !pointer.ctx) { background.canvas.remove(); pointer.canvas.remove(); return () => {}; }
+  const budget=createFrameBudget(()=>particles.length?RENDER_BUDGET.pointerFps:RENDER_BUDGET.ambientFps);
   let width = 0, height = 0, frame = 0, last = 0, lastBackground = 0, elapsed = 0, dirty = true, pointerDrawn = false;
   let particles = [];
   // A modal dialog is above every ordinary z-index. Use a non-interactive
@@ -53,7 +55,7 @@ export function mountAmbientEffects(registry) {
   const promote=()=>{if(!topLayer)return;pointer.canvas.style.zoom=String(1/(document.body.currentCSSZoom||((parseFloat(getComputedStyle(document.body).zoom)||1)*(parseFloat(getComputedStyle(document.documentElement).zoom)||1))));if(pointer.canvas.matches(':popover-open'))pointer.canvas.hidePopover();pointer.canvas.showPopover();};
   const modalOpened=event=>{if(event.target instanceof HTMLDialogElement&&event.newState==='open'&&particles.length)promote();};
   document.addEventListener('toggle',modalOpened,true);
-  const active = () => registry.state.motionEnabled && !document.hidden;
+  const active = () => registry.state.motionEnabled && visualActive();
   const color = alpha => `rgba(${EFFECTS.ink},${alpha})`;
   function draw(now) {
     frame = 0;
@@ -62,16 +64,16 @@ export function mountAmbientEffects(registry) {
     last = now; elapsed += delta;
     if (dirty) {
       width = innerWidth; height = innerHeight;
-      const dpr = Math.min(devicePixelRatio || 1, EFFECTS.maxDpr);
       for (const { canvas, ctx } of [background, pointer]) {
+        const dpr=Math.min(devicePixelRatio||1,canvas===background.canvas?RENDER_BUDGET.ambientMaxDpr:EFFECTS.maxDpr);
         canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
       dirty = false;
     }
     const bg = background.ctx;
-    // Background can run at 30 fps; fast pointer motion follows every display frame.
-    if (now - lastBackground >= EFFECTS.frameMs) {
+    // Slow ambient motion has its own budget; click particles retain faster frames.
+    if (now - lastBackground >= 1000 / RENDER_BUDGET.ambientFps) {
     lastBackground = now;
     bg.clearRect(0, 0, width, height);
     // Large broken ink arcs drift in the page margins, outside the content focus.
@@ -100,11 +102,13 @@ export function mountAmbientEffects(registry) {
       if(blocked.some(r=>x+particle.size>=r.left&&x-particle.size<=r.right&&y+particle.size>=r.top&&y-particle.size<=r.bottom))continue;
       drawDoodle(ctx, particle.shape, x, y, particle.size * (.5 + fade * .5), particle.rotation + particle.spin * age, Math.min(1, fade * 2));
     }
-    frame = requestAnimationFrame(draw);
+    if(!count&&topLayer&&pointer.canvas.matches(':popover-open'))pointer.canvas.hidePopover();
+    pointer.canvas.hidden=!count;
+    frame = budget.request(draw);
   }
   const click = event => {
     if (!active() || event.button !== 0 || event.composedPath().some(el=>el instanceof Element&&el.matches(EFFECTS.excludedRegions))) return;
-    promote();
+    pointer.canvas.hidden=false;promote();
     const time = performance.now() / 1000;
     for (let i = 0; i < DOODLE_PARTICLES.burstCount; i++) particles.push({ x: event.clientX, y: event.clientY, time,
       shape: DOODLE_PARTICLES.shapes[i % DOODLE_PARTICLES.shapes.length],
@@ -116,23 +120,24 @@ export function mountAmbientEffects(registry) {
   };
   const wake = () => {
     if (!active()) {
-      cancelAnimationFrame(frame); frame = 0; last = 0; particles = [];
+      budget.cancel(frame); frame = 0; last = 0; particles = [];
+      if(topLayer&&pointer.canvas.matches(':popover-open'))pointer.canvas.hidePopover();
       for (const { canvas, ctx } of [background, pointer]) { ctx.clearRect(0, 0, canvas.width, canvas.height); canvas.hidden = true; }
     } else {
-      background.canvas.hidden = false; pointer.canvas.hidden = false;
-      if (!frame) frame = requestAnimationFrame(draw);
+      background.canvas.hidden = false; pointer.canvas.hidden = !particles.length;
+      if (!frame) frame = budget.request(draw);
     }
   };
   const resize = () => { dirty = true; wake(); };
   document.addEventListener('pointerdown', click, { passive: true });
-  document.addEventListener('visibilitychange', wake);
+  const offActivity=observeVisualActivity(wake);
   window.addEventListener('resize', resize, { passive: true });
   const off = registry.subscribe(['motionEnabled'], wake);
   return () => {
-    off(); cancelAnimationFrame(frame);
+    off(); budget.cancel(frame);
     document.removeEventListener('pointerdown', click);
     document.removeEventListener('toggle',modalOpened,true);
-    document.removeEventListener('visibilitychange', wake); window.removeEventListener('resize', resize);
+    offActivity(); window.removeEventListener('resize', resize);
     background.canvas.remove(); pointer.canvas.remove();
   };
 }

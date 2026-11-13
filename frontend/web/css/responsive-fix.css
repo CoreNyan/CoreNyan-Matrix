@@ -496,3 +496,5 @@ html[data-terms-pending] body { visibility: hidden; }
 }
 
 #logOrganSelect.log-source-offline,#logOrganSelect option.log-source-offline{color:rgba(255,255,255,.4)}
+
+.visuals-paused .brand-asterisk,.visuals-paused .live-dot,.visuals-paused .kinetic-marquee-track{animation-play-state:paused!important;}

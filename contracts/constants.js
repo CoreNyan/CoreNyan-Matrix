@@ -332,3 +332,5 @@ export const AVATAR_CROP=freeze({types:["image/png","image/jpeg","image/webp"],m
 
 export const EXPLORER_SELECTION=freeze({row:'.tree-node-row,.grid-slice-card',holdMs:280,dragThreshold:6,edge:30,scrollStep:8});
 export const TEXT_MENU=freeze({inset:8,labels:{undo:'撤销',redo:'重做',cut:'剪切',copy:'复制',paste:'粘贴',selectAll:'全选',copyAll:'复制全部日志',find:'查找',replace:'替换'},changed:'编辑内容已变化，请重新选择后操作。',clipboardDenied:'无法访问剪贴板，请允许剪贴板权限，或使用键盘快捷键。'});
+
+export const RENDER_BUDGET=freeze({ambientMaxDpr:1,ambientFps:15,pointerFps:60,waveFps:30,entityFps:30,entityMaxDpr:1.5});

@@ -1,3 +1,5 @@
+import {createFrameBudget,visualActive,observeVisualActivity} from './render-budget.js';
+import {RENDER_BUDGET} from './constants.js';
 'use strict';
 import { WAVE, TELEMETRY, VIEW, WAVE_HEALTH } from './constants.js';
 
@@ -109,7 +111,8 @@ export function mountWaveform(canvas, registry) {
   const seed = registry.state.motionEnabled ? crypto.getRandomValues(new Uint32Array(1))[0] : WAVE.seed;
   let history = null;
   let width = 0, height = 0, last = 0, frame = 0, dirty = true;
-  const visible = () => !document.hidden && registry.state.activeView === VIEW.VITALS;
+  const budget=createFrameBudget(RENDER_BUDGET.waveFps);
+  const visible = () => visualActive() && registry.state.activeView === VIEW.VITALS;
   const draw = time => {
     frame = 0;
     if (!visible()) { last = 0; return; }
@@ -147,15 +150,15 @@ export function mountWaveform(canvas, registry) {
       ctx.arc(head, height * trace.baseline - history.get(history.count - 1, trace.channel), trace.width * 1.5, 0, Math.PI * 2);
       ctx.fill();
     }
-    if (registry.state.motionEnabled) frame = requestAnimationFrame(draw);
+    if (registry.state.motionEnabled) frame = budget.request(draw);
   };
   const wake = () => {
-    if (!visible()) { cancelAnimationFrame(frame); frame = 0; last = 0; return; }
-    if (!frame) frame = requestAnimationFrame(draw);
+    if (!visible()) { budget.cancel(frame); frame = 0; last = 0; return; }
+    if (!frame) frame = budget.request(draw);
   };
   const observer = new ResizeObserver(() => { dirty = true; wake(); });
   observer.observe(canvas.parentElement);
   const unsubscribe = registry.subscribe(['motionEnabled', 'activeView', 'lastVitalsPayload'], wake);
-  document.addEventListener('visibilitychange', wake);
-  return () => { cancelAnimationFrame(frame); observer.disconnect(); unsubscribe(); document.removeEventListener('visibilitychange', wake); };
+  const offActivity=observeVisualActivity(wake);
+  return () => { budget.cancel(frame); observer.disconnect(); unsubscribe(); offActivity(); };
 }

@@ -1,5 +1,6 @@
+import {createFrameBudget,visualActive,observeVisualActivity} from './render-budget.js';
 import {shortcut} from './preferences.js';
-import {ENTITY,ENTITY_MODELS} from './constants.js';
+import {ENTITY,ENTITY_MODELS,RENDER_BUDGET} from './constants.js';
 import {entityKind,buildEntityModel} from './entity-assets.js';
 import {createEntityRenderer} from './entity-point-renderer.js';
 import {mountEntityTelemetry} from './entity-telemetry.js';
@@ -10,10 +11,11 @@ export function mountEntityView(root,registry,layers=()=>[]){
  const camera={yaw:ENTITY.defaultYaw,pitch:ENTITY.defaultPitch,zoom:ENTITY.defaultZoom,pointSize:ENTITY.pointSize,focus:ENTITY.defaultFocus,reveal:1};
  let focusTarget=ENTITY.defaultFocus,transition=null;
  const pointers=new Map();
- let frame=0,last=0,dirty=true,disposed=false,kind='',layerKey='',tabsSignature='',rotSpeed=ENTITY.rotSpeed,lastClock='',warmed=false;
+ let frame=0,last=0,dirty=true,disposed=false,kind='',layerKey='',tabsSignature='',rotSpeed=ENTITY.rotSpeed,lastClock='';
  const text=(selector,value)=>root.querySelector(selector).textContent=value;
- const visible=()=>!document.hidden&&registry.state.activeView==='entity';
- function wake(){if(!frame&&!disposed&&visible()){last=0;frame=requestAnimationFrame(draw);}}
+ const budget=createFrameBudget(RENDER_BUDGET.entityFps);
+ const visible=()=>visualActive()&&registry.state.activeView==='entity';
+ function wake(){if(!frame&&!disposed&&visible()){last=0;frame=budget.request(draw);}}
  function draw(now){
   frame=0;if(disposed||!visible())return;
   const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
@@ -43,13 +45,14 @@ export function mountEntityView(root,registry,layers=()=>[]){
    }else if(t.phase==='assemble'&&amount===1){transition=null;phase='idle';progress=0;canvas.dataset.transition='idle';}
   }
   if(dirty||auto||focusing||t){renderer.draw({...camera,phase,progress});dirty=false;}
-  if(wantsRotation&&!transition||focusing||transition&&!transition.swapping&&(transition.ready||transition.elapsed<ENTITY.scatterMs))frame=requestAnimationFrame(draw);
+  if(wantsRotation&&!transition||focusing||transition&&!transition.swapping&&(transition.ready||transition.elapsed<ENTITY.scatterMs))frame=budget.request(draw);
  }
  function resize(){const rect=canvas.getBoundingClientRect();if(rect.width&&rect.height){renderer.resize(rect.width,rect.height);dirty=true;wake();}}
  const observer=new ResizeObserver(resize);observer.observe(canvas);
  function failTransition(t,error){if(transition!==t||disposed)return;status.textContent=error.message;transition=null;kind=canvas.dataset.model||'';canvas.dataset.transition='error';canvas.dataset.loading='false';dirty=true;wake();}
  function select(key){registry.state.entityLayer=key;}
  function sync(){
+  if(registry.state.activeView!=='entity'){budget.cancel(frame);frame=0;return;}
   const list=layers();if(!list.length)return;
   const signature=JSON.stringify(list.map(l=>[l.key,l.name]));
   if(signature!==tabsSignature){
@@ -63,7 +66,6 @@ export function mountEntityView(root,registry,layers=()=>[]){
    renderer.beginTransition(camera,{isCurrent:()=>transition===t&&!disposed}).then(hasSource=>{if(transition!==t||disposed)return;t.hasSource=hasSource;t.prepared=true;dirty=true;wake();}).catch(error=>failTransition(t,error));
    buildEntityModel(kind).then(()=>{
     if(transition!==t||disposed)return;t.ready=true;dirty=true;wake();
-    if(!warmed){warmed=true;setTimeout(()=>{for(const item of layers())if(entityKind(item)!==kind)buildEntityModel(entityKind(item)).catch(()=>{});},300);}
    }).catch(error=>failTransition(t,error));
   }
   if(layer.key!==layerKey){layerKey=layer.key;dirty=true;}
@@ -74,7 +76,7 @@ export function mountEntityView(root,registry,layers=()=>[]){
   root.querySelectorAll('[data-layer-key]').forEach(button=>{button.classList.toggle('active',button.dataset.layerKey===layerKey);button.setAttribute('aria-pressed',String(button.dataset.layerKey===layerKey));});
   renderTelemetry(layer);
   const clock=new Date().toLocaleTimeString('zh-CN',{hour12:false,timeZone:'Asia/Shanghai'});if(clock!==lastClock){text('#entityClock',clock);lastClock=clock;}
-  if(visible())wake();else{cancelAnimationFrame(frame);frame=0;}
+  if(visible())wake();else{budget.cancel(frame);frame=0;}
  }
  const unsubscribe=registry.subscribe(['activeView','motionEnabled','lastVitalsPayload','entityLayer'],sync);
  function cycle(delta){const list=layers();if(!list.length)return;const i=list.findIndex(l=>l.key===layerKey);select(list[(i+delta+list.length)%list.length].key);}
@@ -112,8 +114,8 @@ export function mountEntityView(root,registry,layers=()=>[]){
   event.preventDefault();update();
  });
  canvas.addEventListener('entity-renderer-restored',()=>{dirty=true;wake();});
- const onVisibility=()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;}else{dirty=true;wake();}};
- document.addEventListener('visibilitychange',onVisibility);
+ const onVisibility=()=>{if(!visualActive()){budget.cancel(frame);frame=0;}else{dirty=true;wake();}};
+ const offActivity=observeVisualActivity(onVisibility);
  update();resize();
- return {setLayer:select,dispose(){disposed=true;cancelAnimationFrame(frame);unsubscribe();observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);renderer.dispose();}};
+ return {setLayer:select,dispose(){disposed=true;budget.cancel(frame);unsubscribe();observer.disconnect();offActivity();renderer.dispose();}};
 }

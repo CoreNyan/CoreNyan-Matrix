@@ -1,3 +1,4 @@
+import {RENDER_BUDGET} from './constants.js';
 import {ENTITY,ENTITY_MODELS} from './constants.js';
 import {buildEntityModel,rotatePoint} from './entity-assets.js';
 const vertex=`attribute vec3 aPosition;attribute vec3 aNormal;attribute float aIndex;attribute vec2 aOffset;
@@ -33,7 +34,7 @@ const mix=(a,b,t)=>t<=0?a:t>=1?b:a+(b-a)*t;
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 function randomStream(){let seed=crypto.getRandomValues(new Uint32Array(1))[0]||1;return()=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return(seed>>>0)/4294967296;};}
 export function createEntityRenderer(canvas,{fallback}={}){
- const gl=canvas.getContext('webgl',{alpha:true,antialias:false,powerPreference:'low-power',preserveDrawingBuffer:true});
+ const gl=canvas.getContext('webgl',{alpha:true,antialias:false,powerPreference:'low-power',preserveDrawingBuffer:false});
  const ctx=gl?null:canvas.getContext('2d');
  const capacity=ENTITY.transitionPoints,indices=Float32Array.from({length:capacity},(_,i)=>i);
  let model,program,uniforms,buffers={},width=1,height=1,dpr=1,fit=1,disposed=false,lost=false,drawCalls=0,generation=0,captureGeneration=0,fitPose=null,lastFrame=null,transitionCurl=0;
@@ -71,7 +72,7 @@ export function createEntityRenderer(canvas,{fallback}={}){
   for(let i=0;i<offsets.length;i+=2){const angle=random()*Math.PI*2,radius=Math.sqrt(random())*ENTITY.focusSpread;offsets[i]=Math.cos(angle)*radius;offsets[i+1]=Math.sin(angle)*radius;}
   upload();calculateFit();canvas.dataset.loading='false';canvas.dataset.model=kind;canvas.dataset.pointCount=String(model.count);return model;
  }
- function resize(w,h){width=Math.max(1,w);height=Math.max(1,h);dpr=Math.min(devicePixelRatio||1,ENTITY.maxDpr);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);if(gl&&!lost)gl.viewport(0,0,canvas.width,canvas.height);calculateFit();}
+ function resize(w,h){width=Math.max(1,w);height=Math.max(1,h);dpr=Math.min(devicePixelRatio||1,RENDER_BUDGET.entityMaxDpr);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);if(gl&&!lost)gl.viewport(0,0,canvas.width,canvas.height);calculateFit();}
  function pose(frame){return {...frame,fit,cy:Math.cos(frame.yaw),sy:Math.sin(frame.yaw),cp:Math.cos(frame.pitch),sp:Math.sin(frame.pitch)};}
  // Mirrors projected shader coordinates for interruption snapshots and the 2D fallback.
  // Called once per switch on WebGL, never on its animation frames.
