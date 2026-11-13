@@ -1,6 +1,5 @@
-// Bounded compositor motion: light ignition, interface settling, phosphor decay.
-// Close fits the existing native 500 ms deadline; no native update is required.
-const OPEN_MS=980,CLOSE_MS=480;
+// Terminal power sequence transforms the actual interface, then restores layout.
+const OPEN_MS=1120,CLOSE_MS=720;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let overlay,timer,animations=[],enabled=true;
 function clear(){clearTimeout(timer);animations.forEach(a=>a.cancel());animations=[];overlay?.remove();overlay=null;}
@@ -15,27 +14,22 @@ function play(closing=false){
  document.documentElement.append(overlay);
  if(typeof overlay.showPopover==='function'){overlay.setAttribute('popover','manual');overlay.showPopover();}
  const part=name=>overlay.querySelector('.terminal-'+name);
- animate(part('veil'),closing?[
-  {opacity:0},{opacity:.38,offset:.38},{opacity:1}
- ]:[{opacity:1},{opacity:.96,offset:.12},{opacity:.22,offset:.48},{opacity:0}],duration,{easing:'cubic-bezier(.4,0,.2,1)'});
- animate(part('phosphor'),closing?[
-  {opacity:0,transform:'scale(1.1,.7)'},{opacity:.35,transform:'scale(.7,.12)',offset:.5},{opacity:0,transform:'scale(.015,.015)'}
- ]:[{opacity:0,transform:'scale(.08,.02)'},{opacity:.45,transform:'scale(.85,.25)',offset:.25},{opacity:.12,transform:'scale(1.25,1)',offset:.6},{opacity:0,transform:'scale(1.4,1.1)'}],duration);
+ animate(part('veil'),closing?[{opacity:0},{opacity:0,offset:.74},{opacity:1}]:[{opacity:1},{opacity:0,offset:.18},{opacity:0}],duration);
+ animate(part('phosphor'),closing?[{opacity:0},{opacity:.7,offset:.72},{opacity:0}]:[{opacity:0},{opacity:.6,offset:.24},{opacity:0,offset:.76},{opacity:0}],duration);
  animate(part('beam'),closing?[
-  {opacity:0,transform:'translateY(15vh) scaleX(.9)'},{opacity:.6,transform:'translateY(0) scaleX(.7)',offset:.52},{opacity:.25,transform:'translateY(0) scaleX(.12)',offset:.82},{opacity:0,transform:'translateY(0) scaleX(0)'}
- ]:[{opacity:0,transform:'translateY(0) scaleX(.02)'},{opacity:.7,transform:'translateY(0) scaleX(.8)',offset:.22},{opacity:.22,transform:'translateY(18vh) scaleX(1)',offset:.55},{opacity:0,transform:'translateY(42vh) scaleX(1.1)'}],duration);
- animate(part('raster'),closing?[{opacity:0},{opacity:.22,offset:.35},{opacity:0}]:[{opacity:0},{opacity:.24,offset:.28},{opacity:0}],duration);
- animate(part('reticle'),closing?[
-  {opacity:0,transform:'scale(1)'},{opacity:.35,transform:'scale(.99)',offset:.25},{opacity:0,transform:'scale(.94)'}
- ]:[{opacity:0,transform:'scale(.96)'},{opacity:.5,transform:'scale(.99)',offset:.3},{opacity:0,transform:'scale(1)'}],duration);
- // Individual scale/translate leave existing view transitions and layout intact.
- const surfaces=document.querySelectorAll('body > main,body > .editorial-topbar,body > .editorial-footer-ticker');
- surfaces.forEach((surface,index)=>{
-  const delay=closing?0:160+Math.min(index,2)*60;
-  animate(surface,closing?[
-   {opacity:1,scale:'1',translate:'0 0'},{opacity:.45,scale:'.994',translate:'0 2px',offset:.45},{opacity:0,scale:'.98',translate:'0 6px'}
-  ]:[{opacity:0,scale:'.985',translate:'0 10px'},{opacity:1,scale:'1',translate:'0 0'}],duration-delay,{delay,easing:closing?'cubic-bezier(.4,0,.2,1)':'cubic-bezier(.22,1,.36,1)'});
- });
+  {opacity:0,transform:'scaleX(.92)'},{opacity:0,transform:'scaleX(.92)',offset:.5},{opacity:1,transform:'scaleX(.92)',offset:.74},{opacity:.8,transform:'scaleX(.04)',offset:.92},{opacity:0,transform:'scaleX(0)'}
+ ]:[{opacity:0,transform:'scaleX(.01)'},{opacity:1,transform:'scaleX(.92)',offset:.24},{opacity:0,transform:'scaleX(.92)',offset:.68},{opacity:0}],duration);
+ animate(part('raster'),closing?[{opacity:0},{opacity:.6,offset:.4},{opacity:0}]:[{opacity:.6},{opacity:.4,offset:.65},{opacity:0}],duration);
+ const shape=closing?[
+  {transform:'scale(1,1)',opacity:0},{transform:'scale(.97,.94)',opacity:.65,offset:.24},{transform:'scale(.94,.006)',opacity:.8,offset:.74},{transform:'scale(.02,.002)',opacity:0}
+ ]:[{transform:'scale(.02,.002)',opacity:0},{transform:'scale(.94,.006)',opacity:.8,offset:.24},{transform:'scale(.97,.94)',opacity:.5,offset:.72},{transform:'scale(1,1)',opacity:0}];
+ animate(part('reticle'),shape,duration,{easing:'cubic-bezier(.4,0,.2,1)'});
+ // A viewport-centered origin also works when closing a scrolled document.
+ const body=document.body,box=body.getBoundingClientRect(),zoom=box.width/body.offsetWidth||1;
+ const origin=((innerWidth/2-box.left)/zoom)+'px '+((innerHeight/2-box.top)/zoom)+'px';
+ animate(body,closing?[
+  {scale:'1 1',opacity:1,transformOrigin:origin},{scale:'.97 .94',opacity:1,transformOrigin:origin,offset:.24},{scale:'.94 .006',opacity:.7,transformOrigin:origin,offset:.74},{scale:'.02 .002',opacity:0,transformOrigin:origin}
+ ]:[{scale:'.02 .002',opacity:0,transformOrigin:origin},{scale:'.94 .006',opacity:.7,transformOrigin:origin,offset:.24},{scale:'.97 .94',opacity:1,transformOrigin:origin,offset:.72},{scale:'1 1',opacity:1,transformOrigin:origin}],duration,{easing:'cubic-bezier(.4,0,.2,1)'});
  timer=setTimeout(()=>{if(closing){overlay?.classList.add('is-closed');animations.forEach(a=>a.cancel());animations=[];}else clear();},duration);
  return duration;
 }

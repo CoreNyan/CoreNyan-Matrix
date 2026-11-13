@@ -16,7 +16,7 @@ internal sealed class MatrixShell : Form {
     readonly JavaScriptSerializer json=new JavaScriptSerializer { MaxJsonLength=13000000 };
     WebView2 web=new WebView2();
     bool rendererFailed,closingAnimation,closeReady;
-    const int CloseFallbackMs=160,CloseScriptTimeoutMs=180,MaxCloseAnimationMs=500;
+    const int CloseFallbackMs=160,CloseScriptTimeoutMs=180,MaxCloseAnimationMs=900;
     readonly Panel titlebar=new Panel(),offline=new Panel(),viewport=new Panel();
     readonly NotifyIcon notification=new NotifyIcon();
     readonly Uri endpoint;

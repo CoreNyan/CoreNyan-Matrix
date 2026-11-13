@@ -276,11 +276,12 @@ export const ENTITY_COMMAND=freeze({"prowTip":-7.2,"sternTip":5.8,"launchLength"
 
 export const MODEL_PRESETS=freeze({
  api:'/api/model-presets',scope:'model_presets',
- kinds:['text','vision','image'],labels:{text:'文字',vision:'视觉',image:'生图'},
+ kinds:['text','vision','image','video'],labels:{text:'文字',vision:'视觉',image:'生图',video:'视频'},
  defaults:{
   text:{base_url:'',model:'',temperature:.8,max_tokens:3000,timeout_ms:90000},
   vision:{base_url:'',model:'',temperature:.1,max_tokens:1200,timeout_ms:25000},
-  image:{base_url:'',model:'',enabled:true,api_mode:'images',size:'auto',timeout_ms:120000}
+  image:{base_url:'',model:'',enabled:true,api_mode:'images',size:'auto',timeout_ms:120000},
+  video:{base_url:'',model:'',enabled:true,api_mode:'workbuddy',seconds:5,timeout_ms:30000}
  }
 });
 
@@ -299,17 +300,21 @@ export const PRESET_EDITOR=freeze({
  requiredFields:[['id','文件路径'],['name','名称'],['settings.base_url','请求地址'],['settings.model','模型标识']],
  version:1,maxBackups:15,maxModelIds:16,storageKey:'corenyan.preset-editor.kind',modes:{form:'表单编辑',json:'完整 JSON'},
  discovery:{path:'/models',timeoutMs:12000,maxBytes:1048576,maxItems:2000,maxConcurrent:4,maxRedirects:2},
- descriptions:{text:'对话、推理与工具决策',vision:'图片理解与参考图分析',image:'图像生成与参考图编辑'},
- groups:[{id:'connection',label:'模型配置'},{id:'timeouts',label:'超时与重试'},{id:'image',label:'绘图行为'}],
+ descriptions:{text:'对话、推理与工具决策',vision:'图片理解与参考图分析',image:'图像生成与参考图编辑',video:'文字或参考图生成视频'},
+ groups:[{id:'connection',label:'模型配置'},{id:'timeouts',label:'超时与重试'},{id:'image',label:'媒体生成'}],
  fields:[
   {path:'base_url',label:'接口完整请求地址',type:'url',group:'connection',required:true,wide:true},
   {path:'api_key',label:'接口密钥',type:'password',group:'connection',wide:true},
   {path:'model',label:'模型 ID',type:'model-list',group:'connection',wide:true},
   {path:'temperature',label:'随机程度',type:'number',min:0,max:2,step:.05,group:'connection',kinds:['text','vision']},
   {path:'max_tokens',label:'最大输出词元数',type:'number',min:1,max:1000000,group:'connection',kinds:['text','vision']},
-  {path:'enabled',label:'启用生图',type:'boolean',group:'image',kinds:['image']},
-  {path:'api_mode',label:'接口模式',type:'select',options:[['auto','自动'],['chat','对话接口'],['images','图像接口']],group:'image',kinds:['image']},
+  {path:'enabled',label:'启用生成',type:'boolean',group:'image',kinds:['image','video']},
+  {path:'api_mode',label:'接口模式',type:'select',options:[['auto','自动'],['chat','对话接口'],['images','图像接口'],['workbuddy','WorkBuddy 视频接口'],['videos','OpenAI 视频接口']],group:'image',kinds:['image','video']},
   {path:'size',label:'图片尺寸',type:'text',group:'image',kinds:['image']},
+  {path:'seconds',label:'视频时长（秒）',type:'number',min:1,max:60,group:'image',kinds:['video']},
+  {path:'resolution',label:'视频分辨率',type:'text',group:'image',kinds:['video']},
+  {path:'aspect_ratio',label:'视频宽高比',type:'text',group:'image',kinds:['video']},
+  {path:'enable_audio',label:'生成视频声音',type:'boolean',group:'image',kinds:['video']},
   {path:'character_reference_path',label:'角色参考图路径',type:'text',wide:true,group:'image',kinds:['image']},
   {path:'timeout_ms',label:'请求超时（毫秒）',type:'number',min:100,max:900000,group:'timeouts'},
   {path:'fast_timeout_ms',label:'快速请求超时（毫秒）',type:'number',min:100,max:900000,group:'timeouts',kinds:['text']},

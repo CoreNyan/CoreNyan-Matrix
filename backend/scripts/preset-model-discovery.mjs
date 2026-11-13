@@ -13,6 +13,7 @@ export function modelsEndpoint(value){
 export async function discoverPresetModels(input,store,{fetchFn=fetch}={}){
  if(!input||typeof input.base_url!=='string'||input.base_url.length>4096)fail('请先填写模型端点。');
  let url=modelsEndpoint(input.base_url),key=input.api_key;
+ if(input.kind==='video'&&input.api_mode==='workbuddy'){url=new URL(input.base_url);url.pathname=url.pathname.replace(/\/(?:videos|media\/models)\/?$/,'').replace(/\/$/,'');if(!url.pathname)url.pathname='/v1';url.pathname+='/media/models';url.search='';url.hash='';}
  if(key===null){key=input.id?store.get(input.id).settings.api_key:'';}
  if(typeof key!=='string'||key.length>8192||/[\r\n]/.test(key))fail('API Key 格式不正确。');
  if(active>=limits.maxConcurrent)fail('正在获取其他模型列表，请稍后再试。',429);
@@ -35,9 +36,9 @@ export async function discoverPresetModels(input,store,{fetchFn=fetch}={}){
   const chunks=[];let size=0;
   while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>limits.maxBytes){await reader.cancel();fail('模型列表响应过大。',502);}chunks.push(value);}
   let data;try{data=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{fail('模型接口未返回有效 JSON，请检查端点是否为 API 地址。',502);}
-  const items=Array.isArray(data)?data:data?.data;
+  const items=Array.isArray(data)?data:data?.data||data?.models;
   if(!Array.isArray(items))fail('该端点未返回兼容的模型列表，可继续手动填写模型 ID。',502);
-  const models=[...new Set(items.map(item=>typeof item==='string'?item:item?.id).filter(id=>typeof id==='string'&&id.trim()&&id.length<=200).map(id=>id.trim()))].slice(0,limits.maxItems);
+  const models=[...new Set(items.filter(item=>input.kind!=='video'||!item?.tags||item.tags.some(t=>['text-to-video','image-to-video'].includes(t))).map(item=>typeof item==='string'?item:item?.id).filter(id=>typeof id==='string'&&id.trim()&&id.length<=200).map(id=>id.trim()))].slice(0,limits.maxItems);
   return {models};
  }catch(error){
   if(error.status)throw error;

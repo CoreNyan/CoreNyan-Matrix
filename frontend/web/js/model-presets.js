@@ -47,7 +47,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
  function nextId(){let i=1;while(state.catalog?.items.some(p=>p.id===state.kind+'/'+PRESET_EDITOR.newFilePrefix+'-'+i))i++;return state.kind+'/'+PRESET_EDITOR.newFilePrefix+'-'+i;}
  function validateDraft(d){const doc=parseDraft(d);const missing=PRESET_EDITOR.requiredFields.filter(([key])=>!String(key==='id'?d.id:readPath(doc,key)||'').trim());if(missing.length){const error=Error('请填写'+missing.map(([,label])=>label).join('、')+'，草稿已保留。');error.field=missing[0][0];throw error;}try{validateModelIds(doc.settings);}catch(error){error.field='settings.model';throw error;}writeModelIds(doc.settings,readModelIds(doc.settings).map(id=>id.trim()));return doc;}
  const dirtyDrafts=()=>[...drafts.values()].filter(isDirty);
- const routeDirty=()=>state.catalog&&(state.primary!==state.catalog.bindings[state.kind]||JSON.stringify(state.backups)!==JSON.stringify(state.catalog.fallbacks?.[state.kind]||[]));
+ const routeDirty=()=>state.catalog&&(state.primary!==(state.catalog.bindings[state.kind]||'')||JSON.stringify(state.backups)!==JSON.stringify(state.catalog.fallbacks?.[state.kind]||[]));
  const dirty=()=>dirtyDrafts().length>0||routeDirty();
  function parseDraft(draft=state.draft){
   let doc;try{doc=JSON.parse(draft.raw);}catch{throw Error('完整 JSON 语法错误，请修正后再切换表单或保存。');}
@@ -115,7 +115,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
    const attrs=' data-setting="'+f.path+'"'+(f.min!==undefined?' min="'+f.min+'"':'')+(f.max!==undefined?' max="'+f.max+'"':'')+(f.step?' step="'+f.step+'"':'');
    let control;
    if(f.type==='select'||f.type==='boolean'){
-    const options=f.type==='boolean'?[['true','启用'],['false','关闭']]:f.options;
+    const options=f.type==='boolean'?[['true','启用'],['false','关闭']]:f.options.filter(([v])=>f.path!=='api_mode'||(state.kind==='video'?['workbuddy','videos']:['auto','chat','images']).includes(v));
     control='<select'+attrs+'><option value="">使用默认</option>'+options.map(([v,label])=>'<option value="'+v+'"'+(String(value)===v?' selected':'')+'>'+label+'</option>').join('')+'</select>';
    }else control='<input type="'+f.type+'"'+attrs+' value="'+esc(value??'')+'" autocomplete="'+(f.type==='password'?'new-password':'off')+'"'+(f.required?' required':'')+'>';
    return '<label class="'+(f.wide?'wide':'')+'">'+f.label+control+(f.path==='api_key'?'<small data-key-note></small><button type="button" data-keep-key>保留服务器现有密钥</button>':'')+'</label>';
@@ -123,7 +123,7 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
   q('[data-fields]').innerHTML='<fieldset><legend>预设信息</legend><label>名称<input data-field="name" maxlength="100" required value="'+esc(doc.name)+'"></label></fieldset>'+PRESET_EDITOR.groups.map(g=>{
    const selected=fields.filter(f=>f.group===g.id);return selected.length?'<fieldset><legend>'+g.label+'</legend><div class="preset-fields">'+selected.map(field).join('')+'</div></fieldset>':'';
   }).join('');
-  modelList=mountModelList(q('[data-model-list]'),{settings:doc.settings,change:ids=>mutate(doc=>writeModelIds(doc.settings,ids)),canStart:()=>!state.busy,loadModels:async()=>{const revision=connectionRevision,doc=parseDraft();const result=await api(MODEL_PRESETS.api+PRESET_EDITOR.discovery.path,{method:'POST',body:{id:state.draft.selected,base_url:doc.settings.base_url,api_key:doc.settings.api_key}});if(revision!==connectionRevision)throw Error('连接信息已修改，请重新获取模型列表。');return result;}});
+  modelList=mountModelList(q('[data-model-list]'),{settings:doc.settings,change:ids=>mutate(doc=>writeModelIds(doc.settings,ids)),canStart:()=>!state.busy,loadModels:async()=>{const revision=connectionRevision,doc=parseDraft();const result=await api(MODEL_PRESETS.api+PRESET_EDITOR.discovery.path,{method:'POST',body:{id:state.draft.selected,base_url:doc.settings.base_url,api_key:doc.settings.api_key,kind:state.kind,api_mode:doc.settings.api_mode}});if(revision!==connectionRevision)throw Error('连接信息已修改，请重新获取模型列表。');return result;}});
   renderRetryRules();renderKeyNote();
  }
  function renderKeyNote(){const note=q('[data-key-note]');if(!note)return;try{const key=parseDraft().settings.api_key;note.textContent=key==null?'密钥不回显；保存时保留服务器现有值。':key===''?'保存时将清除密钥。':'保存时将替换密钥。';}catch{}}
