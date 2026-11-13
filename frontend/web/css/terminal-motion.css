@@ -1,0 +1,7 @@
+.terminal-shutter{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:transparent;overflow:hidden;z-index:2147483647;pointer-events:none;contain:strict;visibility:visible}
+.terminal-shutter::backdrop{background:transparent;pointer-events:none}
+.terminal-shutter i{position:absolute;left:0;right:0;height:50.1%;background:#090909;will-change:transform}
+.terminal-shutter-top{top:0;transform-origin:top}.terminal-shutter-bottom{bottom:0;transform-origin:bottom}
+.terminal-scanline{position:absolute;left:7%;right:7%;top:50%;height:1px;background:#ddd;box-shadow:0 0 8px #ddd6;transform-origin:center}
+.terminal-shutter.is-closed{background:#090909}.terminal-shutter.is-closed>*{display:none}
+@media(prefers-reduced-motion:reduce){.terminal-shutter{display:none}}

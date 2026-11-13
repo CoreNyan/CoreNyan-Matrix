@@ -15,7 +15,8 @@ internal sealed class MatrixShell : Form {
     static readonly string Root=AppDomain.CurrentDomain.BaseDirectory;
     readonly JavaScriptSerializer json=new JavaScriptSerializer { MaxJsonLength=13000000 };
     WebView2 web=new WebView2();
-    bool rendererFailed;
+    bool rendererFailed,closingAnimation,closeReady;
+    const int CloseFallbackMs=160,CloseScriptTimeoutMs=180,MaxCloseAnimationMs=500;
     readonly Panel titlebar=new Panel(),offline=new Panel(),viewport=new Panel();
     readonly NotifyIcon notification=new NotifyIcon();
     readonly Uri endpoint;
@@ -30,6 +31,7 @@ internal sealed class MatrixShell : Form {
     [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr window,uint flags);
     [DllImport("user32.dll")] static extern bool GetMonitorInfo(IntPtr monitor,ref MonitorInfo info);
     [DllImport("user32.dll")] static extern bool IsZoomed(IntPtr window);
+    [DllImport("user32.dll")] static extern bool SystemParametersInfo(uint action,uint parameter,out bool value,uint flags);
     [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr window,int attribute,ref int value,int size);
     [DllImport("dwmapi.dll")] static extern int DwmExtendFrameIntoClientArea(IntPtr window,ref FrameMargins margins);
     [StructLayout(LayoutKind.Sequential)] struct FrameMargins { public int Left,Right,Top,Bottom; }
@@ -66,8 +68,7 @@ internal sealed class MatrixShell : Form {
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));layout.RowStyles.Add(new RowStyle(SizeType.Absolute,42));layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));Controls.Add(layout);
         titlebar.Dock=DockStyle.Fill;titlebar.Margin=Padding.Empty;titlebar.BackColor=BackColor;
         viewport.Dock=DockStyle.Fill;viewport.Margin=Padding.Empty;layout.Controls.Add(titlebar,0,0);layout.Controls.Add(viewport,0,1);
-        var name=new Label {Text="CoreNyan",Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft,Padding=new Padding(14,0,0,0),Font=new Font("Segoe UI",12,FontStyle.Bold)};
-        titlebar.Controls.Add(name);name.MouseDown+=Drag;titlebar.MouseDown+=Drag;name.DoubleClick+=(s,e)=>Maximize();
+        titlebar.MouseDown+=Drag;titlebar.DoubleClick+=(s,e)=>Maximize();
         AddWindowButton("×",()=>Close(),true);AddWindowButton("□",Maximize,false);AddWindowButton("−",()=>WindowState=FormWindowState.Minimized,false);
         web.Dock=DockStyle.Fill;web.DefaultBackgroundColor=BackColor;viewport.Controls.Add(web);
         offline.Dock=DockStyle.Fill;offline.BackColor=BackColor;offline.Visible=false;
@@ -82,6 +83,31 @@ internal sealed class MatrixShell : Form {
     void AddWindowButton(string text,Action action,bool close){var b=new CaptionButton {Text=text,Dock=DockStyle.Right,Width=48,FlatStyle=FlatStyle.Flat,BackColor=BackColor,ForeColor=ForeColor,HoverColor=close?Color.FromArgb(150,40,40):Color.FromArgb(38,38,38),Font=new Font("Segoe UI",15)};b.FlatAppearance.BorderSize=0;b.Click+=(s,e)=>action();titlebar.Controls.Add(b);b.BringToFront();}
     void Drag(object sender,MouseEventArgs e){if(e.Button==MouseButtons.Left){ReleaseCapture();SendMessage(Handle,0xA1,new IntPtr(2),IntPtr.Zero);}}
     void Maximize(){MaximizedBounds=Screen.FromHandle(Handle).WorkingArea;WindowState=WindowState==FormWindowState.Maximized?FormWindowState.Normal:FormWindowState.Maximized;}
+    protected override void OnFormClosing(FormClosingEventArgs e){
+        base.OnFormClosing(e);
+        // Do not delay OS shutdown or a close cancelled by another handler.
+        if(e.Cancel||closeReady||e.CloseReason!=CloseReason.UserClosing)return;
+        e.Cancel=true;if(closingAnimation)return;closingAnimation=true;titlebar.Enabled=false;
+        AnimateClose();
+    }
+    async void AnimateClose(){
+        try{
+            int duration=0;bool animated=false;
+            if(web.CoreWebView2!=null&&!rendererFailed&&web.Source!=null&&Trusted(web.Source.AbsoluteUri)){
+                var script=web.CoreWebView2.ExecuteScriptAsync("window.MatrixTerminal ? window.MatrixTerminal.close() : -1");
+                if(await System.Threading.Tasks.Task.WhenAny(script,System.Threading.Tasks.Task.Delay(CloseScriptTimeoutMs))==script){
+                    int value;if(int.TryParse(await script,out value)&&value>=0){duration=Math.Min(value,MaxCloseAnimationMs);animated=true;}
+                }
+            }
+            if(animated)await System.Threading.Tasks.Task.Delay(duration);
+            else if(ClientAnimationsEnabled()){
+                var elapsed=Stopwatch.StartNew();
+                while(elapsed.ElapsedMilliseconds<CloseFallbackMs&&!IsDisposed){Opacity=Math.Max(.02,1.0-(double)elapsed.ElapsedMilliseconds/CloseFallbackMs);await System.Threading.Tasks.Task.Delay(16);}
+            }
+        }catch{ /* A failed renderer must never trap the window open. */ }
+        finally{closeReady=true;if(!IsDisposed)Close();}
+    }
+    static bool ClientAnimationsEnabled(){bool enabled;return SystemParametersInfo(0x1042,0,out enabled,0)&&enabled;}
     protected override CreateParams CreateParams {get{
         var p=base.CreateParams;
         // Keep a real resizable frame for DWM shadow, antialiasing and Windows snap.

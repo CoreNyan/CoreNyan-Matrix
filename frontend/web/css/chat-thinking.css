@@ -1,0 +1,21 @@
+.chat-task-list{width:min(680px,100%);box-sizing:border-box;padding:18px 20px;background:#111;border:1px solid #303030;border-radius:16px;box-shadow:none;overflow:hidden}
+.thought-header{display:flex;align-items:center;gap:16px}.thought-symbol{width:58px;height:58px;flex:none;contain:paint;color:#ddd}
+.thought-symbol svg{display:block;width:100%;height:100%;stroke:currentColor;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+.thought-brackets{stroke:#626262}.thought-fold{transform-origin:32px 32px}.thought-fold-a{stroke:#aaa}.thought-fold-b{stroke:#666}.thought-thread{stroke:#eee;stroke-width:1.6}.thought-pencil{stroke:#eee}
+.thought-caption{min-width:0}.chat-task-heading{display:block;font-size:14px;line-height:1.5;font-weight:600;letter-spacing:.02em}.chat-task-heading::before{display:none}
+.thought-caption-note{display:block;margin-top:4px;font-size:12px;line-height:1.6;color:#898989}
+.chat-task-list .thought-tasks{margin:14px 0 0;padding:12px 0 0;border-top:1px solid #282828;gap:10px}
+.chat-task{grid-template-columns:14px 68px minmax(0,1fr);gap:10px;font-size:11px;line-height:1.6}
+.chat-task-indicator{position:relative;width:10px;height:10px;border:1px solid #666;border-radius:2px;box-sizing:border-box}
+.chat-task.is-thinking .chat-task-indicator{border-color:#aaa;background:transparent;box-shadow:none;animation:none}
+.chat-task.is-thinking .chat-task-indicator::after{content:'';position:absolute;inset:2px;background:#aaa}
+.chat-task-detail{color:#aaa}.is-queued .chat-task-indicator{border-style:dashed}
+.is-thinking .thought-fold-a{animation:thought-unfold 3.6s cubic-bezier(.65,0,.35,1) infinite}
+.is-thinking .thought-fold-b{animation:thought-counterfold 3.6s cubic-bezier(.65,0,.35,1) infinite}
+.is-thinking .thought-thread{stroke-dasharray:24 76;animation:thought-trace 2.4s linear infinite}
+@keyframes thought-unfold{0%,100%{transform:rotate(-12deg) scale(.94)}45%,55%{transform:rotate(78deg) scale(1.08)}}
+@keyframes thought-counterfold{0%,100%{transform:rotate(33deg) scale(1.04)}45%,55%{transform:rotate(-57deg) scale(.86)}}
+@keyframes thought-trace{to{stroke-dashoffset:-100}}
+.visuals-paused .thought-symbol *,.motion-disabled .thought-symbol *,#view-chat:not(.active) .thought-symbol *{animation-play-state:paused!important}
+@media(max-width:700px){.chat-task-list{padding:14px;border-radius:14px}.thought-header{gap:12px}.thought-symbol{width:46px;height:46px}.chat-task-heading{font-size:13px}.thought-caption-note{font-size:11px}.chat-task{grid-template-columns:12px 60px minmax(0,1fr);gap:8px}}
+@media(prefers-reduced-motion:reduce){.thought-symbol *{animation:none!important}.is-thinking .thought-thread{stroke-dasharray:none}}

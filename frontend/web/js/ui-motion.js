@@ -3,7 +3,7 @@ const states=new WeakMap(),running=new Set();
 let enabled=true;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)');
 const allowed=()=>enabled&&!reduce.matches;
-export function setMotionEnabled(value){enabled=Boolean(value);if(!allowed())for(const state of [...running])state.finish?.();}
+export function setMotionEnabled(value){enabled=Boolean(value);document.documentElement.classList.toggle('motion-disabled',!enabled);window.MatrixTerminal?.setEnabled(enabled);if(!allowed())for(const state of [...running])state.finish?.();}
 reduce.addEventListener('change',()=>setMotionEnabled(enabled));
 function stateOf(element){let state=states.get(element);if(!state){state={desired:null,version:0,animations:[],finish:null};states.set(element,state);}return state;}
 function transition(element,target,visible,commit,kind='dialog'){
