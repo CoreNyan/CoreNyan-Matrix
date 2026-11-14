@@ -181,10 +181,6 @@ internal sealed class MatrixShell : Form {
     async void AnimateClose(){
         try{
             ++fadeGeneration;
-            if(nativeMotion&&ClientAnimationsEnabled()&&WindowState!=FormWindowState.Minimized&&Visible&&!rendererFailed&&web.CoreWebView2!=null){
-                if(await DissolveClose())return;
-            }
-            if(!nativeMotion||!ClientAnimationsEnabled())return;
             int duration=0;bool animated=false;
             if(web.CoreWebView2!=null&&!rendererFailed&&web.Source!=null&&Trusted(web.Source.AbsoluteUri)){
                 var script=web.CoreWebView2.ExecuteScriptAsync("window.MatrixTerminal ? window.MatrixTerminal.close() : -1");
@@ -193,12 +189,14 @@ internal sealed class MatrixShell : Form {
                 }
             }
             if(animated&&duration>0){
-                // The HWND, titlebar and page leave together, before a black frame remains.
+                // Preserve the web mask's full contraction. Only its final HWND fade
+                // is replaced: the covered window breaks from its perimeter inward.
                 int lead=Math.Max(0,duration-300);await System.Threading.Tasks.Task.Delay(lead);
-                if(ClientAnimationsEnabled())await FadeWindow(0,duration-lead);
+                if(nativeMotion&&ClientAnimationsEnabled()&&WindowState!=FormWindowState.Minimized&&Visible&&!rendererFailed&&web.CoreWebView2!=null&&await DissolveClose())return;
+                if(nativeMotion&&ClientAnimationsEnabled())await FadeWindow(0,duration-lead);
                 else await System.Threading.Tasks.Task.Delay(duration-lead);
             }
-            else if(!animated&&ClientAnimationsEnabled())await FadeWindow(0,CloseFallbackMs);
+            else if(!animated&&nativeMotion&&ClientAnimationsEnabled())await FadeWindow(0,CloseFallbackMs);
         }catch{ /* A failed renderer must never trap the window open. */ }
         finally{closeReady=true;if(!IsDisposed)Close();}
     }
@@ -220,6 +218,14 @@ internal sealed class MatrixShell : Form {
     }
     async System.Threading.Tasks.Task<bool> DissolveClose(){
         try{
+            bool maskReady=false;
+            for(int attempt=0;attempt<5;attempt++){
+                var ready=web.CoreWebView2.ExecuteScriptAsync("Boolean(window.MatrixTerminal && window.MatrixTerminal.closeMaskReady && window.MatrixTerminal.closeMaskReady())");
+                if(await System.Threading.Tasks.Task.WhenAny(ready,System.Threading.Tasks.Task.Delay(60))!=ready){var observe=ready.ContinueWith(t=>{if(t.IsFaulted){var error=t.Exception;}},System.Threading.Tasks.TaskScheduler.Default);return false;}
+                if(await ready=="true"){maskReady=true;break;}
+                await System.Threading.Tasks.Task.Delay(16);
+            }
+            if(!maskReady)return false;
             var capture=CaptureCloseFrame();
             if(await System.Threading.Tasks.Task.WhenAny(capture,System.Threading.Tasks.Task.Delay(320))!=capture){
                 // CapturePreview cannot be cancelled. Dispose its eventual result rather
@@ -229,9 +235,8 @@ internal sealed class MatrixShell : Form {
             }
             using(var snapshot=await capture)
             using(var effect=new PixelDissolve(snapshot,RectangleToScreen(ClientRectangle))){
-                // Native close owns this transition; do not also start the white web mask.
-                var pause=web.CoreWebView2.ExecuteScriptAsync("window.MatrixTerminal && window.MatrixTerminal.nativeClose && window.MatrixTerminal.nativeClose()");
-                var observe=pause.ContinueWith(t=>{if(t.IsFaulted){var observed=t.Exception;}},System.Threading.Tasks.TaskScheduler.Default);
+                // Capture includes the completed light/dark mask; do not restart or
+                // cancel its lifecycle, which also owns the existing shutdown sound.
                 await effect.Play(this,()=>{int disabled=1;DwmSetWindowAttribute(Handle,TransitionsForceDisabled,ref disabled,sizeof(int));Opacity=0;});
             }
             return true;

@@ -48,10 +48,10 @@ internal sealed class PixelDissolve : Form {
         // into a bounded source but the alpha surface itself stays at native size.
         int tile=Math.Max(24,(int)Math.Ceiling(Math.Sqrt((double)source.Width*source.Height/TargetTiles)));
         for(int y=0;y<source.Height;y+=tile)for(int x=0;x<source.Width;x+=tile){
-            float nx=(x+tile*.5f)/source.Width-.5f,ny=(y+tile*.5f)/source.Height-.5f;
-            float distance=(float)Math.Sqrt(nx*nx+ny*ny),angle=(float)Math.Atan2(ny,nx)+(Next()-.5f)*.8f;
+            float nx=(x+Math.Min(tile,source.Width-x)*.5f)/source.Width-.5f,ny=(y+Math.Min(tile,source.Height-y)*.5f)/source.Height-.5f;
+            float inset=1-Math.Max(Math.Abs(nx)*2,Math.Abs(ny)*2),angle=(float)Math.Atan2(ny,nx)+(Next()-.5f)*.8f;
             float travel=55+Next()*115;
-            tiles.Add(new Tile{Source=new Rectangle(x,y,Math.Min(tile,source.Width-x),Math.Min(tile,source.Height-y)),Delay=.04f+distance*.18f+Next()*.13f,DX=(float)Math.Cos(angle)*travel,DY=(float)Math.Sin(angle)*travel-Next()*25,Wave=Next()*6.28f,Size=3+Next()*6});
+            tiles.Add(new Tile{Source=new Rectangle(x,y,Math.Min(tile,source.Width-x),Math.Min(tile,source.Height-y)),Delay=.02f+inset*.60f,DX=(float)Math.Cos(angle)*travel,DY=(float)Math.Sin(angle)*travel-Next()*25,Wave=Next()*6.28f,Size=3+Next()*6});
         }
         // One persistent DIB and DC: no per-frame bitmap/handle churn.
         // Reject unusually large native surfaces instead of monopolizing desktop rendering.
@@ -72,8 +72,9 @@ internal sealed class PixelDissolve : Form {
         for(int pixel=0;pixel<total;pixel++)output[pixel]=0;
         float sx=(float)origin.Width/source.Width,sy=(float)origin.Height/source.Height;
         int ox=origin.Left-Left,oy=origin.Top-Top;
+        // Rectangular perimeter-to-centre wave; the untouched centre stays intact.
         foreach(var tile in tiles){
-            float t=Math.Max(0,Math.Min(1,(progress-tile.Delay)/(1-tile.Delay)));
+            float t=Math.Max(0,Math.Min(1,(progress-tile.Delay)/.36f));
             if(t>=1)continue;
             float move=Ease(t),size=1-Ease(Math.Min(1,t*1.2f)),fade=1-Ease(Math.Max(0,(t-.4f)/.6f));
             float wobble=(float)Math.Sin(t*22+tile.Wave)*(float)Math.Sin(t*Math.PI)*7;

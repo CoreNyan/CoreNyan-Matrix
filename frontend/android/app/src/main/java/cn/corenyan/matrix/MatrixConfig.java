@@ -1,1 +1,1 @@
-package cn.corenyan.matrix; public final class MatrixConfig {public static final String SERVER_URL="https://123.56.150.177:25999";public static final String USER_AGENT="CoreNyanMatrix/0.1.0-beta.18";private MatrixConfig(){}}
+package cn.corenyan.matrix; public final class MatrixConfig {public static final String SERVER_URL="https://123.56.150.177:25999";public static final String USER_AGENT="CoreNyanMatrix/0.1.0-beta.19";private MatrixConfig(){}}
