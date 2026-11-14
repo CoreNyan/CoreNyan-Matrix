@@ -3,8 +3,10 @@ const query=new URLSearchParams(location.search);document.querySelector('#error'
 const form=document.querySelector('form'),button=form.querySelector('button');
 button.disabled=true;
 Promise.resolve(window.matrixReady).then(()=>{
+ window.MatrixBoot?.begin('interface');
  button.disabled=false;
- if(!window.matrixPages)return;
+ window.MatrixBoot?.done('interface');window.MatrixBoot?.begin('content');
+ if(!window.matrixPages){window.MatrixBoot?.done('content');return;}
  const doodles=Array.from({length:8},(_,i)=>'/assets/doodle/doodle_'+(i+1)+'.png');
  const picture=document.querySelector('[data-login-doodle]');picture.src=doodles[Math.floor(Math.random()*doodles.length)];picture.onerror=()=>{picture.onerror=null;picture.src=doodles[0];};
  form.addEventListener('submit',async event=>{
@@ -12,4 +14,5 @@ Promise.resolve(window.matrixReady).then(()=>{
   try{const response=await fetch('/auth/login',{method:'POST',body:new URLSearchParams(new FormData(form)),headers:{'Content-Type':'application/x-www-form-urlencoded'}});const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||'登录失败');location.assign(form.elements.next.value||'/');}
   catch(error){document.querySelector('#error').textContent=error.message;button.disabled=false;}
  });
+ window.MatrixBoot?.done('content');
 }).catch(error=>{document.querySelector('#error').textContent=error.message;});

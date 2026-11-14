@@ -1,72 +1,134 @@
-// One lifecycle owns first paint, data readiness and native exit. No opaque shutter.
-const OPEN_MS=820,CLOSE_MS=620,READY_LIMIT_MS=2200;
-const root=document.documentElement,reduced=matchMedia('(prefers-reduced-motion: reduce)');
-let phase='loading',enabled=true,animations=[],completion,readyTimer,loader,preparing=false,timedOut=false;
-const allowed=()=>enabled&&!reduced.matches;
+// A terminal session: real startup work -> shared handoff -> a reversible shutdown.
+const OPEN_MS=1180,CLOSE_MS=980,root=document.documentElement;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)'),boot=window.MatrixBoot;
+let phase='loading',enabled=true,animations=[],finishTimer,generation=0,preparing=false;
+const session=()=>document.querySelector('.terminal-session');
 const setPhase=value=>{phase=value;root.dataset.terminalPhase=value;};
+const allowed=()=>enabled&&!reduce.matches;
 const frame=()=>new Promise(resolve=>requestAnimationFrame(resolve));
-function cancel(){clearTimeout(completion);animations.forEach(a=>a.cancel());animations=[];}
-function onScreen(e){const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&r.bottom>0&&r.top<innerHeight;}
-function surfaces(){
- const main=document.querySelector('body > main'),active=main?.querySelector('.chapter-view.active');
- let panels=active?[...active.querySelectorAll('.bento-cell,.chat-sidebar,.chat-main')]:[...main?.querySelectorAll(':scope > .brand,:scope > h1,:scope > p:not(:empty),:scope > form > label,:scope > form > button')||[]];
- if(active&&!panels.length)panels=[...active.children];
- panels=panels.filter(onScreen).filter(e=>!panels.some(other=>other!==e&&other.contains(e))).slice(0,10);
- return {main,panels,chrome:[...document.querySelectorAll('body > .editorial-topbar,body > .telemetry-overline-strip,body > .editorial-footer-ticker')].filter(onScreen)};
+const settled=step=>step&&['done','skipped'].includes(step.status);
+const onScreen=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&r.bottom>0&&r.top<innerHeight;};
+function cancel(){clearTimeout(finishTimer);for(const a of animations)a.cancel();animations=[];}
+function animate(e,frames,duration,delay=0,easing='cubic-bezier(.22,.75,.22,1)'){
+ if(e)animations.push(e.animate(frames,{duration,delay,fill:'both',easing}));
 }
-function motion(element,frames,duration,delay=0,easing='cubic-bezier(.22,.75,.25,1)'){
- if(element)animations.push(element.animate(frames,{duration,delay,fill:'both',easing}));
+function capture(e){const s=getComputedStyle(e);return{opacity:s.opacity,transform:s.transform,clipPath:s.clipPath};}
+function collect(){
+ const surfaces=[...document.body.children].filter(e=>e!==session()&&!['SCRIPT','STYLE','LINK'].includes(e.tagName)&&onScreen(e));
+ const view=document.querySelector('.chapter-view.active')||document.querySelector('body>main');
+ const candidates=view?[...view.querySelectorAll('.cell-topline,.identity-heading-row,.hero-manifesto,.subconscious-diary-box,.hero-bottom-bar,.signal-loom-stage,.loom-cognitive-matrix,.loom-footer-bar,.health-dials,.ledger-block,.chat-header,.chat-sidebar>header,.chat-sidebar>label,.chat-sidebar>nav,.chat-messages,.chat-bottom,.entity-flight,.entity-stage,:scope>.brand,:scope>h1,:scope>form')].filter(onScreen):[];
+ const details=candidates.filter(e=>!candidates.some(other=>other!==e&&other.contains(e))).slice(0,24);
+ return {surfaces,details};
 }
-function removeLoader(){loader?.remove();loader=null;}
 function finish(closing){
- // Commit the same terminal opacity BEFORE cancelling the animation's fill.
  setPhase(closing?'closed':'open');root.removeAttribute('data-terminal-boot');
- cancel();removeLoader();
+ for(const e of document.querySelectorAll('[data-terminal-surface]')){e.inert=closing;if(!closing)e.removeAttribute('data-terminal-surface');}
+ cancel();
+ const panel=session();if(panel){panel.hidden=!closing;panel.inert=!closing;panel.dataset.mode=closing?'closing':'idle';}
  dispatchEvent(new CustomEvent('matrix-terminal-settled',{detail:{closing}}));
 }
 function play(closing=false){
- if(closing&&(phase==='closing'||phase==='closed'))return phase==='closing'?CLOSE_MS:0;
- if(!closing&&(phase==='opening'||phase==='open'))return 0;
- clearTimeout(readyTimer);
- const previous=phase,{main,panels,chrome}=surfaces();
- const dialogs=[...document.querySelectorAll('dialog[open],body > .modal-backdrop:not(.is-hidden),body > .lightbox-backdrop:not(.is-hidden)')];
- const nodes=[main,...panels,...chrome,...dialogs,loader].filter(Boolean);
- const current=new Map(nodes.map(e=>{const s=getComputedStyle(e);return[e,{opacity:s.opacity,translate:s.translate,scale:s.scale}];}));
- cancel();setPhase(closing?'closing':'opening');root.removeAttribute('data-terminal-boot');
- if(!closing)dispatchEvent(new Event('matrix-terminal-present'));
- if(!allowed()){finish(closing);return 0;}
+ if(closing&&['closing','closed'].includes(phase))return phase==='closing'?CLOSE_MS:0;
+ if(!closing&&['opening','open'].includes(phase))return 0;
+ const previous=phase,initial=phase==='loading',panel=session(),{surfaces,details}=collect();
+ const nodes=[...surfaces,...details,...(panel?[panel,...panel.children]:[])];
+ const current=new Map(nodes.map(e=>[e,capture(e)]));
+ generation++;cancel();setPhase(closing?'closing':'opening');
+ // Fill states are installed in this same task, before the hidden boot state is released.
+ for(const e of surfaces){e.setAttribute('data-terminal-surface','');e.inert=true;}
+ root.removeAttribute('data-terminal-boot');
+ if(!panel||!allowed()){finish(closing);return 0;}
+ panel.hidden=false;panel.inert=false;panel.dataset.mode=closing?'closing':'handoff';panel.dataset.interrupted=String(closing&&(previous==='loading'||previous==='opening'));
+ panel.querySelector('[data-boot-heading]').textContent=closing?'CLOSING':'CONNECTED';
+ panel.querySelector('[data-boot-title]').textContent=closing?'终端休眠':'终端接入';
+ panel.querySelector('[data-boot-status]').textContent=closing?'正在关闭本地界面':'连接完成，欢迎回来';
+ panel.querySelector('[data-boot-footer]').textContent=closing?'云端任务继续运行':'服务已连接';
  const duration=closing?CLOSE_MS:OPEN_MS;
- const fresh=previous==='loading';
- const from=(e,start)=>fresh&&!closing?start:current.get(e);
- motion(main,[from(main,{opacity:0,translate:'0 12px',scale:'.992'}),{opacity:closing?0:1,translate:closing?'0 10px':'0 0',scale:closing?'.992':'1'}],duration);
- panels.forEach((panel,index)=>{
-  const delay=closing?Math.min(panels.length-1-index,5)*20:Math.min(index,6)*35;
-  motion(panel,[from(panel,{opacity:0,translate:'0 16px',scale:'1'}),{opacity:closing?0:1,translate:closing?'0 8px':'0 0',scale:'1'}],duration-delay,delay);
+ const core=panel.querySelector('.terminal-core'),rail=panel.querySelector('.terminal-rail'),foot=panel.querySelector('.terminal-foot'),coordinate=panel.querySelector('.terminal-coordinate'),scan=panel.querySelector('.terminal-scan');
+ if(closing){
+  const interrupted=previous==='loading'||previous==='opening';
+  animate(panel,[interrupted?current.get(panel):{opacity:0},{opacity:1,offset:.68},{opacity:1}],duration);
+  animate(core,[interrupted?current.get(core):{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)',clipPath:'inset(0 0 0 0)',offset:.44},{opacity:0,transform:'translateY(-8px)',clipPath:'inset(0 0 0 0)'}],duration);
+  animate(rail,[interrupted?current.get(rail):{opacity:0,transform:'scaleY(1)'},{opacity:.7,transform:'scaleY(1)',offset:.3},{opacity:0,transform:'scaleY(0)'}],duration);
+  animate(foot,[interrupted?current.get(foot):{opacity:0},{opacity:.7,offset:.4},{opacity:0}],duration);
+  animate(coordinate,[interrupted?current.get(coordinate):{opacity:0},{opacity:.6,offset:.4},{opacity:0}],duration);
+ }else{
+  animate(panel,[initial?{opacity:1}:current.get(panel),{opacity:1,offset:.15},{opacity:0}],duration);
+  animate(core,[initial?{opacity:1,transform:'none',clipPath:'inset(0 0 0 0)'}:current.get(core),{opacity:0,transform:'translateY(-28px)',clipPath:'inset(0 0 100% 0)'}],660);
+  animate(rail,[{opacity:1,transform:'scaleY(1)'},{opacity:0,transform:'scaleY(1) translateX(-12px)'}],duration);
+  animate(foot,[{opacity:.8},{opacity:0}],560);
+  animate(coordinate,[{opacity:.8},{opacity:0}],560);
+  animate(scan,[{opacity:0,transform:'translateX(-2vw)'},{opacity:.22,offset:.23},{opacity:0,transform:'translateX(102vw)'}],duration);
+ }
+ surfaces.forEach((e,i)=>{
+  const start=initial&&!closing?{opacity:0,transform:'translateY(14px)',clipPath:'inset(0 0 0 0)'}:current.get(e);
+  const delay=closing?0:90+Math.min(i,4)*35;
+  animate(e,[start,{opacity:closing?0:1,transform:closing?'translateY(-10px)':'none',clipPath:'inset(0 0 0 0)'}],closing?600:duration-delay,delay);
  });
- chrome.forEach(e=>motion(e,[from(e,{opacity:0,translate:'0 5px',scale:'1'}),{opacity:closing?0:1,translate:'0 0',scale:'1'}],duration));
- if(loader)motion(loader,[current.get(loader),{opacity:0,translate:'0 -6px',scale:'1'}],Math.min(300,duration));
- dialogs.forEach(e=>motion(e,[current.get(e),{opacity:closing?0:1,translate:closing?'0 10px':'0 0',scale:closing?'.99':'1'}],duration));
- completion=setTimeout(()=>finish(closing),duration);
+ details.forEach(e=>{
+  const r=e.getBoundingClientRect(),order=Math.min(1,(r.top/innerHeight*.65+r.left/innerWidth*.35));
+  const delay=closing?(1-order)*110:150+order*220;
+  const start=initial&&!closing?{opacity:0,transform:'translateY(18px)',clipPath:'inset(0 0 12% 0)'}:current.get(e);
+  animate(e,[start,{opacity:closing?0:1,transform:closing?'translateY(-10px)':'none',clipPath:'inset(0 0 0 0)'}],closing?470:duration-delay,delay);
+ });
+ finishTimer=setTimeout(()=>finish(closing),duration);
  return duration;
 }
-async function ready(){
- if(preparing||phase!=='loading'||root.hasAttribute('data-terms-pending'))return;preparing=true;
- // Decode visible portraits and settle fonts/layout, with a bounded wait.
- const images=[...document.images].filter(onScreen);
- let deadline;
- await Promise.race([Promise.allSettled([document.fonts?.ready,...images.map(i=>i.decode?.())]),new Promise(r=>{deadline=setTimeout(r,500);})]);
- clearTimeout(deadline);await frame();await frame();
- if(phase==='loading')play();
+function bounded(promise,ms,message){
+ let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(message)),ms);})]).finally(()=>clearTimeout(timer));
 }
-Object.defineProperty(window,'MatrixTerminal',{value:Object.freeze({close:()=>play(true),open:()=>play(),ready,setEnabled(value){enabled=Boolean(value);if(!allowed()&&phase!=='loading')finish(phase==='closing'||phase==='closed');}})});
-reduced.addEventListener('change',()=>{if(reduced.matches&&phase!=='loading')finish(phase==='closing'||phase==='closed');});
-addEventListener('matrix-app-ready',ready);
-const termsObserver=new MutationObserver(()=>{if(!root.hasAttribute('data-terms-pending')){termsObserver.disconnect();if(timedOut||root.hasAttribute('data-app-ready'))ready();}});
-if(root.hasAttribute('data-terms-pending'))termsObserver.observe(root,{attributes:true,attributeFilter:['data-terms-pending']});
-addEventListener('pagehide',()=>{clearTimeout(readyTimer);termsObserver.disconnect();cancel();removeLoader();});
-addEventListener('pageshow',event=>{if(event.persisted){setPhase('closed');play();}});
-setPhase('loading');
-loader=document.createElement('div');loader.className='terminal-loading';loader.setAttribute('role','status');loader.textContent='正在连接小可';document.body.append(loader);
-// Slow/offline requests must not imprison navigation behind a loading screen.
-readyTimer=setTimeout(()=>{timedOut=true;ready();},READY_LIMIT_MS);
-if(!root.hasAttribute('data-terminal-app')||root.hasAttribute('data-app-ready'))ready();
+function waitForCanvas(canvas,attribute){
+ if(canvas.hasAttribute(attribute))return Promise.resolve();
+ return new Promise((resolve,reject)=>{
+  const done=error=>{clearTimeout(timer);observer.disconnect();error?reject(error):resolve();};
+  const observer=new MutationObserver(()=>{if(canvas.dataset.transition==='error')done(Error('模型未能加载，请重试'));else if(canvas.hasAttribute(attribute))done();});
+  const timer=setTimeout(()=>done(Error('首屏画面准备超时，请重试')),15000);
+  observer.observe(canvas,{attributes:true});
+ });
+}
+async function prepare(){
+ if(preparing||phase!=='loading')return;
+ const state=boot?.snapshot();
+ if(state&&!['config','connection','interface','content'].every(id=>settled(state.steps.find(s=>s.id===id))))return;
+ preparing=true;const ticket=generation;boot?.begin('assets');
+ try{
+  await bounded(document.fonts.ready,10000,'字体加载超时，请重新连接');
+  // Only images needed in the first viewport gate entry; offscreen galleries remain lazy.
+  const images=[...document.images].filter(onScreen);
+  const results=await bounded(Promise.allSettled(images.map(i=>i.decode())),10000,'首屏图片加载超时，请重试或先进入界面');
+  if(results.some(r=>r.status==='rejected'))throw Error('部分首屏图片未能加载，可重试或先进入界面');
+  boot?.done('assets');
+ }catch(error){boot?.fail('assets',error);preparing=false;return;}
+ await prepareFrame(ticket);
+}
+async function prepareFrame(ticket=generation){
+ if(phase!=='loading'||ticket!==generation)return;
+ boot?.begin('frame');
+ try{
+  const wave=document.querySelector('#view-vitals.active #ecgCanvas');
+  if(wave&&root.hasAttribute('data-vitals-ready'))await waitForCanvas(wave,'data-signal-ready');
+  const entity=document.querySelector('#view-entity.active canvas');
+  if(entity)await waitForCanvas(entity,'data-first-frame');
+  await frame();await frame();
+  if(phase!=='loading'||ticket!==generation)return;
+  boot?.done('frame');
+  // Allow the real 100% state to paint; no artificial minimum loading duration.
+  await frame();if(phase==='loading'&&ticket===generation)play();
+ }catch(error){boot?.fail('frame',error);}
+}
+function onProgress(state){
+ if(phase!=='loading')return;
+ if(settled(state.steps.find(s=>s.id==='assets'))&&!preparing){preparing=true;void prepareFrame();return;}
+ if(!preparing)void prepare();
+}
+Object.defineProperty(window,'MatrixTerminal',{value:Object.freeze({
+ close:()=>play(true),open:()=>phase==='loading'?0:play(),ready:()=>prepare(),
+ setEnabled(value){enabled=Boolean(value);if(!allowed()&&!['loading','closed'].includes(phase))finish(phase==='closing');}
+})});
+setPhase('loading');boot?.subscribe(onProgress);
+if(!boot)void prepare();
+reduce.addEventListener('change',()=>{if(reduce.matches&&!['loading','closed'].includes(phase))finish(phase==='closing');});
+addEventListener('pagehide',()=>{generation++;cancel();});
+addEventListener('pageshow',e=>{if(e.persisted){setPhase('closed');play();}});
+// Show the native window as soon as the real connection console has painted.
+void (async()=>{await frame();dispatchEvent(new Event('matrix-terminal-present'));})();

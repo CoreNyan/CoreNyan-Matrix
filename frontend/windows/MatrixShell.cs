@@ -16,7 +16,7 @@ internal sealed class MatrixShell : Form {
     readonly JavaScriptSerializer json=new JavaScriptSerializer { MaxJsonLength=13000000 };
     WebView2 web=new WebView2();
     bool rendererFailed,closingAnimation,closeReady,windowPresented;
-    const int CloseFallbackMs=160,CloseScriptTimeoutMs=180,MaxCloseAnimationMs=900;
+    const int CloseFallbackMs=200,CloseScriptTimeoutMs=250,MaxCloseAnimationMs=1400;
     readonly Panel titlebar=new Panel(),offline=new Panel(),viewport=new Panel();
     readonly NotifyIcon notification=new NotifyIcon();
     readonly Uri endpoint;
@@ -115,7 +115,7 @@ internal sealed class MatrixShell : Form {
             }
             if(animated&&duration>0){
                 // The HWND, titlebar and page leave together, before a black frame remains.
-                int lead=duration/3;await System.Threading.Tasks.Task.Delay(lead);
+                int lead=Math.Max(0,duration-300);await System.Threading.Tasks.Task.Delay(lead);
                 if(ClientAnimationsEnabled())await FadeWindow(0,duration-lead);
                 else await System.Threading.Tasks.Task.Delay(duration-lead);
             }

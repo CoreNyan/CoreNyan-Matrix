@@ -129,7 +129,7 @@ import { entityPreview } from './entity-models.js';
   let fmEditorView, configEditorView, layerEditor, workspaceSearch;
   const syncingEditors = new WeakSet();
   const historyDrafts = new Map();
-  const navigation = createNavigation({ snapshot: navigationSnapshot, restore: restoreNavigation, flush: () => registry.flush(), onError: error => showToast(error.message, true), invalidate: () => { ++requests.file; ++requests.files; ++requests.logs; } });
+  const navigation = createNavigation({ snapshot: navigationSnapshot, restore: restoreNavigation, flush: () => registry.flush(), onError: error => {showToast(error.message, true);if(!document.documentElement.hasAttribute('data-app-ready'))window.MatrixBoot?.fail('content',error);}, invalidate: () => { ++requests.file; ++requests.files; ++requests.logs; } });
 
   function navigationSnapshot() {
     const art = state.lightbox.open ? getCurrentLightboxArtwork() : null;
@@ -431,6 +431,7 @@ import { entityPreview } from './entity-models.js';
 
   async function apiFetch(url, options = {}) {
     const opts = { ...options };
+    if(!opts.signal&&!document.documentElement.hasAttribute('data-app-ready'))opts.signal=AbortSignal.timeout(15000);
     if (opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)) {
       opts.headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
       opts.body = JSON.stringify(opts.body);
@@ -1257,6 +1258,7 @@ import { entityPreview } from './entity-models.js';
         await selectFileScope(defaultScope);
       }
     } catch (err) {
+      if(!document.documentElement.hasAttribute('data-app-ready')&&state.activeView===VIEW.MEMORY)window.MatrixBoot?.fail('content',err);
       showToast(`加载解剖分区失败: ${err.message}`, true);
     }
   }
@@ -2171,7 +2173,7 @@ import { entityPreview } from './entity-models.js';
         state.logs.source = res.source || organ;
         state.logs.sourceOrgan = organ;
       }
-    } catch (err) { if (request === requests.logs) state.logs.rawText = `[ERROR] ${organ}: ${err.message}`; }
+    } catch (err) { if (request === requests.logs) state.logs.rawText = `[ERROR] ${organ}: ${err.message}`; if(!document.documentElement.hasAttribute('data-app-ready')&&state.activeView===VIEW.NEURAL)window.MatrixBoot?.fail('content',err); }
     finally { if (request === requests.logs) state.logs.loading = false; }
   }
 
@@ -2375,7 +2377,7 @@ import { entityPreview } from './entity-models.js';
     initFileDragging();
     mountRecycleBin(registry, apiFetch, refreshCurrentScopeFiles);
     layerEditor=mountLayerEditor(apiFetch,async()=>{await loadFileScopes(false);await pollVitals();});
-    mountChat($('view-chat'),registry);
+    const chatView=mountChat($('view-chat'),registry);
     mountMobileLayout(registry);
     mountOnebotLogin(registry,message=>showToast(message,true));
     mountSettings(registry,{openSystemConfig:async entry=>{
@@ -2410,15 +2412,19 @@ import { entityPreview } from './entity-models.js';
         event.preventDefault();workspaceSearch.open();
       }
     });
-    // Start the actual route immediately; unrelated file scopes must not delay VITALS.
+    window.MatrixBoot?.done('interface');window.MatrixBoot?.begin('content');
+    // A completed request and a rendered route, never a timer, unlock first paint.
     const firstVitals=pollVitals(),route=readRoute(location.href);
     await Promise.allSettled([
       firstVitals,
       route.image||route.bond?firstVitals.then(()=>navigation.start()):navigation.start(),
-      route.view===VIEW.MEMORY?Promise.resolve():loadFileScopes(false)
+      route.view===VIEW.CHAT?chatView.ready:Promise.resolve()
     ]);
+    if(route.view!==VIEW.MEMORY)void loadFileScopes(false);
     registry.flush();
     document.documentElement.setAttribute('data-app-ready','');
+    if(state.telemetryError)window.MatrixBoot?.fail('content',state.telemetryError);
+    else if(!window.MatrixBoot?.snapshot().steps.some(s=>s.id==='content'&&s.status==='failed'))window.MatrixBoot?.done('content');
     window.dispatchEvent(new Event('matrix-app-ready'));
 
     // Non-blocking periodic background telemetry
@@ -2432,8 +2438,8 @@ import { entityPreview } from './entity-models.js';
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootstrap);
+    document.addEventListener('DOMContentLoaded', ()=>bootstrap().catch(error=>window.MatrixBoot?.fail(window.MatrixBoot.snapshot().steps.find(s=>s.id==='interface').status==='done'?'content':'interface',error)));
   } else {
-    bootstrap();
+    bootstrap().catch(error=>window.MatrixBoot?.fail(window.MatrixBoot.snapshot().steps.find(s=>s.id==='interface').status==='done'?'content':'interface',error));
   }
 })();

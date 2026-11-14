@@ -14,7 +14,7 @@ export function mountEntityView(root,registry,layers=()=>[]){
  let frame=0,last=0,dirty=true,disposed=false,kind='',layerKey='',tabsSignature='',rotSpeed=ENTITY.rotSpeed,lastClock='';
  const text=(selector,value)=>root.querySelector(selector).textContent=value;
  const budget=createFrameBudget(RENDER_BUDGET.entityFps);
- const visible=()=>visualActive()&&registry.state.activeView==='entity';
+ const visible=()=>!document.hidden&&registry.state.activeView==='entity'&&(visualActive()||!canvas.hasAttribute('data-first-frame'));
  function wake(){if(!frame&&!disposed&&visible()){last=0;frame=budget.request(draw);}}
  function draw(now){
   frame=0;if(disposed||!visible())return;
@@ -44,7 +44,7 @@ export function mountEntityView(root,registry,layers=()=>[]){
     }).catch(error=>failTransition(t,error));
    }else if(t.phase==='assemble'&&amount===1){transition=null;phase='idle';progress=0;canvas.dataset.transition='idle';}
   }
-  if(dirty||auto||focusing||t){renderer.draw({...camera,phase,progress});dirty=false;}
+  if(dirty||auto||focusing||t){renderer.draw({...camera,phase,progress});dirty=false;if(canvas.dataset.model&&!transition)canvas.setAttribute('data-first-frame','');}
   if(wantsRotation&&!transition||focusing||transition&&!transition.swapping&&(transition.ready||transition.elapsed<ENTITY.scatterMs))frame=budget.request(draw);
  }
  function resize(){const rect=canvas.getBoundingClientRect();if(rect.width&&rect.height){renderer.resize(rect.width,rect.height);dirty=true;wake();}}
