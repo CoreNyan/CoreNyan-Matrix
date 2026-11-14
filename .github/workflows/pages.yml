@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 concurrency:
@@ -26,6 +27,31 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
+          name: pages-${{ github.run_id }}-${{ github.run_attempt }}
           path: .build/pages
+      - name: Wait for uploaded artifact metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_NAME: pages-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          node --input-type=module <<'NODE'
+          const url = `${process.env.GITHUB_API_URL}/repos/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}/artifacts?per_page=100`;
+          for (let attempt = 0; attempt < 12; attempt++) {
+            const response = await fetch(url, {headers: {
+              Authorization: `Bearer ${process.env.GH_TOKEN}`,
+              Accept: 'application/vnd.github+json'
+            }});
+            if (!response.ok && response.status < 500 && response.status !== 429) throw Error(`Artifact metadata HTTP ${response.status}`);
+            const data = response.ok ? await response.json() : {};
+            if (data.artifacts?.some(a => a.name === process.env.ARTIFACT_NAME && !a.expired)) {
+              console.log('Uploaded Pages artifact is visible.');
+              process.exit(0);
+            }
+            await new Promise(resolve => setTimeout(resolve, 3000));
+          }
+          throw Error('Uploaded Pages artifact did not become visible within 36 seconds');
+          NODE
       - uses: actions/deploy-pages@v4
         id: deployment
+        with:
+          artifact_name: pages-${{ github.run_id }}-${{ github.run_attempt }}
