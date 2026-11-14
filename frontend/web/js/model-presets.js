@@ -115,8 +115,8 @@ export function mountModelPresets(api,{onApplied=()=>{},openDirectory=()=>{},cre
    const attrs=' data-setting="'+f.path+'"'+(f.min!==undefined?' min="'+f.min+'"':'')+(f.max!==undefined?' max="'+f.max+'"':'')+(f.step?' step="'+f.step+'"':'');
    let control;
    if(f.type==='select'||f.type==='boolean'){
-    const options=f.type==='boolean'?[['true','启用'],['false','关闭']]:f.options.filter(([v])=>f.path!=='api_mode'||(state.kind==='video'?['workbuddy','videos']:['auto','chat','images']).includes(v));
-    control='<select'+attrs+'><option value="">使用默认</option>'+options.map(([v,label])=>'<option value="'+v+'"'+(String(value)===v?' selected':'')+'>'+label+'</option>').join('')+'</select>';
+    const options=f.type==='boolean'?[['true','启用'],['false','关闭']]:f.options.filter(([v])=>f.path!=='api_mode'||(state.kind==='video'?['workbuddy','videos']:['auto','chat','images','workbuddy']).includes(v));
+    control='<select'+attrs+'><option value="">使用默认</option>'+options.map(([v,label])=>'<option value="'+v+'"'+(String(value)===v?' selected':'')+'>'+(f.path==='api_mode'&&v==='workbuddy'&&state.kind==='image'?'WorkBuddy 图像接口':label)+'</option>').join('')+'</select>';
    }else control='<input type="'+f.type+'"'+attrs+' value="'+esc(value??'')+'" autocomplete="'+(f.type==='password'?'new-password':'off')+'"'+(f.required?' required':'')+'>';
    return '<label class="'+(f.wide?'wide':'')+'">'+f.label+control+(f.path==='api_key'?'<small data-key-note></small><button type="button" data-keep-key>保留服务器现有密钥</button>':'')+'</label>';
   }
