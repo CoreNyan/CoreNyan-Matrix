@@ -40,7 +40,7 @@ export function createChatWelcome(username=''){
   previousDoodle=nextDoodle(previousDoodle,DOODLE_TOTAL);
   const image=document.createElement('img'),title=document.createElement('h2'),subtitle=document.createElement('p');
   image.src=`/assets/doodle/doodle_${previousDoodle}.png`;image.alt='小可';image.decoding='async';
-  node.append(image,title,subtitle,environmentControls());render(node);
+  node.append(image,title,subtitle,environmentControls({enableOnly:true}));render(node);
   const unsubscribe=onEnvironment(()=>{
    if(!node.isConnected){unsubscribe();return;}
    const next=welcomeContext(config,{username:state.username,weather:environmentFor(state.username)?.weather});
