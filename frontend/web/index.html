@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN" data-terms-pending data-terminal-boot data-terminal-app>
-<head>
+<head><script src="/js/theme-bootstrap.js"></script><link rel="stylesheet" href="/css/theme.css">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>CoreNyan</title>
@@ -25,7 +25,7 @@
     <link rel="stylesheet" href="/css/notifications.css">
 <link rel="stylesheet" href="/css/api-records.css">
 <link rel="stylesheet" href="/css/recent-thoughts.css">
-<link rel="stylesheet" href="/css/dashboard-signals.css"><link rel="stylesheet" href="/css/terminal-motion.css"><script src="/js/boot-progress.js"></script><script type="module" src="/js/terminal-motion.js"></script><link rel="stylesheet" href="/css/chat-thinking.css"></head>
+<link rel="stylesheet" href="/css/dashboard-signals.css"><link rel="stylesheet" href="/css/terminal-motion.css"><script src="/js/boot-progress.js"></script><script type="module" src="/js/terminal-motion.js"></script><link rel="stylesheet" href="/css/chat-thinking.css"><link rel="stylesheet" href="/css/life-status.css"></head>
 <body class="editorial-body">
     <!-- Global Top Editorial Navigation Bar (billcreates.tech + havu.cc + mikewilcockdesign.com synthesis) -->
     <header class="editorial-topbar">
@@ -45,11 +45,11 @@
 
         <!-- Center Notch Avatar Badge (billcreates.tech Lucky Guide homage) -->
         <div class="topbar-center">
-            <button class="notch-avatar-pill" id="spineAvatarFrame" type="button" title="点击切换{{character.name}}白线{{concept.doodle.zh}}形态 (1–37)">
-                <span class="notch-dot" id="spinePulseDot"></span>
+            <button class="notch-avatar-pill" id="spineAvatarFrame" type="button" title="换一张小可线稿" aria-label="小可当前状态，点击更换线稿">
+                <span class="notch-portrait">
                 <img src="/assets/doodle/doodle_1.png" alt="{{brand.name}} Doodle" class="notch-avatar-img" id="spineAvatarImg" />
-                <span class="notch-label" id="spineLifeStatusText">PULSE // SYNCHRONIZING</span>
-                <span class="notch-code" id="doodleIndexTag">#01</span>
+                </span><span class="notch-copy"><span class="notch-mode" id="spineLifeMode">CONNECTING</span><span class="notch-label" id="spineLifeStatusText">正在接入</span></span><span class="notch-signal" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                <span class="notch-code" id="doodleIndexTag" hidden>#01</span>
             </button>
         </div>
 
@@ -77,7 +77,7 @@
             </nav>
 
             <div class="topbar-RichToggles">
-<button class="pill-cta-btn" id="btnSettings" type="button" aria-haspopup="dialog"><span>{{settings.title}}</span><span class="cta-arrow" aria-hidden="true">→</span></button>
+<button id="btnTheme" type="button" aria-label="切换白日主题" disabled><svg viewBox="0 0 24 24" aria-hidden="true"></svg></button><button class="pill-cta-btn" id="btnSettings" type="button" aria-haspopup="dialog"><span>{{settings.title}}</span><span class="cta-arrow" aria-hidden="true">→</span></button>
             </div>
         </div>
     </header>

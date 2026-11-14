@@ -3,6 +3,7 @@ import {PREFERENCES,DEFAULT_PREFERENCES,SHORTCUTS,validatePreferences,normalizeC
 export {SHORTCUTS,normalizeChord};
 let values=structuredClone(DEFAULT_PREFERENCES),revision=0,ready=false,busy=false,timer,dirty={},listeners=new Set();
 export const preferences=()=>values;
+export const preferencesReady=()=>ready;
 export const binding=id=>values.shortcuts[id]??SHORTCUTS.find(a=>a.id===id)?.defaultKey??'';
 export function chord(event){if(event.isComposing||['Control','Meta','Alt','Shift'].includes(event.key))return '';return [event.ctrlKey||event.metaKey?'Mod':'',event.altKey?'Alt':'',event.shiftKey?'Shift':'',event.key===' '?'Space':event.key.length===1?event.key.toUpperCase():event.key].filter(Boolean).join('+');}
 export const shortcut=(event,id)=>!event.isComposing&&!!binding(id)&&chord(event)===binding(id);

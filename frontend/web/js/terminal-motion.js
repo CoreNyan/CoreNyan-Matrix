@@ -3,7 +3,7 @@ const OPEN_MS=1180,SHRINK_MS=600,FADE_MS=300,CLOSE_MS=SHRINK_MS+FADE_MS,root=doc
 const reduce=matchMedia('(prefers-reduced-motion: reduce)'),boot=window.MatrixBoot;
 let phase='loading',enabled=true,animations=[],finishTimer,generation=0,preparing=false,exitMask=null,exitField=null,bootEdges=null,exitEdges=null,edgeFrame=0;
 const session=()=>document.querySelector('.terminal-session');
-const setPhase=value=>{phase=value;root.dataset.terminalPhase=value;};
+const setPhase=value=>{const previous=phase;phase=value;root.dataset.terminalPhase=value;dispatchEvent(new CustomEvent('matrix-terminal-transition',{detail:{phase:value,previous}}));};
 function aperture(size){
  const a=(1-size)*50,b=100-a;
  return `polygon(evenodd,0% 0%,100% 0%,100% 100%,0% 100%,0% 0%,${a}% ${a}%,${a}% ${b}%,${b}% ${b}%,${b}% ${a}%,${a}% ${a}%)`;

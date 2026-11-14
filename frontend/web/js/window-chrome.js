@@ -42,4 +42,6 @@ export async function mountWindowChrome(){
  }
  window.addEventListener('matrix-window-state',e=>windowState(e.detail));
  windowState(await native.windowAction('ready'));
+ const reduce=matchMedia('(prefers-reduced-motion: reduce)'),motion=()=>void native.windowAction('motion',!reduce.matches&&!document.body.classList.contains('motion-off')).catch(()=>{});
+ reduce.addEventListener('change',motion);document.addEventListener('corenyan:preferences',motion);motion();
 }

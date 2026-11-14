@@ -545,7 +545,8 @@ import { entityPreview } from './entity-models.js';
       if ($('spineBpmValue')) $('spineBpmValue').textContent = `${vitals.bpm ?? TELEMETRY.bpm} BPM`;
 
       if ($('spineLifeStatusText')) {
-        $('spineLifeStatusText').textContent = LIFE_MODE_LABELS[vitals.mode] || `ACTIVE · ${vitals.mode || 'ONLINE'}`;
+        const label=LIFE_MODE_LABELS[vitals.mode]||'ONLINE · 在线';
+        $('spineLifeStatusText').textContent=label.split(' · ').at(-1);$('spineLifeMode').textContent=vitals.mode||'ONLINE';$('spineAvatarFrame').dataset.mode=vitals.mode||'ONLINE';
       }
 
       if ($('hostPlatformTag')) $('hostPlatformTag').textContent = `${host.hostname || termText("{{brand.display}}")} // ${host.platform || 'LINUX'}`;

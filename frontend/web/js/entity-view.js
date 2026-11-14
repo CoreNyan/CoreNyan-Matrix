@@ -1,5 +1,5 @@
 import {createFrameBudget,visualActive,observeVisualActivity} from './render-budget.js';
-import {shortcut} from './preferences.js';
+import {shortcut,preferences} from './preferences.js';
 import {ENTITY,ENTITY_MODELS,RENDER_BUDGET} from './constants.js';
 import {entityKind,buildEntityModel} from './entity-assets.js';
 import {createEntityRenderer} from './entity-point-renderer.js';
@@ -13,7 +13,7 @@ export function mountEntityView(root,registry,layers=()=>[]){
  const pointers=new Map();
  let frame=0,last=0,dirty=true,disposed=false,kind='',layerKey='',tabsSignature='',rotSpeed=ENTITY.rotSpeed,lastClock='';
  const text=(selector,value)=>root.querySelector(selector).textContent=value;
- const budget=createFrameBudget(RENDER_BUDGET.entityFps);
+ const budget=createFrameBudget(()=>preferences().fpsLimit);
  const visible=()=>!document.hidden&&registry.state.activeView==='entity'&&(visualActive()||!canvas.hasAttribute('data-first-frame'));
  function wake(){if(!frame&&!disposed&&visible()){last=0;frame=budget.request(draw);}}
  function draw(now){

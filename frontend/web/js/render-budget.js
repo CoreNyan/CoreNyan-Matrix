@@ -10,15 +10,13 @@ export function createFrameBudget(fps){
  return {
   request(callback){
    const handle={timer:0,frame:0,cancelled:false};
-   const interval=1000/(typeof fps==='function'?fps():fps);
-   // Sleep between frames instead of waking at the monitor's refresh rate.
-   handle.timer=setTimeout(()=>{
+   const tick=now=>{
     if(handle.cancelled)return;
-    handle.frame=requestAnimationFrame(now=>{
-     if(handle.cancelled)return;
-     last=now;callback(now);
-    });
-   },Math.max(0,interval-(performance.now()-last)));
+    const limit=typeof fps==='function'?fps():fps,interval=limit?1000/limit:0,elapsed=now-last;
+    if(!interval||elapsed>=interval-.25){last=Number.isFinite(elapsed)&&interval?last+interval*Math.max(1,Math.floor((elapsed+.25)/interval)):now;callback(now);}
+    else handle.frame=requestAnimationFrame(tick);
+   };
+   handle.frame=requestAnimationFrame(tick);
    return handle;
   },
   cancel(handle){

@@ -6,8 +6,8 @@ html[data-window-chrome] body{padding-top:42px}
 .window-drag{flex:1;pointer-events:auto;touch-action:none}
 .window-actions{display:flex;align-items:center;padding:4px 5px;gap:4px;pointer-events:auto}
 .window-actions button{display:grid;place-items:center;width:40px;height:34px;min-width:40px;padding:0;border:0;border-radius:9px;background:transparent;color:#fff;cursor:default;transition:background .18s,transform .18s;box-shadow:none}
-.window-actions button:hover{background:#ffffff24}
-.window-actions button:active{transform:scale(.86);background:#ffffff40}
+.window-actions button:hover{background:#fff;color:#000}
+.window-actions button:active{transform:scale(.86);background:#fff;color:#000}
 .window-actions button:focus-visible{outline:1px solid #fff;outline-offset:-3px}
 .window-actions svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round;transition:transform .22s cubic-bezier(.2,.8,.2,1)}
 .window-actions [data-window=minimize]:hover svg{transform:translateY(2px)}

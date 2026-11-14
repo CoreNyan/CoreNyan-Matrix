@@ -23,11 +23,12 @@ export function createAccountStore(file){
    const current=account.preferences||{revision:0,values:{...DEFAULT_PREFERENCES}};
    if(update!==undefined){
     if(!update||Object.keys(update).some(k=>!['revision','values'].includes(k))||!Number.isSafeInteger(update.revision))throw Error('偏好更新格式无效');
+    if(!update.values||typeof update.values!=='object'||Array.isArray(update.values))throw Error('偏好格式无效');
     if(update.revision!==current.revision){const error=Error('其他设备已更新设置，请重试');error.status=409;throw error;}
-    const next={revision:current.revision+1,values:validatePreferences(update.values)};
+    const next={revision:current.revision+1,values:validatePreferences({...current.values,...update.values})};
     account.preferences=next;try{save();}catch(error){account.preferences=current;throw error;}
    }
-   return structuredClone(account.preferences||current);
+   const result=account.preferences||current;return structuredClone({...result,values:validatePreferences(result.values)});
   },
   website(a){if(a){data.website={...data.website,assistantAvatar:avatar(a.assistantAvatar)};save();}return data.website||{};}
  };

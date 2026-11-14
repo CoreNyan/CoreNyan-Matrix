@@ -15,7 +15,8 @@ internal sealed class MatrixShell : Form {
     static readonly string Root=AppDomain.CurrentDomain.BaseDirectory;
     readonly JavaScriptSerializer json=new JavaScriptSerializer { MaxJsonLength=13000000 };
     WebView2 web=new WebView2();
-    bool rendererFailed,closingAnimation,closeReady,windowPresented,chromeReady;
+    bool rendererFailed,closingAnimation,closeReady,windowPresented,chromeReady,changingWindow,nativeMotion=true,minimizedWithMotion;
+    FormWindowState priorWindowState;Rectangle? animatedRestoreBounds;
     const int CloseFallbackMs=200,CloseScriptTimeoutMs=250,MaxCloseAnimationMs=1400;
     readonly Panel titlebar=new Panel(),offline=new Panel(),viewport=new Panel();
     readonly NotifyIcon notification=new NotifyIcon();
@@ -116,8 +117,8 @@ internal sealed class MatrixShell : Form {
         viewport.Dock=DockStyle.Fill;viewport.Margin=Padding.Empty;Controls.Add(viewport);
         titlebar.Height=42;titlebar.Dock=DockStyle.Top;titlebar.Margin=Padding.Empty;titlebar.BackColor=BackColor;titlebar.Visible=false;Controls.Add(titlebar);
         titlebar.MouseDown+=Drag;titlebar.DoubleClick+=(s,e)=>Maximize();
-        AddWindowButton(CaptionAction.Close,()=>Close());AddWindowButton(CaptionAction.Maximize,Maximize);AddWindowButton(CaptionAction.Minimize,()=>WindowState=FormWindowState.Minimized);
-        Resize+=(s,e)=>{foreach(Control control in titlebar.Controls){var button=control as CaptionButton;if(button!=null&&button.Kind==CaptionAction.Maximize){button.Restored=WindowState==FormWindowState.Maximized;button.AccessibleName=button.Restored?"还原":"最大化";button.Invalidate();}}if(web.CoreWebView2!=null&&chromeReady)web.CoreWebView2.PostWebMessageAsJson(json.Serialize(new {type="windowState",maximized=WindowState==FormWindowState.Maximized}));};
+        AddWindowButton(CaptionAction.Close,()=>Close());AddWindowButton(CaptionAction.Maximize,Maximize);AddWindowButton(CaptionAction.Minimize,Minimize);
+        Resize+=(s,e)=>{if(priorWindowState==FormWindowState.Minimized&&WindowState!=FormWindowState.Minimized&&minimizedWithMotion){minimizedWithMotion=false;Opacity=0;RestoreWindowMotion();}priorWindowState=WindowState;foreach(Control control in titlebar.Controls){var button=control as CaptionButton;if(button!=null&&button.Kind==CaptionAction.Maximize){button.Restored=WindowState==FormWindowState.Maximized;button.AccessibleName=button.Restored?"还原":"最大化";button.Invalidate();}}if(web.CoreWebView2!=null&&chromeReady)web.CoreWebView2.PostWebMessageAsJson(json.Serialize(new {type="windowState",maximized=WindowState==FormWindowState.Maximized}));};
         web.Dock=DockStyle.Fill;web.DefaultBackgroundColor=Color.White;viewport.Controls.Add(web);
         offline.Dock=DockStyle.Fill;offline.BackColor=BackColor;offline.Visible=false;
         var retry=new Button {Text="重新连接",Size=new Size(140,42),FlatStyle=FlatStyle.Flat};retry.Click+=async(s,e)=>{
@@ -146,7 +147,45 @@ internal sealed class MatrixShell : Form {
         b.FlatAppearance.BorderSize=0;b.Click+=(s,e)=>action();titlebar.Controls.Add(b);b.BringToFront();
     }
     void Drag(object sender,MouseEventArgs e){if(e.Button==MouseButtons.Left){ReleaseCapture();SendMessage(Handle,0xA1,new IntPtr(2),IntPtr.Zero);}}
-    void Maximize(){MaximizedBounds=Screen.FromHandle(Handle).WorkingArea;WindowState=WindowState==FormWindowState.Maximized?FormWindowState.Normal:FormWindowState.Maximized;}
+    async void RestoreWindowMotion(){if(!closingAnimation&&nativeMotion&&ClientAnimationsEnabled())await FadeWindow(1,180,true);else if(!IsDisposed)Opacity=1;}
+    async void Minimize(){
+        if(changingWindow||closingAnimation)return;changingWindow=true;
+        try{if(nativeMotion&&ClientAnimationsEnabled())await FadeWindow(0,160,true);if(!closingAnimation&&!IsDisposed){minimizedWithMotion=nativeMotion&&ClientAnimationsEnabled();WindowState=FormWindowState.Minimized;Opacity=1;}}
+        finally{changingWindow=false;}
+    }
+    async System.Threading.Tasks.Task<Bitmap> CaptureWindow(){
+        try{if(web.CoreWebView2==null||rendererFailed)return null;using(var stream=new MemoryStream()){await web.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,stream);stream.Position=0;using(var image=Image.FromStream(stream))return new Bitmap(image);}}catch{return null;}
+    }
+    async void Maximize(){
+        if(changingWindow||closingAnimation)return;
+        var work=Screen.FromHandle(Handle).WorkingArea;bool expand=WindowState!=FormWindowState.Maximized;
+        if(!nativeMotion||!ClientAnimationsEnabled()||rendererFailed){MaximizedBounds=work;WindowState=expand?FormWindowState.Maximized:FormWindowState.Normal;animatedRestoreBounds=null;return;}
+        changingWindow=true;PictureBox cover=null;Bitmap snapshot=null;
+        var original=expand?Bounds:(animatedRestoreBounds??RestoreBounds);
+        var source=new Rectangle(PointToScreen(Point.Empty),ClientSize);var target=expand?work:original;
+        try{
+            var capture=CaptureWindow();
+            if(await System.Threading.Tasks.Task.WhenAny(capture,System.Threading.Tasks.Task.Delay(180))==capture)snapshot=await capture;
+            else {var cleanup=capture.ContinueWith(t=>{if(t.Status==System.Threading.Tasks.TaskStatus.RanToCompletion&&t.Result!=null)t.Result.Dispose();});}
+            if(closingAnimation||IsDisposed)return;
+            if(snapshot!=null){cover=new PictureBox {Dock=DockStyle.Fill,Image=snapshot,SizeMode=PictureBoxSizeMode.StretchImage,BackColor=BackColor};viewport.Controls.Add(cover);cover.BringToFront();}
+            if(expand)animatedRestoreBounds=original;else {WindowState=FormWindowState.Normal;Bounds=source;}
+            var clock=Stopwatch.StartNew();
+            while(!closingAnimation&&!IsDisposed){
+                double t=Math.Min(1,clock.Elapsed.TotalMilliseconds/240),v=1-Math.Pow(1-t,3);
+                Bounds=new Rectangle((int)Math.Round(source.X+(target.X-source.X)*v),(int)Math.Round(source.Y+(target.Y-source.Y)*v),(int)Math.Round(source.Width+(target.Width-source.Width)*v),(int)Math.Round(source.Height+(target.Height-source.Height)*v));
+                if(t>=1)break;await System.Threading.Tasks.Task.Delay(16);
+            }
+            if(!closingAnimation&&!IsDisposed){
+                if(expand){Bounds=original;MaximizedBounds=work;WindowState=FormWindowState.Maximized;}
+                else {Bounds=original;animatedRestoreBounds=null;}
+                // Reveal only after the live viewport has laid out at the final size.
+                if(web.CoreWebView2!=null)await web.CoreWebView2.ExecuteScriptAsync("requestAnimationFrame(()=>requestAnimationFrame(()=>dispatchEvent(new Event('matrix-window-layout'))))");
+                await System.Threading.Tasks.Task.Delay(40);
+            }
+        }catch{if(!closingAnimation&&!IsDisposed){MaximizedBounds=work;WindowState=expand?FormWindowState.Maximized:FormWindowState.Normal;if(!expand)Bounds=original;}}
+        finally{if(cover!=null){viewport.Controls.Remove(cover);cover.Dispose();}if(snapshot!=null)snapshot.Dispose();changingWindow=false;}
+    }
     protected override void OnFormClosing(FormClosingEventArgs e){
         base.OnFormClosing(e);
         // Do not delay OS shutdown or a close cancelled by another handler.
@@ -210,7 +249,7 @@ internal sealed class MatrixShell : Form {
     void External(string url){Uri u;if(Uri.TryCreate(url,UriKind.Absolute,out u)&&(u.Scheme=="https"||u.Scheme=="http")&&u.UserInfo=="")Process.Start(new ProcessStartInfo(url){UseShellExecute=true});}
     async System.Threading.Tasks.Task Initialize(){
         try {
-            var env=await CoreWebView2Environment.CreateAsync(null,Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"CoreNyan","WebView2"));
+            var env=await CoreWebView2Environment.CreateAsync(null,Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"CoreNyan","WebView2"),new CoreWebView2EnvironmentOptions("--autoplay-policy=no-user-gesture-required"));
             await web.EnsureCoreWebView2Async(env);var core=web.CoreWebView2;
             core.Settings.UserAgent+=" "+userAgent;core.Settings.AreDevToolsEnabled=false;core.Settings.AreDefaultContextMenusEnabled=false;core.Settings.IsStatusBarEnabled=false;
             core.ServerCertificateErrorDetected+=(s,e)=>{e.Action=Trusted(e.RequestUri)&&CleanPem(e.ServerCertificate.ToPemEncoding())==certificate?CoreWebView2ServerCertificateErrorAction.AlwaysAllow:CoreWebView2ServerCertificateErrorAction.Cancel;};
@@ -233,7 +272,8 @@ internal sealed class MatrixShell : Form {
             switch(action){
                 case "presentWindow":PresentWindow();value=true;break;
                 case "windowReady":chromeReady=true;titlebar.Visible=false;value=new {maximized=WindowState==FormWindowState.Maximized};break;
-                case "windowMinimize":WindowState=FormWindowState.Minimized;value=true;break;
+                case "windowMinimize":Minimize();value=true;break;
+                case "windowMotion":nativeMotion=input is bool&&(bool)input;value=true;break;
                 case "windowMaximize":Maximize();value=true;break;
                 case "windowClose":BeginInvoke(new Action(Close));value=true;break;
                 case "windowDrag":BeginInvoke(new Action(()=>{ReleaseCapture();SendMessage(Handle,0xA1,new IntPtr(2),IntPtr.Zero);}));value=true;break;

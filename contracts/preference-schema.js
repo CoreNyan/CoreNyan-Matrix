@@ -9,7 +9,7 @@ export const SHORTCUTS = Object.freeze([
  ...[['previous','上一张','ArrowLeft'],['next','下一张','ArrowRight']].map(([key,label,defaultKey])=>({id:'images.'+key,scope:'images',group:'图片查看',label,defaultKey})),
  ...[['left','向左旋转','ArrowLeft'],['right','向右旋转','ArrowRight'],['up','向上旋转','ArrowUp'],['down','向下旋转','ArrowDown'],['zoomIn','放大','='],['zoomOut','缩小','-']].map(([key,label,defaultKey])=>({id:'entity.'+key,scope:'entity',group:'三维模型',label,defaultKey}))
 ]);
-export const DEFAULT_PREFERENCES = Object.freeze({displayScale:'auto',textSize:'standard',motion:true,autoPoll:true,notifications:true,shortcuts:{}});
+export const DEFAULT_PREFERENCES = Object.freeze({theme:'dark',fpsLimit:0,displayScale:'auto',textSize:'standard',motion:true,autoPoll:true,notifications:true,shortcuts:{}});
 export function normalizeChord(value){
  if(typeof value!=='string'||value.length>50)throw Error('快捷键格式无效');
  if(value==='')return '';
@@ -24,7 +24,7 @@ export function validatePreferences(input){
  if(!input||typeof input!=='object'||Array.isArray(input))throw Error('偏好格式无效');
  if(Object.keys(input).some(k=>!Object.hasOwn(DEFAULT_PREFERENCES,k)))throw Error('未知偏好字段');
  const p={...DEFAULT_PREFERENCES,...input};
- if(!['auto','100','110','120','125','150'].includes(p.displayScale)||!['standard','large'].includes(p.textSize)||typeof p.motion!=='boolean'||typeof p.autoPoll!=='boolean'||typeof p.notifications!=='boolean')throw Error('偏好值无效');
+ if(!['light','dark','system'].includes(p.theme)||![0,30,60,90,120,144,165,240].includes(p.fpsLimit)||!['auto','100','110','120','125','150'].includes(p.displayScale)||!['standard','large'].includes(p.textSize)||typeof p.motion!=='boolean'||typeof p.autoPoll!=='boolean'||typeof p.notifications!=='boolean')throw Error('偏好值无效');
  if(!p.shortcuts||typeof p.shortcuts!=='object'||Array.isArray(p.shortcuts))throw Error('快捷键格式无效');
  const shortcuts={};for(const [id,value] of Object.entries(p.shortcuts)){if(!SHORTCUTS.some(a=>a.id===id))throw Error('未知快捷键');shortcuts[id]=normalizeChord(value);}
  const used=new Map();for(const a of SHORTCUTS){const value=shortcuts[a.id]??a.defaultKey;if(!value)continue;const key=a.scope+':'+value;if(used.has(key))throw Error(a.label+' 与 '+used.get(key)+' 的快捷键冲突');used.set(key,a.label);}
