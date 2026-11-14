@@ -7,5 +7,5 @@ export const CHAT_ACTIONS=Object.freeze({
  replyOnlyTitle:'重新回复这条消息？',replyOnlyDescription:'上次的操作可能已经执行。这次只重新回答，不重复执行工具操作。',
  saved:'消息已修改',removed:'消息已撤回',retrying:'正在重试…',
  primary:'主对话',clear:'清空聊天记录',clearTitle:'清空这段对话？',clearDescription:'聊天记录将被删除，主对话和通知订阅会保留。',
- errors:Object.freeze({CHAT_PRIMARY_DELETE_DENIED:'主对话不能删除，可以清空聊天记录。',CHAT_PRIMARY_FIXED:'主对话固定显示在列表顶部。',CHAT_VERSION_CONFLICT:'对话已更新，请刷新后重试。',CHAT_MESSAGE_VERSION_CONFLICT:'这条消息已在其他设备修改，已为你刷新。',CHAT_MESSAGE_WITHDRAWN:'这条消息已撤回。',CHAT_BUSY:'这段对话还在处理中，请先停止或稍后重试。',CHAT_MESSAGE_EDIT_DENIED:'只能修改或撤回自己发送的消息。',CHAT_COMMAND_RETRY_UNSUPPORTED:'请重新发送这条指令。',CHAT_MESSAGE_NOT_FOUND:'这条消息已不存在。',RPC_RESULT_UNKNOWN:'操作结果暂时无法确认，请刷新查看；重试会继续核对同一次操作。'})
+ errors:Object.freeze({CHAT_WORK_NOT_COMPLETED:'这轮还没完成，小可没有把需要的步骤执行完，可以重试继续。',COMPLETION_REVIEW_UNAVAILABLE:'结果核验暂时连接不上，这轮先保留为未完成，可以稍后重试。',COMPLETION_REVIEW_INVALID:'结果核验返回异常，暂不能确认任务完成，可以重试。',CHAT_PRIMARY_DELETE_DENIED:'主对话不能删除，可以清空聊天记录。',CHAT_PRIMARY_FIXED:'主对话固定显示在列表顶部。',CHAT_VERSION_CONFLICT:'对话已更新，请刷新后重试。',CHAT_MESSAGE_VERSION_CONFLICT:'这条消息已在其他设备修改，已为你刷新。',CHAT_MESSAGE_WITHDRAWN:'这条消息已撤回。',CHAT_BUSY:'这段对话还在处理中，请先停止或稍后重试。',CHAT_MESSAGE_EDIT_DENIED:'只能修改或撤回自己发送的消息。',CHAT_COMMAND_RETRY_UNSUPPORTED:'请重新发送这条指令。',CHAT_MESSAGE_NOT_FOUND:'这条消息已不存在。',RPC_RESULT_UNKNOWN:'操作结果暂时无法确认，请刷新查看；重试会继续核对同一次操作。'})
 });
