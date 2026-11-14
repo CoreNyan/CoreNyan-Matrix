@@ -180,6 +180,11 @@ internal sealed class MatrixShell : Form {
     }
     async void AnimateClose(){
         try{
+            ++fadeGeneration;
+            if(nativeMotion&&ClientAnimationsEnabled()&&WindowState!=FormWindowState.Minimized&&Visible&&!rendererFailed&&web.CoreWebView2!=null){
+                if(await DissolveClose())return;
+            }
+            if(!nativeMotion||!ClientAnimationsEnabled())return;
             int duration=0;bool animated=false;
             if(web.CoreWebView2!=null&&!rendererFailed&&web.Source!=null&&Trusted(web.Source.AbsoluteUri)){
                 var script=web.CoreWebView2.ExecuteScriptAsync("window.MatrixTerminal ? window.MatrixTerminal.close() : -1");
@@ -196,6 +201,41 @@ internal sealed class MatrixShell : Form {
             else if(!animated&&ClientAnimationsEnabled())await FadeWindow(0,CloseFallbackMs);
         }catch{ /* A failed renderer must never trap the window open. */ }
         finally{closeReady=true;if(!IsDisposed)Close();}
+    }
+    async System.Threading.Tasks.Task<Bitmap> CaptureCloseFrame(){
+        using(var stream=new MemoryStream()){
+            await web.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,stream);
+            stream.Position=0;
+            using(var image=new Bitmap(stream)){
+                var screen=RectangleToScreen(ClientRectangle);
+                float scale=Math.Min(1,(float)Math.Sqrt(1800000.0/Math.Max(1,(long)screen.Width*screen.Height)));
+                var result=new Bitmap(Math.Max(1,(int)(screen.Width*scale)),Math.Max(1,(int)(screen.Height*scale)),System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
+                try{using(var g=Graphics.FromImage(result)){
+                    g.Clear(BackColor);g.InterpolationMode=System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear;
+                    var rect=web.RectangleToScreen(web.ClientRectangle);g.DrawImage(image,new RectangleF((rect.X-screen.X)*scale,(rect.Y-screen.Y)*scale,rect.Width*scale,rect.Height*scale));
+                    if(titlebar.Visible){using(var chrome=new Bitmap(titlebar.Width,titlebar.Height)){titlebar.DrawToBitmap(chrome,new Rectangle(Point.Empty,chrome.Size));var r=titlebar.RectangleToScreen(titlebar.ClientRectangle);g.DrawImage(chrome,new RectangleF((r.X-screen.X)*scale,(r.Y-screen.Y)*scale,r.Width*scale,r.Height*scale));}}
+                }return result;}catch{result.Dispose();throw;}
+            }
+        }
+    }
+    async System.Threading.Tasks.Task<bool> DissolveClose(){
+        try{
+            var capture=CaptureCloseFrame();
+            if(await System.Threading.Tasks.Task.WhenAny(capture,System.Threading.Tasks.Task.Delay(320))!=capture){
+                // CapturePreview cannot be cancelled. Dispose its eventual result rather
+                // than closing a stream still owned by WebView2 or leaking its bitmap.
+                var cleanup=capture.ContinueWith(t=>{if(t.Status==System.Threading.Tasks.TaskStatus.RanToCompletion)t.Result.Dispose();else if(t.IsFaulted){var observed=t.Exception;}},System.Threading.Tasks.TaskScheduler.Default);
+                return false;
+            }
+            using(var snapshot=await capture)
+            using(var effect=new PixelDissolve(snapshot,RectangleToScreen(ClientRectangle))){
+                // Native close owns this transition; do not also start the white web mask.
+                var pause=web.CoreWebView2.ExecuteScriptAsync("window.MatrixTerminal && window.MatrixTerminal.nativeClose && window.MatrixTerminal.nativeClose()");
+                var observe=pause.ContinueWith(t=>{if(t.IsFaulted){var observed=t.Exception;}},System.Threading.Tasks.TaskScheduler.Default);
+                await effect.Play(this,()=>{int disabled=1;DwmSetWindowAttribute(Handle,TransitionsForceDisabled,ref disabled,sizeof(int));Opacity=0;});
+            }
+            return true;
+        }catch{return !IsDisposed&&Opacity<=0;}
     }
     static bool ClientAnimationsEnabled(){bool enabled;return SystemParametersInfo(0x1042,0,out enabled,0)&&enabled;}
     protected override void SetBoundsCore(int x,int y,int width,int height,BoundsSpecified specified){

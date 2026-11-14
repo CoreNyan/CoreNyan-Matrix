@@ -170,6 +170,7 @@ function onProgress(state){
  if(!preparing)void prepare();
 }
 Object.defineProperty(window,'MatrixTerminal',{value:Object.freeze({
+ nativeClose(){generation++;cancel();setPhase('closing');document.body.inert=true;},
  close:()=>play(true),open:()=>phase==='loading'?0:play(),ready:()=>prepare(),
  setEnabled(value){enabled=Boolean(value);if(!allowed()){bootEdges?.clear();exitEdges?.clear();if(!['loading','closed'].includes(phase))finish(phase==='closing');}}
 })});
