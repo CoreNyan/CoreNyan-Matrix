@@ -4,21 +4,38 @@
  const steps=definitions.map(([id,label])=>({id,label,status:'pending',detail:''})),listeners=new Set();
  const snapshot=()=>({steps:steps.map(s=>({...s})),percent:Math.floor(100*steps.filter(s=>['done','skipped'].includes(s.status)).length/steps.length)});
  function update(id,status,detail=''){const step=steps.find(s=>s.id===id);if(!step||['done','skipped'].includes(step.status))return;Object.assign(step,{status,detail:String(detail)});for(const listener of listeners)listener(snapshot());}
- const boot={snapshot,begin:id=>update(id,'running'),done:id=>update(id,'done'),fail:(id,error)=>update(id,'failed',error?.message||error),skip:id=>update(id,'skipped'),subscribe(listener){listeners.add(listener);listener(snapshot());return()=>listeners.delete(listener);}};
+ let doodleReady=Promise.resolve();
+ const boot={snapshot,doodleReady:()=>doodleReady,begin:id=>update(id,'running'),done:id=>update(id,'done'),fail:(id,error)=>update(id,'failed',error?.message||error),skip:id=>update(id,'skipped'),subscribe(listener){listeners.add(listener);listener(snapshot());return()=>listeners.delete(listener);}};
  Object.defineProperty(window,'MatrixBoot',{value:Object.freeze(boot)});
  function mount(){
   if(!document.body||document.querySelector('.terminal-session'))return;
   const panel=document.createElement('aside');panel.className='terminal-session';panel.setAttribute('aria-label','连接 CoreNyan');
-  panel.innerHTML='<div class="terminal-coordinate" aria-hidden="true"><span class="terminal-cross">+</span> CORENYAN / TERMINAL</div><div class="terminal-rail" aria-hidden="true"><div class="terminal-rail-fill"></div></div><div class="terminal-core"><div class="terminal-intro"><div class="terminal-kicker"><span class="terminal-led"></span><span data-boot-heading>CONNECTING</span></div><h1 class="terminal-title" data-boot-title>接入神经</h1><ol class="terminal-stages"></ol></div><div class="terminal-display"><div class="terminal-wordmark"><svg viewBox="0 0 310 182" role="img" aria-label="CoreNyan"><g fill="currentColor" fill-rule="evenodd"><path d="M64 0H14L0 14V68L14 82H64V65H20V17H64Z"/><path d="M88 0H132L146 14V68L132 82H88L74 68V14ZM94 17V65H126V17Z"/><path d="M158 0H211L226 15V43L215 54L230 82H208L191 55H176V82H158ZM176 17V39H205V17Z"/><path d="M240 0H304V17H258V32H295V49H258V65H304V82H240Z"/><g transform="translate(0 100)"><path d="M0 82V0H18L49 48V0H67V82H49L18 34V82Z"/><path d="M80 0H100L116 30L132 0H152L125 47V82H107V47Z"/><path d="M158 82L180 0H205L229 82H209L204 63H180L175 82ZM184 47H200L192 17Z"/><path d="M240 82V0H258L289 48V0H307V82H289L258 34V82Z"/></g></g></svg></div><div class="terminal-status" role="status" aria-live="polite" data-boot-status>正在建立连接</div><div class="terminal-actions" hidden><button type="button" data-boot-retry>重新连接 ↗</button><button type="button" data-boot-continue hidden>先进入界面 →</button></div></div><div class="terminal-progress-block"><div class="terminal-progress-meta"><div><span data-boot-stage>配置连接</span><span class="terminal-counter" data-boot-count>00 / 06</span></div><span class="terminal-percentage"><b data-boot-percent>0</b><small>%</small></span></div><div class="terminal-progress" role="progressbar" aria-label="启动准备进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="terminal-progress-fill"></div><div class="terminal-progress-cursor"></div></div><div class="terminal-ruler" aria-hidden="true"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div></div></div><div class="terminal-foot"><span data-boot-footer>等待连接</span><span aria-hidden="true">CORENYAN</span></div><div class="terminal-scan" aria-hidden="true"></div>';
+  panel.innerHTML='<div class="terminal-coordinate" aria-hidden="true"><span class="terminal-cross">+</span> CORENYAN / TERMINAL</div><div class="terminal-rail" aria-hidden="true"></div><div class="terminal-core"><div class="terminal-intro"><div class="terminal-kicker"><span class="terminal-led"></span><span data-boot-heading>CONNECTING</span></div><h1 class="terminal-title" data-boot-title>接入神经</h1><ol class="terminal-stages"></ol></div><div class="terminal-display"><div class="terminal-brand-pair"><div class="terminal-wordmark"><svg viewBox="0 0 310 182" role="img" aria-label="CoreNyan"><g fill="currentColor" fill-rule="evenodd"><path d="M64 0H14L0 14V68L14 82H64V65H20V17H64Z"/><path d="M88 0H132L146 14V68L132 82H88L74 68V14ZM94 17V65H126V17Z"/><path d="M158 0H211L226 15V43L215 54L230 82H208L191 55H176V82H158ZM176 17V39H205V17Z"/><path d="M240 0H304V17H258V32H295V49H258V65H304V82H240Z"/><g transform="translate(0 100)"><path d="M0 82V0H18L49 48V0H67V82H49L18 34V82Z"/><path d="M80 0H100L116 30L132 0H152L125 47V82H107V47Z"/><path d="M158 82L180 0H205L229 82H209L204 63H180L175 82ZM184 47H200L192 17Z"/><path d="M240 82V0H258L289 48V0H307V82H289L258 34V82Z"/></g></g></svg></div><figure class="terminal-illustration"><div class="terminal-doodle terminal-progress" role="progressbar" aria-label="小可线稿绘制进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><svg viewBox="-8 -8 245 230" aria-hidden="true"><g class="terminal-doodle-ink"></g><circle class="terminal-doodle-pen" r="2.5" cx="0" cy="0"/></svg></div><figcaption><span class="terminal-doodle-caption">连接进度</span><span class="terminal-percentage"><b data-boot-percent>0</b><small>%</small></span></figcaption></figure></div><div class="terminal-status" role="status" aria-live="polite" data-boot-status>正在建立连接</div><div class="terminal-progress-meta"><span data-boot-stage>配置连接</span><span class="terminal-counter" data-boot-count>00 / 06</span></div><div class="terminal-actions" hidden><button type="button" data-boot-retry>重新连接 ↗</button><button type="button" data-boot-continue hidden>先进入界面 →</button></div></div></div><div class="terminal-foot"><span data-boot-footer>等待连接</span><span aria-hidden="true">CORENYAN</span></div><div class="terminal-scan" aria-hidden="true"></div>';
   const list=panel.querySelector('.terminal-stages');
-  for(const step of steps){const item=document.createElement('li');item.dataset.bootStep=step.id;item.innerHTML='<i aria-hidden="true">'+String(steps.indexOf(step)+1).padStart(2,'0')+'</i><span></span><em aria-hidden="true"></em>';item.querySelector('span').textContent=step.label;list.append(item);}
+  const icons={
+   config:'<path d="M4 7h16M4 17h16"/><path class="step-knob-a" d="M9 4v6"/><path class="step-knob-b" d="M15 14v6"/>',
+   connection:'<path d="M8 12h8M12 8v8"/><circle class="step-node-a" cx="5" cy="12" r="2"/><circle class="step-node-b" cx="12" cy="5" r="2"/><circle class="step-node-c" cx="19" cy="12" r="2"/><circle class="step-node-d" cx="12" cy="19" r="2"/>',
+   interface:'<rect class="step-panel-a" x="4" y="4" width="6" height="16" rx="1"/><rect class="step-panel-b" x="14" y="4" width="6" height="6" rx="1"/><rect class="step-panel-c" x="14" y="14" width="6" height="6" rx="1"/>',
+   content:'<path d="M7 3h7l4 4v14H7zM14 3v5h4"/><path class="step-line-a" d="M10 12h5"/><path class="step-line-b" d="M10 16h5"/>',
+   assets:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle class="step-sun" cx="16" cy="9" r="2"/><path class="step-landscape" d="m4 18 5-6 4 4 3-3 4 5"/>',
+   frame:'<path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/><path class="step-scan" d="M6 12h12"/>'
+  };
+  for(const step of steps){
+   const item=document.createElement('li');item.dataset.bootStep=step.id;
+   item.innerHTML='<i class="terminal-step-icon" aria-hidden="true"><svg viewBox="0 0 24 24">'+icons[step.id]+'</svg></i><span class="terminal-step-copy"><span data-step-label></span><small data-step-status>等待接入</small></span>';
+   item.querySelector('[data-step-label]').textContent=step.label;list.append(item);
+  }
+
   panel.querySelector('[data-boot-retry]').onclick=()=>location.reload();
   panel.querySelector('[data-boot-continue]').onclick=()=>{for(const step of steps)if(step.status==='failed'&&['content','assets'].includes(step.id))boot.skip(step.id);};
   document.body.append(panel);
+  let drawing;
+  doodleReady=loadDoodle(panel).then(()=>{drawing=mountDoodleProgress(panel);drawing.update(boot.snapshot().percent/100);});
+  doodleReady.catch(()=>{panel.querySelector('.terminal-doodle-caption').textContent='线稿暂不可用';});
   boot.subscribe(state=>{
    if(['opening','open','closing','closed'].includes(document.documentElement.dataset.terminalPhase))return;
    const failed=state.steps.find(s=>s.status==='failed'),active=failed||state.steps.find(s=>s.status==='running')||state.steps.find(s=>s.status==='pending');
-   panel.dataset.failed=String(Boolean(failed));panel.style.setProperty('--boot-progress',String(state.percent/100));
+   panel.dataset.failed=String(Boolean(failed));drawing?.update(state.percent/100);
    panel.querySelector('.terminal-progress').setAttribute('aria-valuenow',String(state.percent));
    panel.querySelector('[data-boot-percent]').textContent=String(state.percent);
    panel.querySelector('[data-boot-count]').textContent=String(state.steps.filter(s=>['done','skipped'].includes(s.status)).length).padStart(2,'0')+' / 06';
@@ -28,8 +45,54 @@
    panel.querySelector('[data-boot-footer]').textContent=failed?'连接尚未完成':state.steps.find(s=>s.id==='connection').status==='done'?'服务已连接':'正在连接服务';
    panel.querySelector('.terminal-actions').hidden=!failed;
    panel.querySelector('[data-boot-continue]').hidden=!failed||!state.steps.some(s=>s.id==='interface'&&s.status==='done')||state.steps.some(s=>!['content','assets'].includes(s.id)&&s.status==='failed');
-   for(const step of state.steps)panel.querySelector('[data-boot-step="'+step.id+'"]').dataset.status=step.status;
+   for(const step of state.steps){const item=panel.querySelector('[data-boot-step="'+step.id+'"]');item.dataset.status=step.status;item.querySelector('[data-step-status]').textContent={pending:'等待接入',running:'正在准备',done:'已就绪',failed:'需要重试',skipped:'已跳过'}[step.status];}
   });
+ }
+// Stroke-distance progress: no image masks, alpha reveal or synthetic progress timer.
+ function mountDoodleProgress(panel){
+  const host=panel.querySelector('.terminal-doodle'),pen=host.querySelector('.terminal-doodle-pen');
+  const paths=[...host.querySelectorAll('[data-doodle-stroke]')];
+  const measured=paths.map(p=>p.getTotalLength()),lengths=measured,total=lengths.reduce((a,b)=>a+b,0),reduce=matchMedia('(prefers-reduced-motion: reduce)');
+  let value=0,target=0,raf=0,last=0,disposed=false;
+  function paint(){
+   let remaining=value*total,active=-1;
+   paths.forEach((path,i)=>{const fraction=Math.min(1,Math.max(0,remaining/lengths[i]));path.style.strokeDashoffset=String(1-fraction);path.style.visibility=fraction>0?'visible':'hidden';if(fraction>0&&fraction<1){active=i;const point=path.getPointAtLength(measured[i]*fraction);pen.setAttribute('cx',point.x);pen.setAttribute('cy',point.y);}remaining-=lengths[i];});
+   pen.style.visibility=active>=0&&Math.abs(value-target)>.0001?'visible':'hidden';
+   host.dataset.drawn=String(value);
+  }
+  function tick(now){
+   raf=0;if(disposed)return;
+   const dt=last?Math.min(64,now-last):16;last=now;
+   value=reduce.matches||document.documentElement.classList.contains('motion-disabled')?target:Math.min(target,value+dt/650);paint();
+   if(value<target)raf=requestAnimationFrame(tick);else last=0;
+  }
+  function stop(){cancelAnimationFrame(raf);raf=0;last=0;pen.style.visibility='hidden';}
+  function update(progress){
+   target=Math.max(target,Math.min(1,progress));
+   if(disposed)return;
+   if(reduce.matches||document.documentElement.classList.contains('motion-disabled')){stop();value=target;paint();}
+   else if(!raf&&value<target)raf=requestAnimationFrame(tick);
+  }
+  reduce.addEventListener('change',()=>update(target));
+  addEventListener('matrix-terminal-settled',stop);
+  addEventListener('pagehide',()=>{disposed=true;stop();},{once:true});
+  paint();return {update};
+ }
+
+ async function loadDoodle(panel){
+  // One selection per document; progress and shutdown keep the same character.
+  const id=1+Math.floor(crypto.getRandomValues(new Uint32Array(1))[0]/4294967296*37);
+  const host=panel.querySelector('.terminal-doodle');host.dataset.doodleId=String(id);
+  const response=await fetch('/assets/terminal-doodles/doodle_'+id+'.json',{signal:AbortSignal.timeout(10000)});
+  if(!response.ok)throw Error('加载小可线稿失败，可重试或先进入界面');
+  const data=await response.json();
+  if(data.viewBox!=='-8 -8 245 230'||!Array.isArray(data.strokes)||!data.strokes.length||data.strokes.length>500)throw Error('线稿数据不完整');
+  const ink=host.querySelector('.terminal-doodle-ink'),fragment=document.createDocumentFragment();
+  for(const stroke of data.strokes){
+   if(typeof stroke.d!=='string'||stroke.d.length>20000||!/^M[MLQ0-9., \-]+$/.test(stroke.d))throw Error('线稿路径无效');
+   const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',stroke.d);path.setAttribute('pathLength','1');path.setAttribute('data-doodle-stroke','');fragment.append(path);
+  }
+  ink.replaceChildren(fragment);host.dataset.doodleReady='true';
  }
  const observer=new MutationObserver(()=>{if(document.body){mount();observer.disconnect();}});observer.observe(document.documentElement,{childList:true});mount();
 })();

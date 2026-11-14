@@ -31,7 +31,7 @@ function play(closing=false){
  if(closing&&['closing','closed'].includes(phase))return phase==='closing'?CLOSE_MS:0;
  if(!closing&&['opening','open'].includes(phase))return 0;
  const previous=phase,initial=phase==='loading',panel=session(),{surfaces,details}=collect();
- const nodes=[...surfaces,...details,...(panel?[panel,...panel.children]:[])];
+ const nodes=[...surfaces,...details,...(panel?[panel,...panel.children,panel.querySelector('.terminal-doodle')].filter(Boolean):[])];
  const current=new Map(nodes.map(e=>[e,capture(e)]));
  generation++;cancel();setPhase(closing?'closing':'opening');
  // Fill states are installed in this same task, before the hidden boot state is released.
@@ -45,6 +45,7 @@ function play(closing=false){
  panel.querySelector('[data-boot-footer]').textContent=closing?'云端任务继续运行':'服务已连接';
  const duration=closing?CLOSE_MS:OPEN_MS;
  const core=panel.querySelector('.terminal-core'),rail=panel.querySelector('.terminal-rail'),foot=panel.querySelector('.terminal-foot'),coordinate=panel.querySelector('.terminal-coordinate'),scan=panel.querySelector('.terminal-scan');
+ const doodle=panel.querySelector('.terminal-doodle');
  if(closing){
   const interrupted=previous==='loading'||previous==='opening';
   animate(panel,[interrupted?current.get(panel):{opacity:0},{opacity:1,offset:.68},{opacity:1}],duration);
@@ -52,9 +53,12 @@ function play(closing=false){
   animate(rail,[interrupted?current.get(rail):{opacity:0,transform:'scaleY(1)'},{opacity:.7,transform:'scaleY(1)',offset:.3},{opacity:0,transform:'scaleY(0)'}],duration);
   animate(foot,[interrupted?current.get(foot):{opacity:0},{opacity:.7,offset:.4},{opacity:0}],duration);
   animate(coordinate,[interrupted?current.get(coordinate):{opacity:0},{opacity:.6,offset:.4},{opacity:0}],duration);
+  if(doodle)animate(doodle,[current.get(doodle),{transform:'translateY(3px) rotate(7deg) scale(.97)',offset:.5},{transform:'translateY(12px) rotate(10deg) scale(.92)'}],duration);
  }else{
   animate(panel,[initial?{opacity:1}:current.get(panel),{opacity:1,offset:.15},{opacity:0}],duration);
-  animate(core,[initial?{opacity:1,transform:'none',clipPath:'inset(0 0 0 0)'}:current.get(core),{opacity:0,transform:'translateY(-28px)',clipPath:'inset(0 0 100% 0)'}],660);
+  // Keep the completed drawing intact: a small greeting, then the whole scene recedes.
+  animate(core,[initial?{opacity:1,transform:'none'}:current.get(core),{opacity:1,transform:'translateY(-4px) scale(.995)',offset:.3},{opacity:0,transform:'translateY(-25px) scale(.96)'}],duration);
+  if(doodle)animate(doodle,[current.get(doodle),{transform:'translateY(-9px) rotate(-5deg) scale(1.045)',offset:.3},{transform:'translateY(2px) rotate(2deg) scale(.99)',offset:.52},{transform:'translateY(0) rotate(0deg) scale(1)'}],Math.min(820,duration));
   animate(rail,[{opacity:1,transform:'scaleY(1)'},{opacity:0,transform:'scaleY(1) translateX(-12px)'}],duration);
   animate(foot,[{opacity:.8},{opacity:0}],560);
   animate(coordinate,[{opacity:.8},{opacity:0}],560);
@@ -92,6 +96,7 @@ async function prepare(){
  if(state&&!['config','connection','interface','content'].every(id=>settled(state.steps.find(s=>s.id===id))))return;
  preparing=true;const ticket=generation;boot?.begin('assets');
  try{
+  await boot?.doodleReady?.();
   await bounded(document.fonts.ready,10000,'字体加载超时，请重新连接');
   // Only images needed in the first viewport gate entry; offscreen galleries remain lazy.
   const images=[...document.images].filter(onScreen);

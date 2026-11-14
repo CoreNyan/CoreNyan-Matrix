@@ -13,6 +13,8 @@ export function createFrontend({webRoot=path.join(directory,'web'),contractsRoot
  const doodles=fs.readdirSync(path.join(webRoot,'assets/doodle'),{withFileTypes:true}).filter(entry=>entry.isFile()&&/^doodle_\d+\.png$/.test(entry.name)).map(entry=>'/assets/doodle/'+entry.name);
  if(!doodles.length)throw Error('Login doodle assets missing');
  const publicDoodles=new Set(doodles);
+ const terminalDoodleRoot=path.join(webRoot,'assets/terminal-doodles');
+ const publicTerminalDoodles=new Set(fs.existsSync(terminalDoodleRoot)?fs.readdirSync(terminalDoodleRoot).filter(name=>/^doodle_\d+\.json$/.test(name)).map(name=>'/assets/terminal-doodles/'+name):[]);
  const fail=(res,status,message)=>{if(res.headersSent){res.destroy();return;}res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({ok:false,error:message}));};
  function request(req,pathname,method=req.method){return transport.request({hostname:upstream.hostname,port:upstream.port,path:pathname,method,headers:{...req.headers,host:req.headers.host,'x-forwarded-proto':'https'},timeout:120000});}
  function proxy(req,res){const forward=request(req,req.url);forward.on('response',r=>{res.writeHead(r.statusCode,r.headers);r.pipe(res);});forward.on('timeout',()=>forward.destroy(Error('timeout')));forward.on('error',()=>fail(res,502,'Matrix 后端暂不可用'));req.on('aborted',()=>forward.destroy());res.on('close',()=>{if(!res.writableEnded)forward.destroy();});req.pipe(forward);}
@@ -24,7 +26,7 @@ export function createFrontend({webRoot=path.join(directory,'web'),contractsRoot
    const url=new URL(req.url,'https://matrix.local'),pathname=decodeURIComponent(url.pathname);
    if(/^\/(api|auth)\//.test(pathname)||pathname==='/healthz'||pathname.startsWith('/assets/uploads/'))return proxy(req,res);
    if(!['GET','HEAD'].includes(req.method))return fail(res,405,'METHOD_NOT_ALLOWED');
-   const publicAsset=['/contracts/product.json','/pages-bootstrap.js','/login','/login.js','/css/login.css','/css/terminal-motion.css','/js/boot-progress.js','/js/terminal-motion.js','/vendor/jetbrains-mono-latin.woff2','/assets/favicon.ico','/assets/app-icon.png'].includes(pathname)||publicDoodles.has(pathname);
+   const publicAsset=['/contracts/product.json','/pages-bootstrap.js','/login','/login.js','/css/login.css','/css/terminal-motion.css','/js/boot-progress.js','/js/terminal-motion.js','/vendor/jetbrains-mono-latin.woff2','/assets/favicon.ico','/assets/app-icon.png'].includes(pathname)||publicDoodles.has(pathname)||publicTerminalDoodles.has(pathname);
    if(!publicAsset){const status=await authenticated(req,res);if(status===401){res.writeHead(303,{Location:'/login?next='+encodeURIComponent(url.pathname+url.search),'Cache-Control':'no-store'});res.end();return;}if(status!==204)return fail(res,502,'Matrix 登录服务暂不可用');}
    const isContract=pathname.startsWith('/contracts/'),base=path.resolve(isContract?contractsRoot:webRoot);
    const relative=pathname==='/login'?'login.html':pathname==='/'||/^\/(VITALS|LAYERS|ORGANS|CORTEX|SYNAPSE|ENTITY|CHAT)(?:\/|$)/i.test(pathname)?'index.html':isContract?pathname.slice('/contracts/'.length):pathname.slice(1);
