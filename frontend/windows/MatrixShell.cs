@@ -11,12 +11,12 @@ using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
 internal sealed class MatrixShell : Form {
-    const int WindowCornerPreference=33,RoundCorners=2,ImmersiveDarkMode=20,WindowBorderColor=34;
+    const int WindowCornerPreference=33,RoundCorners=2,ImmersiveDarkMode=20,WindowBorderColor=34,TransitionsForceDisabled=3;
     static readonly string Root=AppDomain.CurrentDomain.BaseDirectory;
     readonly JavaScriptSerializer json=new JavaScriptSerializer { MaxJsonLength=13000000 };
     WebView2 web=new WebView2();
-    bool rendererFailed,closingAnimation,closeReady,windowPresented,chromeReady,changingWindow,nativeMotion=true,minimizedWithMotion;
-    FormWindowState priorWindowState;Rectangle? animatedRestoreBounds;
+    bool rendererFailed,closingAnimation,closeReady,windowPresented,chromeReady,changingWindow,nativeMotion=true;
+    int fadeGeneration;Rectangle? restoringBounds;bool nativeRestorePending;
     const int CloseFallbackMs=200,CloseScriptTimeoutMs=250,MaxCloseAnimationMs=1400;
     readonly Panel titlebar=new Panel(),offline=new Panel(),viewport=new Panel();
     readonly NotifyIcon notification=new NotifyIcon();
@@ -32,6 +32,8 @@ internal sealed class MatrixShell : Form {
     [DllImport("user32.dll")] static extern IntPtr MonitorFromWindow(IntPtr window,uint flags);
     [DllImport("user32.dll")] static extern bool GetMonitorInfo(IntPtr monitor,ref MonitorInfo info);
     [DllImport("user32.dll")] static extern bool IsZoomed(IntPtr window);
+    [DllImport("user32.dll")] static extern bool IsIconic(IntPtr window);
+    [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr window,out NativeRect rect);
     [DllImport("user32.dll")] static extern bool SystemParametersInfo(uint action,uint parameter,out bool value,uint flags);
     [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr window,int attribute,ref int value,int size);
     [DllImport("dwmapi.dll")] static extern int DwmExtendFrameIntoClientArea(IntPtr window,ref FrameMargins margins);
@@ -118,7 +120,7 @@ internal sealed class MatrixShell : Form {
         titlebar.Height=42;titlebar.Dock=DockStyle.Top;titlebar.Margin=Padding.Empty;titlebar.BackColor=BackColor;titlebar.Visible=false;Controls.Add(titlebar);
         titlebar.MouseDown+=Drag;titlebar.DoubleClick+=(s,e)=>Maximize();
         AddWindowButton(CaptionAction.Close,()=>Close());AddWindowButton(CaptionAction.Maximize,Maximize);AddWindowButton(CaptionAction.Minimize,Minimize);
-        Resize+=(s,e)=>{if(priorWindowState==FormWindowState.Minimized&&WindowState!=FormWindowState.Minimized&&minimizedWithMotion){minimizedWithMotion=false;Opacity=0;RestoreWindowMotion();}priorWindowState=WindowState;foreach(Control control in titlebar.Controls){var button=control as CaptionButton;if(button!=null&&button.Kind==CaptionAction.Maximize){button.Restored=WindowState==FormWindowState.Maximized;button.AccessibleName=button.Restored?"还原":"最大化";button.Invalidate();}}if(web.CoreWebView2!=null&&chromeReady)web.CoreWebView2.PostWebMessageAsJson(json.Serialize(new {type="windowState",maximized=WindowState==FormWindowState.Maximized}));};
+        Resize+=(s,e)=>{foreach(Control control in titlebar.Controls){var button=control as CaptionButton;if(button!=null&&button.Kind==CaptionAction.Maximize){button.Restored=WindowState==FormWindowState.Maximized;button.AccessibleName=button.Restored?"还原":"最大化";button.Invalidate();}}if(web.CoreWebView2!=null&&chromeReady)web.CoreWebView2.PostWebMessageAsJson(json.Serialize(new {type="windowState",maximized=WindowState==FormWindowState.Maximized}));};
         web.Dock=DockStyle.Fill;web.DefaultBackgroundColor=Color.White;viewport.Controls.Add(web);
         offline.Dock=DockStyle.Fill;offline.BackColor=BackColor;offline.Visible=false;
         var retry=new Button {Text="重新连接",Size=new Size(140,42),FlatStyle=FlatStyle.Flat};retry.Click+=async(s,e)=>{
@@ -135,8 +137,8 @@ internal sealed class MatrixShell : Form {
         if(ClientAnimationsEnabled())await FadeWindow(1,380,true);else Opacity=1;
     }
     async System.Threading.Tasks.Task FadeWindow(double target,int duration,bool opening=false){
-        double start=Opacity;var elapsed=Stopwatch.StartNew();
-        while(!IsDisposed&&(!opening||!closingAnimation)){
+        int generation=++fadeGeneration;double start=Opacity;var elapsed=Stopwatch.StartNew();
+        while(!IsDisposed&&generation==fadeGeneration&&(!opening||!closingAnimation)){
             double t=Math.Min(1,(double)elapsed.ElapsedMilliseconds/Math.Max(1,duration));
             double eased=t*t*(3-2*t);Opacity=start+(target-start)*eased;
             if(t>=1)break;await System.Threading.Tasks.Task.Delay(16);
@@ -147,45 +149,28 @@ internal sealed class MatrixShell : Form {
         b.FlatAppearance.BorderSize=0;b.Click+=(s,e)=>action();titlebar.Controls.Add(b);b.BringToFront();
     }
     void Drag(object sender,MouseEventArgs e){if(e.Button==MouseButtons.Left){ReleaseCapture();SendMessage(Handle,0xA1,new IntPtr(2),IntPtr.Zero);}}
-    async void RestoreWindowMotion(){if(!closingAnimation&&nativeMotion&&ClientAnimationsEnabled())await FadeWindow(1,180,true);else if(!IsDisposed)Opacity=1;}
-    async void Minimize(){
-        if(changingWindow||closingAnimation)return;changingWindow=true;
-        try{if(nativeMotion&&ClientAnimationsEnabled())await FadeWindow(0,160,true);if(!closingAnimation&&!IsDisposed){minimizedWithMotion=nativeMotion&&ClientAnimationsEnabled();WindowState=FormWindowState.Minimized;Opacity=1;}}
-        finally{changingWindow=false;}
+    // DWM is the only owner of minimize/maximize/restore transitions. Resizing the
+    // HWND by hand and resetting it before ShowWindow makes WebView2 repaint twice.
+    // Opacity and GDI snapshot overlays also compete with the native compositor.
+    void UpdateWindowMotion(){
+        if(!IsHandleCreated)return;
+        int disabled=nativeMotion&&ClientAnimationsEnabled()?0:1;
+        DwmSetWindowAttribute(Handle,TransitionsForceDisabled,ref disabled,sizeof(int));
     }
-    async System.Threading.Tasks.Task<Bitmap> CaptureWindow(){
-        try{if(web.CoreWebView2==null||rendererFailed)return null;using(var stream=new MemoryStream()){await web.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,stream);stream.Position=0;using(var image=Image.FromStream(stream))return new Bitmap(image);}}catch{return null;}
-    }
-    async void Maximize(){
-        if(changingWindow||closingAnimation)return;
-        var work=Screen.FromHandle(Handle).WorkingArea;bool expand=WindowState!=FormWindowState.Maximized;
-        if(!nativeMotion||!ClientAnimationsEnabled()||rendererFailed){MaximizedBounds=work;WindowState=expand?FormWindowState.Maximized:FormWindowState.Normal;animatedRestoreBounds=null;return;}
-        changingWindow=true;PictureBox cover=null;Bitmap snapshot=null;
-        var original=expand?Bounds:(animatedRestoreBounds??RestoreBounds);
-        var source=new Rectangle(PointToScreen(Point.Empty),ClientSize);var target=expand?work:original;
+    void ChangeWindowState(FormWindowState state){
+        if(changingWindow||closingAnimation||IsDisposed)return;
+        changingWindow=true;
         try{
-            var capture=CaptureWindow();
-            if(await System.Threading.Tasks.Task.WhenAny(capture,System.Threading.Tasks.Task.Delay(180))==capture)snapshot=await capture;
-            else {var cleanup=capture.ContinueWith(t=>{if(t.Status==System.Threading.Tasks.TaskStatus.RanToCompletion&&t.Result!=null)t.Result.Dispose();});}
-            if(closingAnimation||IsDisposed)return;
-            if(snapshot!=null){cover=new PictureBox {Dock=DockStyle.Fill,Image=snapshot,SizeMode=PictureBoxSizeMode.StretchImage,BackColor=BackColor};viewport.Controls.Add(cover);cover.BringToFront();}
-            if(expand)animatedRestoreBounds=original;else {WindowState=FormWindowState.Normal;Bounds=source;}
-            var clock=Stopwatch.StartNew();
-            while(!closingAnimation&&!IsDisposed){
-                double t=Math.Min(1,clock.Elapsed.TotalMilliseconds/240),v=1-Math.Pow(1-t,3);
-                Bounds=new Rectangle((int)Math.Round(source.X+(target.X-source.X)*v),(int)Math.Round(source.Y+(target.Y-source.Y)*v),(int)Math.Round(source.Width+(target.Width-source.Width)*v),(int)Math.Round(source.Height+(target.Height-source.Height)*v));
-                if(t>=1)break;await System.Threading.Tasks.Task.Delay(16);
-            }
-            if(!closingAnimation&&!IsDisposed){
-                if(expand){Bounds=original;MaximizedBounds=work;WindowState=FormWindowState.Maximized;}
-                else {Bounds=original;animatedRestoreBounds=null;}
-                // Reveal only after the live viewport has laid out at the final size.
-                if(web.CoreWebView2!=null)await web.CoreWebView2.ExecuteScriptAsync("requestAnimationFrame(()=>requestAnimationFrame(()=>dispatchEvent(new Event('matrix-window-layout'))))");
-                await System.Threading.Tasks.Task.Delay(40);
-            }
-        }catch{if(!closingAnimation&&!IsDisposed){MaximizedBounds=work;WindowState=expand?FormWindowState.Maximized:FormWindowState.Normal;if(!expand)Bounds=original;}}
-        finally{if(cover!=null){viewport.Controls.Remove(cover);cover.Dispose();}if(snapshot!=null)snapshot.Dispose();changingWindow=false;}
+            ++fadeGeneration; // Cancel a pending startup fade before handing off to DWM.
+            Opacity=1;UpdateWindowMotion();
+            if(state==FormWindowState.Maximized)MaximizedBounds=Screen.FromHandle(Handle).WorkingArea;
+            // Let native WINDOWPLACEMENT retain outer bounds. WinForms' restore
+            // setter adds caption margins even though WM_NCCALCSIZE removes them.
+            ShowWindow(Handle,state==FormWindowState.Maximized?3:state==FormWindowState.Minimized?6:9);
+        }finally{changingWindow=false;}
     }
+    void Minimize(){ChangeWindowState(FormWindowState.Minimized);}
+    void Maximize(){ChangeWindowState(WindowState==FormWindowState.Maximized?FormWindowState.Normal:FormWindowState.Maximized);}
     protected override void OnFormClosing(FormClosingEventArgs e){
         base.OnFormClosing(e);
         // Do not delay OS shutdown or a close cancelled by another handler.
@@ -213,6 +198,13 @@ internal sealed class MatrixShell : Form {
         finally{closeReady=true;if(!IsDisposed)Close();}
     }
     static bool ClientAnimationsEnabled(){bool enabled;return SystemParametersInfo(0x1042,0,out enabled,0)&&enabled;}
+    protected override void SetBoundsCore(int x,int y,int width,int height,BoundsSpecified specified){
+        // During native restore, Form converts its cached client size into an outer
+        // size with caption insets. Our zero-inset frame already has the correct
+        // native WINDOWPLACEMENT; preserve it before Form can issue a second resize.
+        if(restoringBounds.HasValue){var r=restoringBounds.Value;x=r.X;y=r.Y;width=r.Width;height=r.Height;}
+        base.SetBoundsCore(x,y,width,height,specified);
+    }
     protected override CreateParams CreateParams {get{
         var p=base.CreateParams;
         // Keep a real resizable frame for DWM shadow, antialiasing and Windows snap.
@@ -220,7 +212,7 @@ internal sealed class MatrixShell : Form {
         p.Style|=0x00C00000|0x00040000|0x00080000|0x00020000|0x00010000;
         return p;
     }}
-    protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);UpdateWindowFrame();}
+    protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);UpdateWindowFrame();UpdateWindowMotion();}
     void UpdateWindowFrame(){
         if(!IsHandleCreated)return;
         int corner=RoundCorners,dark=1,border=unchecked((int)0xFFFFFFFE);
@@ -231,6 +223,14 @@ internal sealed class MatrixShell : Form {
         DwmExtendFrameIntoClientArea(Handle,ref margins);
     }
     protected override void WndProc(ref Message m){
+        if((m.Msg==0x46||m.Msg==0x47)&&(IsZoomed(Handle)||IsIconic(Handle)))nativeRestorePending=true;
+        if(m.Msg==0x47&&nativeRestorePending&&!IsZoomed(Handle)&&!IsIconic(Handle)){
+            nativeRestorePending=false;
+            NativeRect rect;if(GetWindowRect(Handle,out rect)){
+                var prior=restoringBounds;restoringBounds=Rectangle.FromLTRB(rect.Left,rect.Top,rect.Right,rect.Bottom);
+                try{base.WndProc(ref m);}finally{restoringBounds=prior;}return;
+            }
+        }
         if(m.Msg==0x83&&m.WParam!=IntPtr.Zero){
             // Maximized HWND includes invisible resize margins; its content must
             // use the monitor work area so the titlebar and composer stay visible.
@@ -273,7 +273,7 @@ internal sealed class MatrixShell : Form {
                 case "presentWindow":PresentWindow();value=true;break;
                 case "windowReady":chromeReady=true;titlebar.Visible=false;value=new {maximized=WindowState==FormWindowState.Maximized};break;
                 case "windowMinimize":Minimize();value=true;break;
-                case "windowMotion":nativeMotion=input is bool&&(bool)input;value=true;break;
+                case "windowMotion":nativeMotion=input is bool&&(bool)input;UpdateWindowMotion();value=true;break;
                 case "windowMaximize":Maximize();value=true;break;
                 case "windowClose":BeginInvoke(new Action(Close));value=true;break;
                 case "windowDrag":BeginInvoke(new Action(()=>{ReleaseCapture();SendMessage(Handle,0xA1,new IntPtr(2),IntPtr.Zero);}));value=true;break;
