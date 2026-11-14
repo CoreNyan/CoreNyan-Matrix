@@ -33,7 +33,7 @@ export function environmentControls({enableOnly=false}={}){
  const button=document.createElement('button');button.type='button';
  const source=document.createElement('a');source.href='https://www.met.no/en';source.target='_blank';source.rel='noopener noreferrer';source.textContent='MET Norway';
  const status=document.createElement('span');status.setAttribute('role','status');
- const paint=()=>{button.hidden=enableOnly&&enabled();button.textContent=enabled()?'关闭位置共享':'启用位置与天气';button.title='向小可共享此设备的约略位置，用于天气问候；可随时关闭';source.hidden=!snapshot?.weather;status.textContent=snapshot?.weather?`${snapshot.weather.label} · ${snapshot.weather.temperature}°C`:snapshot?.location?'天气暂不可用':'';};
+ const paint=()=>{button.hidden=enableOnly&&enabled();button.textContent=enabled()?'关闭位置共享':'启用位置与天气';button.title='向小可共享此设备的约略位置，用于天气问候；可随时关闭';source.hidden=enableOnly||!snapshot?.weather;status.textContent=snapshot?.weather?`${snapshot.weather.label} · ${snapshot.weather.temperature}°C`:snapshot?.location?'天气暂不可用':'';};
  button.onclick=async()=>{button.disabled=true;try{if(enabled())await disableEnvironment();else{status.textContent='正在获取位置…';await refreshEnvironment(true);}paint();}catch(e){status.textContent=e.message;}finally{button.disabled=false;}};
  wrap.append(button,status,source);paint();
  const unlisten=onEnvironment(()=>{if(wrap.isConnected)paint();else unlisten();});
