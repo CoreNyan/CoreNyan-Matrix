@@ -498,3 +498,8 @@ html[data-terms-pending] body { visibility: hidden; }
 #logOrganSelect.log-source-offline,#logOrganSelect option.log-source-offline{color:rgba(255,255,255,.4)}
 
 .visuals-paused .brand-asterisk,.visuals-paused .live-dot,.visuals-paused .kinetic-marquee-track{animation-play-state:paused!important;}
+
+/* Same cut-corner, 82-unit letter construction as the CoreNyan wordmark. */
+.geometric-headline .hl-line{line-height:1;letter-spacing:0;-webkit-text-stroke:0}
+.geometric-headline .hl-line+.hl-line{margin-top:12px}
+.geometric-headline svg{display:block;width:100%;height:auto;overflow:visible}

@@ -107,8 +107,8 @@ async function prepareFrame(ticket=generation){
   await frame();await frame();
   if(phase!=='loading'||ticket!==generation)return;
   boot?.done('frame');
-  // Allow the real 100% state to paint; no artificial minimum loading duration.
-  await frame();if(phase==='loading'&&ticket===generation)play();
+  // Finish the bounded stroke transition before handing off; no synthetic progress.
+  await boot?.visualReady?.(!allowed());await frame();if(phase==='loading'&&ticket===generation)play();
  }catch(error){boot?.fail('frame',error);}
 }
 function onProgress(state){

@@ -9,7 +9,7 @@ html[data-terminal-phase]:not([data-terminal-phase=open]) .chapter-view.active,.
 html[data-terminal-phase=closed] .terminal-session>*{opacity:0}
 .terminal-core{position:absolute;left:50%;top:49%;width:min(1040px,calc(100% - 128px),calc((100svh - 140px)*1.65));translate:-50% -50%;transform-origin:50% 65%}
 .terminal-brand-pair{display:flex;align-items:flex-end;gap:4%}
-.terminal-wordmark{width:40%;flex:none;margin:0 0 16px;color:#fff}
+.terminal-wordmark{width:40%;flex:none;align-self:center;margin:0 0 48px;color:#fff}
 .terminal-wordmark svg{display:block;width:100%;height:auto;overflow:visible}
 .terminal-illustration{width:56%;flex:none;margin:0 0 34px}
 .terminal-doodle{width:100%;aspect-ratio:245/230;position:relative;transform-origin:50% 76%;will-change:transform}
@@ -17,11 +17,13 @@ html[data-terminal-phase=closed] .terminal-session>*{opacity:0}
 .terminal-doodle-ink{fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .terminal-doodle-ink path{stroke-dasharray:1;stroke-dashoffset:1}
 .terminal-doodle-pen{fill:#fff;stroke:#ffffff30;stroke-width:4;visibility:hidden}
-.terminal-status-row{display:flex;align-items:baseline;justify-content:space-between;gap:24px;min-height:64px;margin:18px 0 0 2px}
-.terminal-status{color:#eee;font:500 clamp(20px,2vw,26px)/1.5 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;letter-spacing:.08em;overflow-wrap:anywhere}
+.terminal-status-row{display:flex;align-items:baseline;justify-content:space-between;gap:24px;min-height:100px;margin:18px 0 0;position:relative;isolation:isolate;box-sizing:border-box;padding:16px 24px;background:#000}
+.terminal-status-row::before{content:"";position:absolute;inset:0;background:#fff;transform:scaleX(var(--display-progress,0));transform-origin:left;pointer-events:none}
+.terminal-status-row>.terminal-status,.terminal-status-row>.terminal-percentage{position:relative;color:#fff;mix-blend-mode:difference}
+.terminal-status{color:#fff;font:500 clamp(20px,2vw,26px)/1.5 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;letter-spacing:.08em;overflow-wrap:anywhere}
 .terminal-percentage{display:flex;align-items:baseline;gap:7px;color:#fff;flex:none}
 .terminal-percentage b{font:500 clamp(48px,5.6vw,76px)/1 TerminalMono,monospace;font-variant-numeric:tabular-nums}
-.terminal-percentage small{font:20px/1 TerminalMono,monospace;color:#bbb}
+.terminal-percentage small{font:20px/1 TerminalMono,monospace;color:#fff}
 .terminal-session[data-failed=true] .terminal-core{position:relative;left:auto;top:auto;translate:none;margin:clamp(24px,7vh,64px) auto}
 .terminal-session[data-failed=true] .terminal-status-row{align-items:flex-start}
 .terminal-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}.terminal-actions[hidden]{display:none}
@@ -39,16 +41,16 @@ html[data-terminal-phase=closed] dialog[open]::backdrop{opacity:0;animation:none
  .terminal-core{width:calc(100% - 48px);max-width:470px;top:49%}
  .terminal-brand-pair{flex-direction:column;align-items:flex-start;gap:10px}
  .terminal-illustration{order:-1;width:76%;align-self:flex-end;margin:0}
- .terminal-wordmark{width:72%;margin:0}
- .terminal-status-row{margin-top:24px;gap:16px;min-height:44px;align-items:center}
+ .terminal-wordmark{width:72%;align-self:flex-start;margin:0}
+ .terminal-status-row{margin-top:24px;gap:12px;min-height:68px;align-items:center;padding:12px 14px}
  .terminal-status{font-size:17px;letter-spacing:.02em}.terminal-percentage b{font-size:44px}.terminal-percentage small{font-size:15px}
 }
 @media(max-height:520px){
  .terminal-core{width:min(820px,calc(100% - 80px));top:49%}
  .terminal-brand-pair{gap:8%;align-items:flex-end}
- .terminal-wordmark{width:37%;margin:0 0 8px}
+ .terminal-wordmark{width:37%;margin:0 0 20px}
  .terminal-illustration{width:40%;max-width:calc((100svh - 108px)*1.06);margin:0 0 8px auto}
- .terminal-status-row{margin-top:12px;min-height:40px}.terminal-status{font-size:18px}.terminal-percentage b{font-size:42px}.terminal-percentage small{font-size:14px}
+ .terminal-status-row{margin-top:12px;min-height:66px;padding:12px 18px}.terminal-status{font-size:18px}.terminal-percentage b{font-size:42px}.terminal-percentage small{font-size:14px}
  .terminal-actions{margin-top:10px}
 }
 @media(max-width:380px) and (min-height:521px){.terminal-core{width:calc(100% - 40px)}.terminal-status{font-size:15px}.terminal-percentage b{font-size:36px}}
