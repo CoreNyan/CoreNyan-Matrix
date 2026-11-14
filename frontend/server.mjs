@@ -26,7 +26,7 @@ export function createFrontend({webRoot=path.join(directory,'web'),contractsRoot
    const url=new URL(req.url,'https://matrix.local'),pathname=decodeURIComponent(url.pathname);
    if(/^\/(api|auth)\//.test(pathname)||pathname==='/healthz'||pathname.startsWith('/assets/uploads/'))return proxy(req,res);
    if(!['GET','HEAD'].includes(req.method))return fail(res,405,'METHOD_NOT_ALLOWED');
-   const publicAsset=['/contracts/product.json','/pages-bootstrap.js','/login','/login.js','/css/login.css','/css/terminal-motion.css','/js/boot-progress.js','/js/terminal-motion.js','/vendor/jetbrains-mono-latin.woff2','/assets/favicon.ico','/assets/app-icon.png'].includes(pathname)||publicDoodles.has(pathname)||publicTerminalDoodles.has(pathname);
+   const publicAsset=['/contracts/product.json','/pages-bootstrap.js','/login','/login.js','/css/login.css','/css/theme.css','/js/theme-bootstrap.js','/css/terminal-motion.css','/js/boot-progress.js','/js/terminal-motion.js','/vendor/jetbrains-mono-latin.woff2','/assets/favicon.ico','/assets/app-icon.png'].includes(pathname)||publicDoodles.has(pathname)||publicTerminalDoodles.has(pathname);
    if(!publicAsset){const status=await authenticated(req,res);if(status===401){res.writeHead(303,{Location:'/login?next='+encodeURIComponent(url.pathname+url.search),'Cache-Control':'no-store'});res.end();return;}if(status!==204)return fail(res,502,'Matrix 登录服务暂不可用');}
    const isContract=pathname.startsWith('/contracts/'),base=path.resolve(isContract?contractsRoot:webRoot);
    const relative=pathname==='/login'?'login.html':pathname==='/'||/^\/(VITALS|LAYERS|ORGANS|CORTEX|SYNAPSE|ENTITY|CHAT)(?:\/|$)/i.test(pathname)?'index.html':isContract?pathname.slice('/contracts/'.length):pathname.slice(1);
