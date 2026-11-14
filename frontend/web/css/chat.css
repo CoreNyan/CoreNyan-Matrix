@@ -7,8 +7,8 @@
 
 #settingsAccount>details{border:1px solid #444;padding:14px 16px;margin:16px 0}#settingsAccount summary{cursor:pointer;font-weight:600}#settingsAccount details[open]>form{margin-top:16px}#settingsAccount>h3:not(:first-child){font-size:14px;margin-top:25px}#settingsAccount>details[open]{animation:account-open .28s ease-out}@keyframes account-open{from{transform:translateY(8px);opacity:.5}to{transform:none;opacity:1}}
 
-.chat-shell [data-hide-sidebar]{display:none}.chat-sidebar>header>span{flex:1}
-@media(max-width:600px){.chat-shell [data-hide-sidebar]{display:block}.chat-shell:not(.sidebar-collapsed) .chat-main{min-width:0}.chat-shell .chat-sidebar{transition:transform .3s,opacity .25s}.chat-shell.sidebar-collapsed .chat-sidebar{transform:translateX(-100%)}body:has(#view-chat.active) .overline-metrics{display:none}.chat-message-content>header{flex-wrap:wrap;gap:5px}.chat-message-content>header strong{overflow-wrap:anywhere}}
+.chat-sidebar>header>span{flex:1}
+@media(max-width:600px){.chat-shell:not(.sidebar-collapsed) .chat-main{min-width:0}.chat-shell .chat-sidebar{transition:transform .3s,opacity .25s}.chat-shell.sidebar-collapsed .chat-sidebar{transform:translateX(-100%)}body:has(#view-chat.active) .overline-metrics{display:none}.chat-message-content>header{flex-wrap:wrap;gap:5px}.chat-message-content>header strong{overflow-wrap:anywhere}}
 
 /* Pending attachments share the monochrome CHAT surface and remain conversation scoped. */
 .chat-attachments{display:flex;flex-wrap:nowrap;gap:10px;min-width:0;overflow-x:auto;max-height:112px;padding:6px 2px 10px;scrollbar-width:thin}
@@ -31,9 +31,9 @@
 /* Shared 36px action geometry keeps icons independent of font baselines. */
 .chat-shell{border-color:#303030;border-radius:12px;grid-template-columns:242px minmax(0,1fr)}
 .chat-sidebar{background:#101010}.chat-sidebar>header{padding:18px 14px;letter-spacing:1px;font-size:9px;justify-content:flex-start}.chat-sidebar>header>span{flex:1}
-.chat-shell :is([data-new],[data-hide-sidebar],[data-collapse],[data-more],.chat-attach){display:inline-grid;place-items:center;width:34px;height:34px;min-width:34px;flex:0 0 34px;padding:0;border:1px solid #3d3d3d;border-radius:7px;line-height:1;vertical-align:middle}
+.chat-shell :is([data-new],[data-collapse],[data-more],.chat-attach){display:inline-grid;place-items:center;width:34px;height:34px;min-width:34px;flex:0 0 34px;padding:0;border:1px solid #3d3d3d;border-radius:7px;line-height:1;vertical-align:middle}
 .chat-shell svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.chat-shell [data-hide-sidebar]{width:26px;min-width:26px;flex-basis:26px;border:0}.chat-search{margin:0 14px;border-radius:7px;padding:10px 12px;background:#151515;border-color:#333}.chat-search input{font-size:11px}
+.chat-search{margin:0 14px;border-radius:7px;padding:10px 12px;background:#151515;border-color:#333}.chat-search input{font-size:11px}
 .chat-sidebar-tools{gap:8px;padding-block:14px}.chat-sidebar-tools button{border-radius:6px;font-size:10px;min-height:28px}.chat-thread{border-radius:7px;padding:12px!important}.chat-thread.active{background:#222;border-color:#484848!important}.chat-group-name{letter-spacing:.04em}.chat-sidebar>footer{font-size:11px}.chat-sidebar>footer small{display:none}
 .chat-header{padding:16px 22px;border-bottom-color:#272727}.chat-header h2{font-size:17px}.chat-header small{font-size:8px}.chat-header [data-more]{border-color:transparent}
 .chat-welcome{min-height:180px}.chat-welcome img{width:90px;height:90px;transform:rotate(-5deg)}.chat-welcome h2{font-size:clamp(21px,2.6vw,30px);letter-spacing:-.04em;margin:12px 0}.chat-welcome p{color:#999;font-size:12px;margin:0}
@@ -115,3 +115,10 @@ body.chat-active{display:flex;flex-direction:column;height:var(--chat-viewport-h
 .chat-preview-tools [data-preview-page]::-webkit-inner-spin-button{appearance:none;}.document-zoom-control{border-left:1px solid #444;padding-left:6px;}.document-zoom-control>span{min-width:36px;text-align:center;}
 .chat-preview-tools [data-preview-previous],.chat-preview-tools [data-preview-next],.chat-preview-tools [data-preview-zoom-in],.chat-preview-tools [data-preview-zoom-out]{display:grid;place-items:center;width:30px;height:32px;padding:0;font:20px/1 sans-serif;}
 @media(max-width:600px){.chat-preview-stage.is-document{padding:10px;}.document-pages{gap:12px;}.chat-preview-tools{gap:4px;}.chat-preview-tools button{min-height:34px;}.document-zoom-control{gap:3px;padding-left:4px;}.chat-preview-tools [data-preview-page]{width:42px;}.chat-preview-header{padding:10px;}}
+
+/* Account identity stays with the conversation list on every platform. */
+.chat-sidebar>footer{display:flex;align-items:center;gap:10px;min-width:0;padding:14px 16px}
+.chat-account-avatar{position:relative;display:grid;place-items:center;width:32px;height:32px;flex:0 0 32px;border-radius:50%;overflow:hidden;background:#2a2a2a;color:#eee;font-size:13px;font-weight:600}
+.chat-account-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.chat-account-avatar img[hidden]{display:none}
+.chat-sidebar [data-account]{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

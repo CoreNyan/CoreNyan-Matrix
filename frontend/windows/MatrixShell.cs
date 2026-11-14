@@ -39,15 +39,63 @@ internal sealed class MatrixShell : Form {
     [StructLayout(LayoutKind.Sequential)] struct NativeRect { public int Left,Top,Right,Bottom; }
     [StructLayout(LayoutKind.Sequential)] struct MonitorInfo { public int Size;public NativeRect Monitor,Work;public uint Flags; }
     [StructLayout(LayoutKind.Sequential)] struct MinMaxInfo { public NativePoint Reserved,MaxSize,MaxPosition,MinTrackSize,MaxTrackSize; }
+    enum CaptionAction { Minimize, Maximize, Close }
     sealed class CaptionButton : Button {
-        bool hovered;
-        public Color HoverColor {get;set;}
-        public CaptionButton(){SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer,true);TabStop=false;}
-        protected override bool ShowFocusCues {get{return false;}}
+        readonly System.Windows.Forms.Timer motion=new System.Windows.Forms.Timer {Interval=16};
+        readonly Stopwatch elapsed=Stopwatch.StartNew();
+        bool hovered,pressed,dispatching;
+        float hover,press,pulse=1;
+        long last;
+        public CaptionAction Kind {get;set;}
+        public bool Restored {get;set;}
+        public CaptionButton(){
+            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer,true);
+            TabStop=false;motion.Tick+=(s,e)=>Advance();
+        }
         public override void NotifyDefault(bool value){base.NotifyDefault(false);}
-        protected override void OnMouseEnter(EventArgs e){hovered=true;Invalidate();base.OnMouseEnter(e);}
-        protected override void OnMouseLeave(EventArgs e){hovered=false;Invalidate();base.OnMouseLeave(e);}
-        protected override void OnPaint(PaintEventArgs e){e.Graphics.Clear(hovered?HoverColor:BackColor);TextRenderer.DrawText(e.Graphics,Text,Font,ClientRectangle,ForeColor,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding);}
+        void Animate(){
+            if(!ClientAnimationsEnabled()){hover=hovered?1:0;press=pressed?1:0;pulse=1;motion.Stop();Invalidate();return;}
+            if(!motion.Enabled){last=elapsed.ElapsedMilliseconds;motion.Start();}Invalidate();
+        }
+        void Advance(){
+            long now=elapsed.ElapsedMilliseconds;float dt=Math.Min(64,now-last);last=now;
+            float target=hovered?1:0,down=pressed?1:0;
+            hover+=(target-hover)*(1-(float)Math.Exp(-dt/55));press+=(down-press)*(1-(float)Math.Exp(-dt/35));
+            pulse=Math.Min(1,pulse+dt/280);
+            if(Math.Abs(target-hover)<.004f&&Math.Abs(down-press)<.004f&&pulse==1){hover=target;press=down;motion.Stop();}
+            Invalidate();
+        }
+        protected override void OnMouseEnter(EventArgs e){hovered=true;Animate();base.OnMouseEnter(e);}
+        protected override void OnMouseLeave(EventArgs e){hovered=false;Animate();base.OnMouseLeave(e);}
+        protected override void OnMouseDown(MouseEventArgs e){if(e.Button==MouseButtons.Left){pressed=true;pulse=0;Animate();}base.OnMouseDown(e);}
+        protected override void OnMouseUp(MouseEventArgs e){pressed=false;Animate();base.OnMouseUp(e);}
+        protected override void OnMouseCaptureChanged(EventArgs e){pressed=false;Animate();base.OnMouseCaptureChanged(e);}
+        protected override async void OnClick(EventArgs e){
+            if(dispatching)return;dispatching=true;
+            try{if(ClientAnimationsEnabled())await System.Threading.Tasks.Task.Delay(90);if(!IsDisposed&&Enabled)base.OnClick(e);}finally{dispatching=false;}
+        }
+        static System.Drawing.Drawing2D.GraphicsPath Rounded(RectangleF r,float radius){
+            var p=new System.Drawing.Drawing2D.GraphicsPath();float d=radius*2;
+            p.AddArc(r.Left,r.Top,d,d,180,90);p.AddArc(r.Right-d,r.Top,d,d,270,90);p.AddArc(r.Right-d,r.Bottom-d,d,d,0,90);p.AddArc(r.Left,r.Bottom-d,d,d,90,90);p.CloseFigure();return p;
+        }
+        protected override void OnPaint(PaintEventArgs e){
+            var g=e.Graphics;g.Clear(BackColor);g.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            float unit=Math.Min(Width/48f,Height/42f);
+            g.TranslateTransform(Width/2f,Height/2f);g.ScaleTransform(unit,unit);
+            var bg=Kind==CaptionAction.Close?Color.FromArgb(172,53,57):Color.FromArgb(90,90,90);
+            using(var shape=Rounded(new RectangleF(-19,-16,38,32),9))
+            using(var fill=new SolidBrush(Color.FromArgb((int)(hover*110+press*35),bg)))g.FillPath(fill,shape);
+            if(pulse<1){float v=1-(1-pulse)*(1-pulse);using(var ring=Rounded(new RectangleF(-12-7*v,-10-6*v,24+14*v,20+12*v),7))using(var pen=new Pen(Color.FromArgb((int)(75*(1-pulse)),ForeColor),1))g.DrawPath(pen,ring);}
+            g.ScaleTransform(1-.16f*press,1-.16f*press);
+            using(var pen=new Pen(Color.FromArgb((int)(185+70*hover),ForeColor),1.55f)){
+                pen.StartCap=pen.EndCap=System.Drawing.Drawing2D.LineCap.Round;pen.LineJoin=System.Drawing.Drawing2D.LineJoin.Round;
+                if(Kind==CaptionAction.Minimize){g.TranslateTransform(0,hover*2);g.DrawLine(pen,-6,3,6,3);}
+                else if(Kind==CaptionAction.Close){g.RotateTransform(hover*90);g.DrawLine(pen,-5,-5,5,5);g.DrawLine(pen,5,-5,-5,5);}
+                else if(Restored){g.DrawLines(pen,new[]{new PointF(-2,-6),new PointF(6,-6),new PointF(6,2)});using(var box=Rounded(new RectangleF(-6,-2,8,8),1.4f))g.DrawPath(pen,box);}
+                else {float v=hover;g.DrawLines(pen,new[]{new PointF(-6-v,-1),new PointF(-6-v,-6-v),new PointF(-1,-6-v)});g.DrawLines(pen,new[]{new PointF(1,6+v),new PointF(6+v,6+v),new PointF(6+v,1)});}
+            }
+        }
+        protected override void Dispose(bool disposing){if(disposing)motion.Dispose();base.Dispose(disposing);}
     }
     [STAThread] static int Main(string[] args) {
         if(args.Length>0&&args[0]=="--check-runtime") { try { CoreWebView2Environment.GetAvailableBrowserVersionString();return 0; } catch { return 2; } }
@@ -70,7 +118,8 @@ internal sealed class MatrixShell : Form {
         titlebar.Dock=DockStyle.Fill;titlebar.Margin=Padding.Empty;titlebar.BackColor=BackColor;
         viewport.Dock=DockStyle.Fill;viewport.Margin=Padding.Empty;layout.Controls.Add(titlebar,0,0);layout.Controls.Add(viewport,0,1);
         titlebar.MouseDown+=Drag;titlebar.DoubleClick+=(s,e)=>Maximize();
-        AddWindowButton("×",()=>Close(),true);AddWindowButton("□",Maximize,false);AddWindowButton("−",()=>WindowState=FormWindowState.Minimized,false);
+        AddWindowButton(CaptionAction.Close,()=>Close());AddWindowButton(CaptionAction.Maximize,Maximize);AddWindowButton(CaptionAction.Minimize,()=>WindowState=FormWindowState.Minimized);
+        Resize+=(s,e)=>{foreach(Control control in titlebar.Controls){var button=control as CaptionButton;if(button!=null&&button.Kind==CaptionAction.Maximize){button.Restored=WindowState==FormWindowState.Maximized;button.AccessibleName=button.Restored?"还原":"最大化";button.Invalidate();}}};
         web.Dock=DockStyle.Fill;web.DefaultBackgroundColor=BackColor;viewport.Controls.Add(web);
         offline.Dock=DockStyle.Fill;offline.BackColor=BackColor;offline.Visible=false;
         var retry=new Button {Text="重新连接",Size=new Size(140,42),FlatStyle=FlatStyle.Flat};retry.Click+=async(s,e)=>{
@@ -94,7 +143,10 @@ internal sealed class MatrixShell : Form {
             if(t>=1)break;await System.Threading.Tasks.Task.Delay(16);
         }
     }
-    void AddWindowButton(string text,Action action,bool close){var b=new CaptionButton {Text=text,Dock=DockStyle.Right,Width=48,FlatStyle=FlatStyle.Flat,BackColor=BackColor,ForeColor=ForeColor,HoverColor=close?Color.FromArgb(150,40,40):Color.FromArgb(38,38,38),Font=new Font("Segoe UI",15)};b.FlatAppearance.BorderSize=0;b.Click+=(s,e)=>action();titlebar.Controls.Add(b);b.BringToFront();}
+    void AddWindowButton(CaptionAction kind,Action action){
+        var b=new CaptionButton {Kind=kind,AccessibleName=kind==CaptionAction.Close?"关闭":kind==CaptionAction.Maximize?"最大化":"最小化",Dock=DockStyle.Right,Width=48,FlatStyle=FlatStyle.Flat,BackColor=BackColor,ForeColor=ForeColor};
+        b.FlatAppearance.BorderSize=0;b.Click+=(s,e)=>action();titlebar.Controls.Add(b);b.BringToFront();
+    }
     void Drag(object sender,MouseEventArgs e){if(e.Button==MouseButtons.Left){ReleaseCapture();SendMessage(Handle,0xA1,new IntPtr(2),IntPtr.Zero);}}
     void Maximize(){MaximizedBounds=Screen.FromHandle(Handle).WorkingArea;WindowState=WindowState==FormWindowState.Maximized?FormWindowState.Normal:FormWindowState.Maximized;}
     protected override void OnFormClosing(FormClosingEventArgs e){

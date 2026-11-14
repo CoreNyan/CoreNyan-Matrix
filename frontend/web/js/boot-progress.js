@@ -4,8 +4,9 @@
  const steps=definitions.map(([id,label])=>({id,label,status:'pending',detail:''})),listeners=new Set();
  const snapshot=()=>({steps:steps.map(s=>({...s})),percent:Math.floor(100*steps.filter(s=>['done','skipped'].includes(s.status)).length/steps.length)});
  function update(id,status,detail=''){const step=steps.find(s=>s.id===id);if(!step||['done','skipped'].includes(step.status))return;Object.assign(step,{status,detail:String(detail)});for(const listener of listeners)listener(snapshot());}
- let doodleReady=Promise.resolve(),visualReady=()=>Promise.resolve();
- const boot={snapshot,doodleReady:()=>doodleReady,visualReady:immediate=>visualReady(immediate),begin:id=>update(id,'running'),done:id=>update(id,'done'),fail:(id,error)=>update(id,'failed',error?.message||error),skip:id=>update(id,'skipped'),subscribe(listener){listeners.add(listener);listener(snapshot());return()=>listeners.delete(listener);}};
+ let doodleReady=Promise.resolve(),visualReady=()=>Promise.resolve(),visualValue=0;
+ const visualListeners=new Set();
+ const boot={snapshot,doodleReady:()=>doodleReady,visualReady:immediate=>visualReady(immediate),onVisual(listener){visualListeners.add(listener);listener(visualValue);return()=>visualListeners.delete(listener);},begin:id=>update(id,'running'),done:id=>update(id,'done'),fail:(id,error)=>update(id,'failed',error?.message||error),skip:id=>update(id,'skipped'),subscribe(listener){listeners.add(listener);listener(snapshot());return()=>listeners.delete(listener);}};
  Object.defineProperty(window,'MatrixBoot',{value:Object.freeze(boot)});
  function mount(){
   if(!document.body||document.querySelector('.terminal-session'))return;
@@ -38,7 +39,7 @@
    paths.forEach((path,i)=>{const fraction=Math.min(1,Math.max(0,remaining/lengths[i]));path.style.strokeDashoffset=String(1-fraction);path.style.visibility=fraction>0?'visible':'hidden';if(fraction>0&&fraction<1){active=i;const point=path.getPointAtLength(lengths[i]*fraction);pen.setAttribute('cx',point.x);pen.setAttribute('cy',point.y);}remaining-=lengths[i];});
    pen.style.visibility=active>=0&&Math.abs(value-target)>.0001?'visible':'hidden';
    host.dataset.drawn=String(value);host.setAttribute('aria-valuenow',String(Math.floor(value*100)));
-   percent.textContent=String(Math.floor(value*100));panel.style.setProperty('--display-progress',String(value));assemble(value);
+   percent.textContent=String(Math.floor(value*100));panel.style.setProperty('--display-progress',String(value));panel.style.setProperty('--reveal-inset',((1-value)*50)+'%');panel.toggleAttribute('data-reveal-started',value>0);assemble(value);visualValue=value;for(const listener of visualListeners)listener(value);
   }
   function tick(now){
    raf=0;if(disposed)return;

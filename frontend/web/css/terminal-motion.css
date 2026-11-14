@@ -1,10 +1,20 @@
+/* Use the shared pressed feedback, not Android WebView tap rectangles. */
+:root{-webkit-tap-highlight-color:transparent}
 @font-face{font-family:TerminalMono;src:url('/vendor/jetbrains-mono-latin.woff2') format('woff2');font-style:normal;font-weight:100 800;font-display:swap}
 /* One composition: a wordmark, a drawing and one line of real progress. */
 html{background:#090909}
+html[data-terminal-boot],html[data-terminal-boot] body,html[data-terminal-phase=closed],html[data-terminal-phase=closed] body{background:#fff}
 html[data-terminal-boot] body>:not(.terminal-session):not(script):not(style),html[data-terminal-phase=closed] [data-terminal-surface]{opacity:0;pointer-events:none}
 html[data-terminal-phase=closing] body{pointer-events:none}
 html[data-terminal-phase]:not([data-terminal-phase=open]) .chapter-view.active,.chapter-view[data-terminal-initial]{animation:none!important}
 .terminal-session{position:fixed;inset:0;margin:0;padding:0;width:100%;height:100%;max-width:none;max-height:none;border:0;color:#fff;background:#000;z-index:2147483600;overflow:auto;isolation:isolate;visibility:visible;box-sizing:border-box;font:12px/1.5 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif}
+/* White outside the central aperture inverts the existing startup composition. */
+.terminal-session::after{content:"";position:fixed;inset:0;background:#fff;mix-blend-mode:difference;z-index:2;pointer-events:none;clip-path:polygon(evenodd,0% 0%,100% 0%,100% 100%,0% 100%,0% 0%,var(--reveal-inset,50%) var(--reveal-inset,50%),var(--reveal-inset,50%) calc(100% - var(--reveal-inset,50%)),calc(100% - var(--reveal-inset,50%)) calc(100% - var(--reveal-inset,50%)),calc(100% - var(--reveal-inset,50%)) var(--reveal-inset,50%),var(--reveal-inset,50%) var(--reveal-inset,50%))}
+.terminal-session:not([data-reveal-started])::after{clip-path:inset(0)}
+.terminal-exit-mask{position:fixed;inset:0;margin:0;padding:0;width:100%;height:100%;max-width:none;max-height:none;border:0;background:transparent;pointer-events:none;z-index:2147483646}
+.terminal-exit-field{position:absolute;inset:0;background:#fff}
+.terminal-edge-glitch{position:fixed;inset:0;width:100%;height:100%;z-index:3;pointer-events:none;mix-blend-mode:difference}
+.terminal-exit-mask::backdrop{background:transparent;pointer-events:none}
 .terminal-session[hidden]{display:none}
 html[data-terminal-phase=closed] .terminal-session>*{opacity:0}
 .terminal-core{position:absolute;left:50%;top:49%;width:min(1040px,calc(100% - 128px),calc((100svh - 140px)*1.65));translate:-50% -50%;transform-origin:50% 65%}
@@ -32,7 +42,6 @@ html[data-terminal-phase=closed] .terminal-session>*{opacity:0}
 .terminal-session[data-mode=handoff]{pointer-events:none}
 html[data-terminal-app] :is([data-vitals-content],#ecgCanvas){transition:opacity 560ms cubic-bezier(.22,.75,.25,1)}
 html[data-terminal-app]:not([data-vitals-ready]) [data-vitals-content],#ecgCanvas:not([data-signal-ready]){opacity:0}
-html[data-terminal-phase=closing] dialog[open]::backdrop{animation:terminal-backdrop-out 300ms ease both}
 html[data-terminal-phase=closed] dialog[open]::backdrop{opacity:0;animation:none}
 @keyframes terminal-backdrop-out{to{opacity:0}}
 @media(max-width:700px) and (min-height:521px){
