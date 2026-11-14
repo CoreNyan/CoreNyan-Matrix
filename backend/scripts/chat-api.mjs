@@ -4,7 +4,7 @@ import path from 'node:path';
 import {createRequire} from 'node:module';
 import {randomUUID} from 'node:crypto';
 const require=createRequire(import.meta.url);
-export function createChatApi({sharedRoot,gatewayRoot}){
+export function createChatApi({sharedRoot,gatewayRoot,environmentSnapshot=()=>null}){
  const shared=require(path.join(sharedRoot,'index.js')),{CHAT,uuid}=require(path.join(sharedRoot,'chat-contract.cjs'));
  const bus=new shared.RedisBus({getConfig:()=>{const cfg=JSON.parse(fs.readFileSync(path.join(gatewayRoot,'corenyan-config.json'),'utf8'));return {redis:{...cfg.redis,host:process.env.REDIS_HOST||'corenyan-redis'}};},logger:(...a)=>console.log('[CHAT]',...a)});
  const client=shared.createRpcClient({bus,requestChannel:shared.channel('chat:request'),responseChannel:shared.channel('chat:response'),timeoutMs:CHAT.requestMs});bus.connect();
@@ -14,7 +14,7 @@ export function createChatApi({sharedRoot,gatewayRoot}){
   if(!url.pathname.startsWith(CHAT.api))return false;
   try{
    if(!req.auth)throw Error('CHAT_AUTH_REQUIRED');if(!shared.enabled('chat'))throw Error('CHAT_DISABLED');
-   const c={platform:'chat',authenticated:true,accountId:req.auth.id,username:req.auth.username,role:req.auth.role,linkedQQ:req.auth.linkedQQ||''},parts=url.pathname.slice(CHAT.api.length).split('/').filter(Boolean);
+   const c={platform:'chat',authenticated:true,accountId:req.auth.id,username:req.auth.username,role:req.auth.role,linkedQQ:req.auth.linkedQQ||'',userEnvironment:environmentSnapshot(req)},parts=url.pathname.slice(CHAT.api.length).split('/').filter(Boolean);
    const call=(op,a={},id=randomUUID())=>client.call(op,a,c,{id});
    if(parts[0]==='capabilities'&&req.method==='GET'){json(res,200,{ok:true,version:CHAT.version,maxFileBytes:CHAT.maxFileBytes,maxFiles:CHAT.maxFiles,chunkBytes:CHAT.chunkBytes,identity:req.auth});return true;}
    if(parts[0]==='conversations'){

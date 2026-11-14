@@ -1,7 +1,7 @@
 import {applyCors,trustedRequestOrigin,allowedOrigins} from './cors.mjs';
 import {createSessionStore,SESSION_POLICY} from './auth-sessions.mjs';
 import {createAccountStore} from './account-store.mjs';
-import {scrypt,randomBytes,timingSafeEqual} from 'node:crypto';
+import {scrypt,randomBytes,timingSafeEqual,createHash} from 'node:crypto';
 import {promisify} from 'node:util';
 import fs from 'node:fs';
 const derive=promisify(scrypt);
@@ -41,7 +41,7 @@ export function createAuth({credentialFile,secure=true,now=Date.now,accounts=cre
   const token=bearer||String(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);
   const stored=sessions.find(token),credential=stored?accounts.find(stored.accountId):null;
   const session=sessions.get(token,credential),authenticated=!!session;
-  if(authenticated)req.auth={...accounts.publicAccount(credential),expiresAt:session.expiresAt};
+  if(authenticated){req.auth={...accounts.publicAccount(credential),expiresAt:session.expiresAt};req.sessionKey=createHash('sha256').update(token).digest('hex');}
   if(!['GET','HEAD'].includes(req.method)){
    if(!trustedRequestOrigin(req,secure)||(!bearer&&req.headers['sec-fetch-site']==='cross-site'&&url.pathname!=='/auth/login')){json(res,403,'请从当前控制台页面提交操作');return true;}
   }

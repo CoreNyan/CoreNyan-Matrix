@@ -6,6 +6,7 @@ import {createAccountStore} from './scripts/account-store.mjs';
 import {createNotifications} from './scripts/notifications.mjs';
 import {readOnebotLogin} from './scripts/onebot-login.mjs';
 import {chatPrivatePath} from './scripts/chat-private-path.mjs';
+import {createUserEnvironment} from './scripts/user-environment.mjs';
 import {createChatApi} from './scripts/chat-api.mjs';
 import {moveFiles} from './scripts/file-move.mjs';
 import {createAuth} from './scripts/web-auth.mjs';
@@ -430,7 +431,8 @@ async function readJsonBody(req) {
 
 const securityDirectory=(process.env.MATRIX_SECURITY_DIR||process.env.CORENYAN_WEB_SECURITY_DIR);
 if(!securityDirectory)throw Error('CORENYAN_WEB_SECURITY_DIR is required; refusing unprotected startup');
-const chatApi=createChatApi({sharedRoot:path.join(path.dirname(WEB_ROOT),'shared'),gatewayRoot:GATEWAY_ROOT});
+const userEnvironment=createUserEnvironment();
+const chatApi=createChatApi({environmentSnapshot:userEnvironment.snapshot,sharedRoot:path.join(path.dirname(WEB_ROOT),'shared'),gatewayRoot:GATEWAY_ROOT});
 const credentialFile=path.join(securityDirectory,'credentials.json');
 const accounts=createAccountStore(credentialFile);
 const authorize=createAuth({credentialFile,accounts});
@@ -440,6 +442,7 @@ const server = http.createServer(async (req, res) => {
   try { if(await authorize(req,res))return; } catch {res.writeHead(400);res.end('Invalid request');return;}
   const url = new URL(req.url, `https://${req.headers.host || 'localhost'}`);
   const pathname = url.pathname;
+  if(await userEnvironment.handle(req,res,url))return;
   if(await sounds.handle(req,res,url))return;
   if(await notifications.handle(req,res,url))return;
   if(await chatApi(req,res,url))return;

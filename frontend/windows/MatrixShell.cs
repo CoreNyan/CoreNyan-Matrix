@@ -257,7 +257,16 @@ internal sealed class MatrixShell : Form {
             core.NewWindowRequested+=(s,e)=>{e.Handled=true;if(Trusted(e.Uri))core.Navigate(e.Uri);else External(e.Uri);};
             core.NavigationCompleted+=(s,e)=>{if(!e.IsSuccess&&e.WebErrorStatus!=CoreWebView2WebErrorStatus.OperationCanceled){offline.Visible=true;offline.BringToFront();titlebar.Visible=true;titlebar.BringToFront();PresentWindow();}};
             core.ProcessFailed+=(s,e)=>{rendererFailed=true;offline.Visible=true;offline.BringToFront();titlebar.Visible=true;titlebar.BringToFront();PresentWindow();};
-            core.PermissionRequested+=(s,e)=>{e.State=Trusted(e.Uri)&&(e.PermissionKind==CoreWebView2PermissionKind.Notifications||e.PermissionKind==CoreWebView2PermissionKind.ClipboardRead&&e.IsUserInitiated)?CoreWebView2PermissionState.Allow:CoreWebView2PermissionState.Deny;};
+            core.PermissionRequested+=(s,e)=>{
+                if(e.PermissionKind==CoreWebView2PermissionKind.Geolocation){
+                    e.SavesInProfile=false;e.State=CoreWebView2PermissionState.Deny;
+                    if(Trusted(e.Uri)&&Trusted(web.Source.AbsoluteUri)){
+                        var choice=MessageBox.Show(this,"允许小可使用此设备的位置查询天气吗？只共享约略坐标，可在 CHAT 中随时关闭。","CoreNyan · 位置",MessageBoxButtons.YesNo,MessageBoxIcon.Question);
+                        if(choice==DialogResult.Yes){e.State=CoreWebView2PermissionState.Allow;e.SavesInProfile=true;}
+                    }return;
+                }
+                e.State=Trusted(e.Uri)&&(e.PermissionKind==CoreWebView2PermissionKind.Notifications||e.PermissionKind==CoreWebView2PermissionKind.ClipboardRead&&e.IsUserInitiated)?CoreWebView2PermissionState.Allow:CoreWebView2PermissionState.Deny;
+            };
             core.DownloadStarting+=(s,e)=>{if(!Trusted(e.DownloadOperation.Uri)&&!e.DownloadOperation.Uri.StartsWith("blob:"+endpoint.GetLeftPart(UriPartial.Authority)+"/")){e.Cancel=true;return;}using(var picker=new SaveFileDialog {Title="保存文件",FileName=Path.GetFileName(e.ResultFilePath)}){e.Handled=true;if(picker.ShowDialog(this)==DialogResult.OK)e.ResultFilePath=picker.FileName;else e.Cancel=true;}};
             core.WebMessageReceived+=MessageFromPage;
             string bridge=File.ReadAllText(Path.Combine(Root,"bridge.js")).Replace("__MATRIX_ORIGIN__",json.Serialize(endpoint.GetLeftPart(UriPartial.Authority)));

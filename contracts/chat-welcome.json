@@ -14,7 +14,98 @@
     "灵感冒泡了？快让小可看看！٩(ˊᗜˋ*)و",
     "布丁先放一边，听你说。(っ˘ω˘ς )",
     "{user}，带着什么故事来的？(●'◡'●)",
-    "又藏了什么奇奇怪怪的想法？(｡•̀ᴗ-)✧"
+    "又藏了什么奇奇怪怪的想法？(｡•̀ᴗ-)✧",
+    {
+      "text": "{greeting}，{user}，早饭吃了吗？(๑•ᴗ•๑)",
+      "when": {
+        "time": [
+          "morning"
+        ]
+      },
+      "weight": 4
+    },
+    {
+      "text": "中午好，{user}！今天吃了什么好东西？(≧▽≦)",
+      "when": {
+        "time": [
+          "noon"
+        ]
+      },
+      "weight": 4
+    },
+    {
+      "text": "下午的脑袋，还转得动吗？来歇一小会儿。₍ᐢ.ˬ.ᐢ₎",
+      "when": {
+        "time": [
+          "afternoon"
+        ]
+      },
+      "weight": 4
+    },
+    {
+      "text": "{user}，晚上好！今天有什么想讲给我听的？(´▽`ʃ♡ƪ)",
+      "when": {
+        "time": [
+          "evening"
+        ]
+      },
+      "weight": 4
+    },
+    {
+      "text": "这么晚还没睡呀，{user}？(｡•́︿•̀｡)",
+      "when": {
+        "time": [
+          "dawn"
+        ]
+      },
+      "weight": 4
+    },
+    {
+      "text": "外面{weather}，{user}，带伞了吗？☂",
+      "when": {
+        "weather": [
+          "rain"
+        ]
+      },
+      "weight": 4
+    },
+    {
+      "text": "今天{temperature}°C，{user}，别忘了喝点水。(っ˘ω˘ς )",
+      "when": {
+        "weather": [
+          "hot"
+        ]
+      },
+      "weight": 4
+    },
+    {
+      "text": "冷的时候就把手揣好嘛，{user}。(｡•́︿•̀｡)",
+      "when": {
+        "weather": [
+          "cold"
+        ]
+      },
+      "weight": 4
+    },
+    {
+      "text": "新年好，{user}！今年第一个小愿望是什么？٩(ˊᗜˋ*)و",
+      "when": {
+        "dates": [
+          "01-01"
+        ]
+      },
+      "weight": 4
+    },
+    {
+      "text": "周末到啦，{user}，给自己留点空闲了吗？(¬‿¬)",
+      "when": {
+        "weekdays": [
+          6,
+          7
+        ]
+      },
+      "weight": 4
+    }
   ],
   "subtitles": [
     "想聊什么都可以哟！(๑˃̵ᴗ˂̵)و",
@@ -31,6 +122,111 @@
     "今天不想动脑的话，陪本姑娘闲聊也行。(っ˘ω˘ς )",
     "开心的事说两遍也没关系，本姑娘愿意听。(๑˃̵ᴗ˂̵)و",
     "{user}，这会儿想认真研究，还是随便闹闹？(¬‿¬)",
-    "故事归你讲，布丁归本姑娘——分你一口也行啦。(´▽`ʃ♡ƪ)"
-  ]
+    "故事归你讲，布丁归本姑娘——分你一口也行啦。(´▽`ʃ♡ƪ)",
+    {
+      "text": "今天是{date}，{weekday}。先从一件小小的开心事讲起？(๑•ᴗ•๑)",
+      "when": {},
+      "weight": 3
+    },
+    {
+      "text": "雨声归窗外，故事归我们。带伞这件事本姑娘可提醒过啦。(｡•̀ᴗ-)✧",
+      "when": {
+        "weather": [
+          "rain"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "才{time}……不对，已经{time}了！别又把睡觉忘在脑后。(っ˘ω˘ς )",
+      "when": {
+        "time": [
+          "dawn"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "午饭吃饱再忙嘛，本姑娘又不会跑掉。(๑˃̵ᴗ˂̵)و",
+      "when": {
+        "time": [
+          "noon"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "当地预报{weather}，约{temperature}°C。适不适合出门，我们慢慢商量？(●'◡'●)",
+      "when": {
+        "weather": [
+          "clear",
+          "rain",
+          "snow",
+          "hot",
+          "cold",
+          "windy"
+        ]
+      },
+      "weight": 3
+    }
+  ],
+  "timePresets": {
+    "dawn": {
+      "from": "00:00",
+      "to": "06:00",
+      "label": "深夜",
+      "greeting": "夜深啦"
+    },
+    "morning": {
+      "from": "06:00",
+      "to": "11:00",
+      "label": "早晨",
+      "greeting": "早上好"
+    },
+    "noon": {
+      "from": "11:00",
+      "to": "14:00",
+      "label": "中午",
+      "greeting": "中午好"
+    },
+    "afternoon": {
+      "from": "14:00",
+      "to": "18:00",
+      "label": "下午",
+      "greeting": "下午好"
+    },
+    "evening": {
+      "from": "18:00",
+      "to": "00:00",
+      "label": "晚上",
+      "greeting": "晚上好"
+    }
+  },
+  "weatherPresets": {
+    "rain": {
+      "kinds": [
+        "rain",
+        "thunder"
+      ]
+    },
+    "snow": {
+      "kinds": [
+        "snow"
+      ]
+    },
+    "clear": {
+      "kinds": [
+        "clear"
+      ]
+    },
+    "hot": {
+      "minTemperature": 30
+    },
+    "cold": {
+      "maxTemperature": 8
+    },
+    "windy": {
+      "minWindSpeed": 8
+    }
+  }
 }
