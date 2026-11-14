@@ -37,3 +37,13 @@ html[data-theme=light][data-theme-handoff]::before{background:#f6f6f6}
 
 .topbar-RichToggles #btnSettings{height:36px;box-sizing:border-box}
 @media(max-width:700px){.mobile-layout .topbar-RichToggles #btnSettings{height:42px}}
+
+/* Model launch cards stay in the same tonal family during hover and keyboard focus. */
+html .settings-dialog .preset-overview>button:not(:disabled){position:relative;background:#151515;border-color:#454545;border-radius:12px;color:#f2f2f2;box-shadow:none;transform:none;transition:background-color .22s ease,border-color .22s ease,box-shadow .22s ease,transform .18s ease}
+html .settings-dialog .preset-overview>button:not(:disabled):is(:hover,:focus-visible){background:#252525;color:#f2f2f2;border-color:#999;box-shadow:inset 3px 0 0 #ddd;transform:none}
+html .settings-dialog .preset-overview>button:not(:disabled):active{background:#303030;transform:scale(.985)}
+html .settings-dialog .preset-overview>button:focus-visible{outline:2px solid #aaa;outline-offset:3px}
+html .settings-dialog .preset-overview>button span{color:#c5c5c5}
+html .settings-dialog .preset-overview>button .preset-overview-meta{color:#a0a0a0}
+@media(prefers-reduced-motion:reduce){html .settings-dialog .preset-overview>button:not(:disabled){transition:none}}
+html.motion-disabled .settings-dialog .preset-overview>button:not(:disabled){transition:none}
