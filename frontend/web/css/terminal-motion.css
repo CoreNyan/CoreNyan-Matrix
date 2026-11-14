@@ -7,21 +7,23 @@ html[data-terminal-phase]:not([data-terminal-phase=open]) .chapter-view.active,.
 .terminal-session{position:fixed;inset:0;margin:0;padding:0;width:100%;height:100%;max-width:none;max-height:none;border:0;color:#fff;background:#000;z-index:2147483600;overflow:auto;isolation:isolate;visibility:visible;box-sizing:border-box;font:12px/1.5 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif}
 .terminal-session[hidden]{display:none}
 html[data-terminal-phase=closed] .terminal-session>*{opacity:0}
-.terminal-core{position:absolute;left:50%;top:47%;width:min(570px,calc(100% - 80px));translate:-50% -50%;transform-origin:50% 65%}
-.terminal-brand-pair{display:flex;align-items:flex-end;gap:24px}
-.terminal-wordmark{width:40%;flex:none;margin:0 0 25px;color:#fff}
+.terminal-core{position:absolute;left:50%;top:49%;width:min(1040px,calc(100% - 128px),calc((100svh - 140px)*1.65));translate:-50% -50%;transform-origin:50% 65%}
+.terminal-brand-pair{display:flex;align-items:flex-end;gap:4%}
+.terminal-wordmark{width:40%;flex:none;margin:0 0 16px;color:#fff}
 .terminal-wordmark svg{display:block;width:100%;height:auto;overflow:visible}
-.terminal-illustration{width:calc(60% - 24px);flex:none;margin:0 0 58px}
+.terminal-illustration{width:56%;flex:none;margin:0 0 34px}
 .terminal-doodle{width:100%;aspect-ratio:245/230;position:relative;transform-origin:50% 76%;will-change:transform}
 .terminal-doodle svg{display:block;width:100%;height:100%;overflow:visible}
 .terminal-doodle-ink{fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .terminal-doodle-ink path{stroke-dasharray:1;stroke-dashoffset:1}
 .terminal-doodle-pen{fill:#fff;stroke:#ffffff30;stroke-width:4;visibility:hidden}
-.terminal-status-row{display:flex;align-items:baseline;gap:18px;min-height:22px;margin:0 0 0 2px}
-.terminal-status{color:#a8a8a8;font:11px/1.8 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;letter-spacing:.08em;overflow-wrap:anywhere}
-.terminal-percentage{display:flex;align-items:baseline;gap:3px;color:#fff;flex:none}
-.terminal-percentage b{font:400 12px/1 TerminalMono,monospace;font-variant-numeric:tabular-nums}
-.terminal-percentage small{font:9px/1 TerminalMono,monospace;color:#888}
+.terminal-status-row{display:flex;align-items:baseline;justify-content:space-between;gap:24px;min-height:64px;margin:18px 0 0 2px}
+.terminal-status{color:#eee;font:500 clamp(20px,2vw,26px)/1.5 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;letter-spacing:.08em;overflow-wrap:anywhere}
+.terminal-percentage{display:flex;align-items:baseline;gap:7px;color:#fff;flex:none}
+.terminal-percentage b{font:500 clamp(48px,5.6vw,76px)/1 TerminalMono,monospace;font-variant-numeric:tabular-nums}
+.terminal-percentage small{font:20px/1 TerminalMono,monospace;color:#bbb}
+.terminal-session[data-failed=true] .terminal-core{position:relative;left:auto;top:auto;translate:none;margin:clamp(24px,7vh,64px) auto}
+.terminal-session[data-failed=true] .terminal-status-row{align-items:flex-start}
 .terminal-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}.terminal-actions[hidden]{display:none}
 .terminal-actions button{display:block;width:auto;margin:0;padding:10px 15px;border:1px solid #ffffff40;border-radius:5px;background:#ffffff05;color:#eee;font:12px/1.5 "Microsoft YaHei UI","PingFang SC",system-ui;cursor:pointer;transition:background 180ms}
 .terminal-actions button:hover{background:#ffffff16}.terminal-actions button:focus-visible{outline:2px solid #ddd;outline-offset:3px}.terminal-actions button[hidden]{display:none}
@@ -33,12 +35,22 @@ html[data-terminal-app]:not([data-vitals-ready]) [data-vitals-content],#ecgCanva
 html[data-terminal-phase=closing] dialog[open]::backdrop{animation:terminal-backdrop-out 600ms ease both}
 html[data-terminal-phase=closed] dialog[open]::backdrop{opacity:0;animation:none}
 @keyframes terminal-backdrop-out{to{opacity:0}}
-@media(max-width:700px){
- .terminal-core{width:calc(100% - 56px);max-width:440px;top:46%}
- .terminal-brand-pair{gap:12px}.terminal-wordmark{width:42%;margin-bottom:22px}
- .terminal-illustration{width:calc(58% - 12px);margin-bottom:58px}
- .terminal-status-row{gap:12px}.terminal-status{font-size:10px;letter-spacing:.03em}.terminal-percentage b{font-size:11px}
+@media(max-width:700px) and (min-height:521px){
+ .terminal-core{width:calc(100% - 48px);max-width:470px;top:49%}
+ .terminal-brand-pair{flex-direction:column;align-items:flex-start;gap:10px}
+ .terminal-illustration{order:-1;width:76%;align-self:flex-end;margin:0}
+ .terminal-wordmark{width:72%;margin:0}
+ .terminal-status-row{margin-top:24px;gap:16px;min-height:44px;align-items:center}
+ .terminal-status{font-size:17px;letter-spacing:.02em}.terminal-percentage b{font-size:44px}.terminal-percentage small{font-size:15px}
 }
-@media(max-height:520px){.terminal-core{width:min(400px,calc(100% - 56px));top:48%}.terminal-illustration{margin-bottom:25px}.terminal-wordmark{margin-bottom:10px}.terminal-actions{margin-top:10px}}
+@media(max-height:520px){
+ .terminal-core{width:min(820px,calc(100% - 80px));top:49%}
+ .terminal-brand-pair{gap:8%;align-items:flex-end}
+ .terminal-wordmark{width:37%;margin:0 0 8px}
+ .terminal-illustration{width:40%;max-width:calc((100svh - 108px)*1.06);margin:0 0 8px auto}
+ .terminal-status-row{margin-top:12px;min-height:40px}.terminal-status{font-size:18px}.terminal-percentage b{font-size:42px}.terminal-percentage small{font-size:14px}
+ .terminal-actions{margin-top:10px}
+}
+@media(max-width:380px) and (min-height:521px){.terminal-core{width:calc(100% - 40px)}.terminal-status{font-size:15px}.terminal-percentage b{font-size:36px}}
 @media(prefers-reduced-motion:reduce){.terminal-session *{animation:none!important;transition:none!important}html[data-terminal-app] :is([data-vitals-content],#ecgCanvas){transition:none}}
 .motion-disabled [data-vitals-content],.motion-disabled #ecgCanvas{transition:none!important}
