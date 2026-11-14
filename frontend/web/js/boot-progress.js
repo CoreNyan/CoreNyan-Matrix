@@ -10,42 +10,22 @@
  function mount(){
   if(!document.body||document.querySelector('.terminal-session'))return;
   const panel=document.createElement('aside');panel.className='terminal-session';panel.setAttribute('aria-label','连接 CoreNyan');
-  panel.innerHTML='<div class="terminal-coordinate" aria-hidden="true"><span class="terminal-cross">+</span> CORENYAN / TERMINAL</div><div class="terminal-rail" aria-hidden="true"></div><div class="terminal-core"><div class="terminal-intro"><div class="terminal-kicker"><span class="terminal-led"></span><span data-boot-heading>CONNECTING</span></div><h1 class="terminal-title" data-boot-title>接入神经</h1><ol class="terminal-stages"></ol></div><div class="terminal-display"><div class="terminal-brand-pair"><div class="terminal-wordmark"><svg viewBox="0 0 310 182" role="img" aria-label="CoreNyan"><g fill="currentColor" fill-rule="evenodd"><path d="M64 0H14L0 14V68L14 82H64V65H20V17H64Z"/><path d="M88 0H132L146 14V68L132 82H88L74 68V14ZM94 17V65H126V17Z"/><path d="M158 0H211L226 15V43L215 54L230 82H208L191 55H176V82H158ZM176 17V39H205V17Z"/><path d="M240 0H304V17H258V32H295V49H258V65H304V82H240Z"/><g transform="translate(0 100)"><path d="M0 82V0H18L49 48V0H67V82H49L18 34V82Z"/><path d="M80 0H100L116 30L132 0H152L125 47V82H107V47Z"/><path d="M158 82L180 0H205L229 82H209L204 63H180L175 82ZM184 47H200L192 17Z"/><path d="M240 82V0H258L289 48V0H307V82H289L258 34V82Z"/></g></g></svg></div><figure class="terminal-illustration"><div class="terminal-doodle terminal-progress" role="progressbar" aria-label="小可线稿绘制进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><svg viewBox="-8 -8 245 230" aria-hidden="true"><g class="terminal-doodle-ink"></g><circle class="terminal-doodle-pen" r="2.5" cx="0" cy="0"/></svg></div><figcaption><span class="terminal-doodle-caption">连接进度</span><span class="terminal-percentage"><b data-boot-percent>0</b><small>%</small></span></figcaption></figure></div><div class="terminal-status" role="status" aria-live="polite" data-boot-status>正在建立连接</div><div class="terminal-progress-meta"><span data-boot-stage>配置连接</span><span class="terminal-counter" data-boot-count>00 / 06</span></div><div class="terminal-actions" hidden><button type="button" data-boot-retry>重新连接 ↗</button><button type="button" data-boot-continue hidden>先进入界面 →</button></div></div></div><div class="terminal-foot"><span data-boot-footer>等待连接</span><span aria-hidden="true">CORENYAN</span></div><div class="terminal-scan" aria-hidden="true"></div>';
-  const list=panel.querySelector('.terminal-stages');
-  const icons={
-   config:'<path d="M4 7h16M4 17h16"/><path class="step-knob-a" d="M9 4v6"/><path class="step-knob-b" d="M15 14v6"/>',
-   connection:'<path d="M8 12h8M12 8v8"/><circle class="step-node-a" cx="5" cy="12" r="2"/><circle class="step-node-b" cx="12" cy="5" r="2"/><circle class="step-node-c" cx="19" cy="12" r="2"/><circle class="step-node-d" cx="12" cy="19" r="2"/>',
-   interface:'<rect class="step-panel-a" x="4" y="4" width="6" height="16" rx="1"/><rect class="step-panel-b" x="14" y="4" width="6" height="6" rx="1"/><rect class="step-panel-c" x="14" y="14" width="6" height="6" rx="1"/>',
-   content:'<path d="M7 3h7l4 4v14H7zM14 3v5h4"/><path class="step-line-a" d="M10 12h5"/><path class="step-line-b" d="M10 16h5"/>',
-   assets:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle class="step-sun" cx="16" cy="9" r="2"/><path class="step-landscape" d="m4 18 5-6 4 4 3-3 4 5"/>',
-   frame:'<path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/><path class="step-scan" d="M6 12h12"/>'
-  };
-  for(const step of steps){
-   const item=document.createElement('li');item.dataset.bootStep=step.id;
-   item.innerHTML='<i class="terminal-step-icon" aria-hidden="true"><svg viewBox="0 0 24 24">'+icons[step.id]+'</svg></i><span class="terminal-step-copy"><span data-step-label></span><small data-step-status>等待接入</small></span>';
-   item.querySelector('[data-step-label]').textContent=step.label;list.append(item);
-  }
-
+  panel.innerHTML='<div class="terminal-core"><div class="terminal-brand-pair"><div class="terminal-wordmark"><svg viewBox="0 0 310 182" role="img" aria-label="CoreNyan"><g fill="currentColor" fill-rule="evenodd"><path d="M64 0H14L0 14V68L14 82H64V65H20V17H64Z"/><path d="M88 0H132L146 14V68L132 82H88L74 68V14ZM94 17V65H126V17Z"/><path d="M158 0H211L226 15V43L215 54L230 82H208L191 55H176V82H158ZM176 17V39H205V17Z"/><path d="M240 0H304V17H258V32H295V49H258V65H304V82H240Z"/><g transform="translate(0 100)"><path d="M0 82V0H18L49 48V0H67V82H49L18 34V82Z"/><path d="M80 0H100L116 30L132 0H152L125 47V82H107V47Z"/><path d="M158 82L180 0H205L229 82H209L204 63H180L175 82ZM184 47H200L192 17Z"/><path d="M240 82V0H258L289 48V0H307V82H289L258 34V82Z"/></g></g></svg></div><figure class="terminal-illustration"><div class="terminal-doodle terminal-progress" role="progressbar" aria-label="小可线稿绘制进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><svg viewBox="-8 -8 245 230" aria-hidden="true"><g class="terminal-doodle-ink"></g><circle class="terminal-doodle-pen" r="2.5" cx="0" cy="0"/></svg></div></figure></div><div class="terminal-status-row"><span class="terminal-status" role="status" aria-live="polite" data-boot-status>接入神经</span><span class="terminal-percentage" aria-hidden="true"><b data-boot-percent>0</b><small>%</small></span></div><div class="terminal-actions" hidden><button type="button" data-boot-retry>重新连接 ↗</button><button type="button" data-boot-continue hidden>先进入界面 →</button></div></div>';
   panel.querySelector('[data-boot-retry]').onclick=()=>location.reload();
   panel.querySelector('[data-boot-continue]').onclick=()=>{for(const step of steps)if(step.status==='failed'&&['content','assets'].includes(step.id))boot.skip(step.id);};
   document.body.append(panel);
   let drawing;
   doodleReady=loadDoodle(panel).then(()=>{drawing=mountDoodleProgress(panel);drawing.update(boot.snapshot().percent/100);});
-  doodleReady.catch(()=>{panel.querySelector('.terminal-doodle-caption').textContent='线稿暂不可用';});
+  doodleReady.catch(()=>{}); // The asset stage displays the error and recovery actions.
   boot.subscribe(state=>{
    if(['opening','open','closing','closed'].includes(document.documentElement.dataset.terminalPhase))return;
    const failed=state.steps.find(s=>s.status==='failed'),active=failed||state.steps.find(s=>s.status==='running')||state.steps.find(s=>s.status==='pending');
    panel.dataset.failed=String(Boolean(failed));drawing?.update(state.percent/100);
    panel.querySelector('.terminal-progress').setAttribute('aria-valuenow',String(state.percent));
    panel.querySelector('[data-boot-percent]').textContent=String(state.percent);
-   panel.querySelector('[data-boot-count]').textContent=String(state.steps.filter(s=>['done','skipped'].includes(s.status)).length).padStart(2,'0')+' / 06';
-   panel.querySelector('[data-boot-heading]').textContent=failed?'CONNECTION PAUSED':state.percent===100?'CONNECTED':'CONNECTING';
-   panel.querySelector('[data-boot-status]').textContent=failed?failed.detail:active?'正在'+active.label:'准备就绪';
-   panel.querySelector('[data-boot-stage]').textContent=active?.label||'准备完成';
-   panel.querySelector('[data-boot-footer]').textContent=failed?'连接尚未完成':state.steps.find(s=>s.id==='connection').status==='done'?'服务已连接':'正在连接服务';
+   panel.querySelector('[data-boot-status]').textContent=failed?failed.detail:active?'接入神经 · '+active.label:'神经已接入';
    panel.querySelector('.terminal-actions').hidden=!failed;
    panel.querySelector('[data-boot-continue]').hidden=!failed||!state.steps.some(s=>s.id==='interface'&&s.status==='done')||state.steps.some(s=>!['content','assets'].includes(s.id)&&s.status==='failed');
-   for(const step of state.steps){const item=panel.querySelector('[data-boot-step="'+step.id+'"]');item.dataset.status=step.status;item.querySelector('[data-step-status]').textContent={pending:'等待接入',running:'正在准备',done:'已就绪',failed:'需要重试',skipped:'已跳过'}[step.status];}
   });
  }
 // Stroke-distance progress: no image masks, alpha reveal or synthetic progress timer.

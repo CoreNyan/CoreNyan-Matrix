@@ -39,30 +39,20 @@ function play(closing=false){
  root.removeAttribute('data-terminal-boot');
  if(!panel||!allowed()){finish(closing);return 0;}
  panel.hidden=false;panel.inert=false;panel.dataset.mode=closing?'closing':'handoff';panel.dataset.interrupted=String(closing&&(previous==='loading'||previous==='opening'));
- panel.querySelector('[data-boot-heading]').textContent=closing?'CLOSING':'CONNECTED';
- panel.querySelector('[data-boot-title]').textContent=closing?'终端休眠':'接入神经';
- panel.querySelector('[data-boot-status]').textContent=closing?'正在关闭本地界面':'连接完成，欢迎回来';
- panel.querySelector('[data-boot-footer]').textContent=closing?'云端任务继续运行':'服务已连接';
+ panel.querySelector('[data-boot-status]').textContent=closing?'暂别，待会儿见':'神经已接入';
  const duration=closing?CLOSE_MS:OPEN_MS;
- const core=panel.querySelector('.terminal-core'),rail=panel.querySelector('.terminal-rail'),foot=panel.querySelector('.terminal-foot'),coordinate=panel.querySelector('.terminal-coordinate'),scan=panel.querySelector('.terminal-scan');
+ const core=panel.querySelector('.terminal-core');
  const doodle=panel.querySelector('.terminal-doodle');
  if(closing){
   const interrupted=previous==='loading'||previous==='opening';
   animate(panel,[interrupted?current.get(panel):{opacity:0},{opacity:1,offset:.68},{opacity:1}],duration);
   animate(core,[interrupted?current.get(core):{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)',clipPath:'inset(0 0 0 0)',offset:.44},{opacity:0,transform:'translateY(-8px)',clipPath:'inset(0 0 0 0)'}],duration);
-  animate(rail,[interrupted?current.get(rail):{opacity:0,transform:'scaleY(1)'},{opacity:.7,transform:'scaleY(1)',offset:.3},{opacity:0,transform:'scaleY(0)'}],duration);
-  animate(foot,[interrupted?current.get(foot):{opacity:0},{opacity:.7,offset:.4},{opacity:0}],duration);
-  animate(coordinate,[interrupted?current.get(coordinate):{opacity:0},{opacity:.6,offset:.4},{opacity:0}],duration);
   if(doodle)animate(doodle,[current.get(doodle),{transform:'translateY(3px) rotate(7deg) scale(.97)',offset:.5},{transform:'translateY(12px) rotate(10deg) scale(.92)'}],duration);
  }else{
   animate(panel,[initial?{opacity:1}:current.get(panel),{opacity:1,offset:.15},{opacity:0}],duration);
   // Keep the completed drawing intact: a small greeting, then the whole scene recedes.
   animate(core,[initial?{opacity:1,transform:'none'}:current.get(core),{opacity:1,transform:'translateY(-4px) scale(.995)',offset:.3},{opacity:0,transform:'translateY(-25px) scale(.96)'}],duration);
   if(doodle)animate(doodle,[current.get(doodle),{transform:'translateY(-9px) rotate(-5deg) scale(1.045)',offset:.3},{transform:'translateY(2px) rotate(2deg) scale(.99)',offset:.52},{transform:'translateY(0) rotate(0deg) scale(1)'}],Math.min(820,duration));
-  animate(rail,[{opacity:1,transform:'scaleY(1)'},{opacity:0,transform:'scaleY(1) translateX(-12px)'}],duration);
-  animate(foot,[{opacity:.8},{opacity:0}],560);
-  animate(coordinate,[{opacity:.8},{opacity:0}],560);
-  animate(scan,[{opacity:0,transform:'translateX(-2vw)'},{opacity:.22,offset:.23},{opacity:0,transform:'translateX(102vw)'}],duration);
  }
  surfaces.forEach((e,i)=>{
   const start=initial&&!closing?{opacity:0,transform:'translateY(14px)',clipPath:'inset(0 0 0 0)'}:current.get(e);
