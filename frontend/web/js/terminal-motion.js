@@ -40,7 +40,7 @@ function play(closing=false){
  if(!panel||!allowed()){finish(closing);return 0;}
  panel.hidden=false;panel.inert=false;panel.dataset.mode=closing?'closing':'handoff';panel.dataset.interrupted=String(closing&&(previous==='loading'||previous==='opening'));
  panel.querySelector('[data-boot-heading]').textContent=closing?'CLOSING':'CONNECTED';
- panel.querySelector('[data-boot-title]').textContent=closing?'终端休眠':'终端接入';
+ panel.querySelector('[data-boot-title]').textContent=closing?'终端休眠':'接入神经';
  panel.querySelector('[data-boot-status]').textContent=closing?'正在关闭本地界面':'连接完成，欢迎回来';
  panel.querySelector('[data-boot-footer]').textContent=closing?'云端任务继续运行':'服务已连接';
  const duration=closing?CLOSE_MS:OPEN_MS;

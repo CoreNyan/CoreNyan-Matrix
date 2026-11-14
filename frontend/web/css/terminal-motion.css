@@ -4,49 +4,49 @@ html{background:#090909}
 html[data-terminal-boot] body>:not(.terminal-session):not(script):not(style),html[data-terminal-phase=closed] [data-terminal-surface]{opacity:0;pointer-events:none}
 html[data-terminal-phase=closing] body{pointer-events:none}
 html[data-terminal-phase]:not([data-terminal-phase=open]) .chapter-view.active,.chapter-view[data-terminal-initial]{animation:none!important}
-.terminal-session{--terminal-ink:#ecece8;position:fixed;inset:0;margin:0;padding:0;width:100%;height:100%;max-width:none;max-height:none;border:0;color:var(--terminal-ink);background:radial-gradient(ellipse at 76% 37%,#202020 0,transparent 65%),#090909;z-index:2147483600;overflow:auto;isolation:isolate;visibility:visible;box-sizing:border-box;font:12px/1.5 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif}
+.terminal-session{--terminal-ink:#ffffff;position:fixed;inset:0;margin:0;padding:0;width:100%;height:100%;max-width:none;max-height:none;border:0;color:var(--terminal-ink);background:radial-gradient(ellipse at 76% 37%,#202020 0,transparent 65%),#090909;z-index:2147483600;overflow:auto;isolation:isolate;visibility:visible;box-sizing:border-box;font:12px/1.5 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif}
 .terminal-session[hidden]{display:none}
 html[data-terminal-phase=closed] .terminal-session>:not(.terminal-scan){opacity:0}
 .terminal-session::before{content:"";position:absolute;inset:0;opacity:.18;background-image:linear-gradient(#ffffff10 1px,transparent 1px),linear-gradient(90deg,#ffffff10 1px,transparent 1px);background-size:80px 80px;mask-image:radial-gradient(ellipse at 75% 45%,black,transparent 72%);pointer-events:none}
-.terminal-coordinate{position:absolute;left:clamp(32px,6vw,88px);top:32px;font:10px/1.5 TerminalMono,monospace;letter-spacing:.1em;color:#868b80;display:flex;gap:12px;align-items:center}
-.terminal-cross{font:20px/1 TerminalMono,monospace;color:#b9bfb1}
+.terminal-coordinate{position:absolute;left:clamp(32px,6vw,88px);top:32px;font:10px/1.5 TerminalMono,monospace;letter-spacing:.1em;color:#999999;display:flex;gap:12px;align-items:center}
+.terminal-cross{font:20px/1 TerminalMono,monospace;color:#cccccc}
 .terminal-core{position:absolute;left:50%;top:48%;width:min(1060px,calc(100% - 160px));translate:-50% -50%;display:grid;grid-template-columns:minmax(170px,.7fr) minmax(260px,1.3fr);column-gap:clamp(40px,10vw,160px);row-gap:36px;transform-origin:50% 0}
 .terminal-intro{padding-top:6px;align-self:center}
-.terminal-kicker{display:flex;align-items:center;gap:9px;font:11px/1.5 TerminalMono,monospace;font-weight:500;letter-spacing:.12em;color:#b9bbb5;white-space:nowrap}
-.terminal-led{width:6px;height:6px;background:#e3e6d9;box-shadow:0 0 14px #e3e6d930}
-.terminal-title{font:500 22px/1.5 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;letter-spacing:.22em;margin:15px 0 26px;color:#ecece8}
+.terminal-kicker{display:flex;align-items:center;gap:9px;font:11px/1.5 TerminalMono,monospace;font-weight:500;letter-spacing:.12em;color:#dddddd;white-space:nowrap}
+.terminal-led{width:6px;height:6px;background:#ffffff;box-shadow:0 0 14px #ffffff30}
+.terminal-title{font:500 22px/1.5 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;letter-spacing:.22em;margin:15px 0 26px;color:#ffffff}
 .terminal-display{position:relative;align-self:center;min-width:0}
 .terminal-wordmark{width:min(100%,390px);margin:0 0 22px;color:var(--terminal-ink)}
 .terminal-wordmark svg{display:block;width:100%;height:auto;overflow:visible}
-.terminal-status{color:#989f91;font:12px/1.8 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;letter-spacing:.08em;min-height:2em;overflow-wrap:anywhere}
+.terminal-status{color:#cccccc;font:12px/1.8 "Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;letter-spacing:.08em;min-height:2em;overflow-wrap:anywhere}
 .terminal-stages{list-style:none;margin:0;padding:0;display:grid;gap:0}
-.terminal-stages li{position:relative;display:flex;align-items:center;gap:16px;height:35px;color:#5b5e58;font-size:12px;letter-spacing:.08em;border-top:1px solid #ffffff0a;transition:color 220ms}
+.terminal-stages li{position:relative;display:flex;align-items:center;gap:16px;height:35px;color:#888888;font-size:12px;letter-spacing:.08em;border-top:1px solid #ffffff0a;transition:color 220ms}
 .terminal-stages li:last-child{border-bottom:1px solid #ffffff0a}
 .terminal-stages i{font:10px TerminalMono,monospace;letter-spacing:0;flex:none;color:inherit}
 .terminal-stages em{width:5px;height:5px;margin-left:auto;border:1px solid currentColor;transform:rotate(45deg);transition:background 220ms}
-.terminal-stages [data-status=done]{color:#bec2b8}.terminal-stages [data-status=done] em{background:currentColor}
-.terminal-stages [data-status=running]{color:#f1f4e9}.terminal-stages [data-status=running]::before{content:'';position:absolute;left:-12px;top:13px;width:2px;height:9px;background:currentColor}
+.terminal-stages [data-status=done]{color:#eeeeee}.terminal-stages [data-status=done] em{background:currentColor}
+.terminal-stages [data-status=running]{color:#ffffff}.terminal-stages [data-status=running]::before{content:'';position:absolute;left:-12px;top:13px;width:2px;height:9px;background:currentColor}
 .terminal-stages [data-status=running] em{animation:terminal-pulse 1.6s ease-in-out infinite}
 .terminal-stages [data-status=failed],.terminal-stages [data-status=skipped]{color:#d2b48d}
 .terminal-progress-block{grid-column:1/-1}
-.terminal-progress-meta{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:17px;color:#a0a894;font-size:12px}
+.terminal-progress-meta{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:17px;color:#dddddd;font-size:12px}
 .terminal-progress-meta>div{display:flex;align-items:center;gap:22px;padding-bottom:3px}
-.terminal-counter{font:10px/1.5 TerminalMono,monospace;color:#666a61;letter-spacing:.06em}
+.terminal-counter{font:10px/1.5 TerminalMono,monospace;color:#999999;letter-spacing:.06em}
 .terminal-percentage{display:flex;align-items:flex-end;gap:8px}
 .terminal-progress-meta b{font:500 clamp(38px,4vw,56px)/.9 TerminalMono,monospace;font-variant-numeric:tabular-nums;letter-spacing:-.08em;color:var(--terminal-ink)}
 .terminal-progress-meta small{font:12px/1 TerminalMono,monospace;margin-bottom:3px}
 .terminal-progress{position:relative;height:9px;background:repeating-linear-gradient(90deg,#ffffff14 0,#ffffff14 calc(100% / 60 - 3px),transparent calc(100% / 60 - 3px),transparent calc(100% / 60));border-top:1px solid #ffffff12;border-bottom:1px solid #ffffff12}
 .terminal-progress-fill{position:absolute;inset:0;clip-path:inset(0 calc((1 - var(--boot-progress,0))*100%) 0 0);background:repeating-linear-gradient(90deg,var(--terminal-ink) 0,var(--terminal-ink) calc(100% / 60 - 3px),transparent calc(100% / 60 - 3px),transparent calc(100% / 60));transition:clip-path 220ms cubic-bezier(.22,.75,.22,1)}
-.terminal-progress-cursor{position:absolute;left:calc(var(--boot-progress,0)*100%);top:-6px;bottom:-6px;width:2px;background:#f2f5e7;transform:translateX(-1px);box-shadow:0 0 14px #e5eadb20;transition:left 220ms cubic-bezier(.22,.75,.22,1)}
-.terminal-progress-cursor::before{content:'';position:absolute;top:-4px;left:-3px;border:4px solid transparent;border-top-color:#f2f5e7;border-bottom:0}
-.terminal-ruler{display:flex;justify-content:space-between;padding-top:10px;color:#5c6554;font:9px/1.5 TerminalMono,monospace}
+.terminal-progress-cursor{position:absolute;left:calc(var(--boot-progress,0)*100%);top:-6px;bottom:-6px;width:2px;background:#ffffff;transform:translateX(-1px);box-shadow:0 0 14px #ffffff20;transition:left 220ms cubic-bezier(.22,.75,.22,1)}
+.terminal-progress-cursor::before{content:'';position:absolute;top:-4px;left:-3px;border:4px solid transparent;border-top-color:#ffffff;border-bottom:0}
+.terminal-ruler{display:flex;justify-content:space-between;padding-top:10px;color:#888888;font:9px/1.5 TerminalMono,monospace}
 .terminal-ruler span{position:relative}.terminal-ruler span::before{content:'';position:absolute;height:3px;width:1px;background:#ffffff36;left:50%;top:-6px}
 .terminal-rail{position:absolute;top:0;bottom:0;left:clamp(12px,2vw,28px);width:1px;background:#ffffff0a;transform-origin:bottom}
-.terminal-rail-fill{position:absolute;inset:0;background:#a9b29e;transform:scaleY(var(--boot-progress,0));transform-origin:top;transition:transform 220ms cubic-bezier(.22,.75,.22,1)}
-.terminal-foot{position:absolute;left:clamp(32px,6vw,88px);right:clamp(32px,6vw,88px);bottom:max(26px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:center;border-top:1px solid #ffffff12;padding-top:16px;color:#686b64;font:10px/1.5 TerminalMono,monospace;letter-spacing:.08em}
-.terminal-scan{position:absolute;inset:0 auto 0 0;width:1px;background:linear-gradient(transparent,#f4f5e9,transparent);box-shadow:0 0 45px 8px #ffffff0a;opacity:0;pointer-events:none}
+.terminal-rail-fill{position:absolute;inset:0;background:#bbbbbb;transform:scaleY(var(--boot-progress,0));transform-origin:top;transition:transform 220ms cubic-bezier(.22,.75,.22,1)}
+.terminal-foot{position:absolute;left:clamp(32px,6vw,88px);right:clamp(32px,6vw,88px);bottom:max(26px,env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:center;border-top:1px solid #ffffff12;padding-top:16px;color:#999999;font:10px/1.5 TerminalMono,monospace;letter-spacing:.08em}
+.terminal-scan{position:absolute;inset:0 auto 0 0;width:1px;background:linear-gradient(transparent,#ffffff,transparent);box-shadow:0 0 45px 8px #ffffff0a;opacity:0;pointer-events:none}
 .terminal-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}.terminal-actions[hidden]{display:none}
-.terminal-actions button{display:block;width:auto;margin:0;padding:10px 15px;border:1px solid #cad3bd40;border-radius:5px;background:#ffffff05;color:#e4e8dd;font:12px/1.5 "Microsoft YaHei UI","PingFang SC",system-ui;cursor:pointer;transition:background 180ms}
+.terminal-actions button{display:block;width:auto;margin:0;padding:10px 15px;border:1px solid #ffffff40;border-radius:5px;background:#ffffff05;color:#eeeeee;font:12px/1.5 "Microsoft YaHei UI","PingFang SC",system-ui;cursor:pointer;transition:background 180ms}
 .terminal-actions button:hover{background:#ffffff16}.terminal-actions button:focus-visible{outline:2px solid #ddd;outline-offset:3px}.terminal-actions button[hidden]{display:none}
 .terminal-session[data-mode=handoff]{pointer-events:none}
 .terminal-session[data-mode=closing]:not([data-interrupted=true]) :is(.terminal-progress-block,.terminal-stages,.terminal-actions){visibility:hidden}
