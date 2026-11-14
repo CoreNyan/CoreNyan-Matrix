@@ -1,17 +1,21 @@
 .signal-health{margin:20px 0 8px;min-width:0}
 .signal-health-heading{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px;color:#929292;font:10px/1.5 var(--font-mono,monospace);letter-spacing:.06em}
 .signal-health-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.signal-metric{min-width:0;display:block;width:100%;padding:14px 14px 10px;text-align:left;color:#ddd;background:#ffffff03;border:1px solid #ffffff16;border-radius:12px;cursor:pointer;transition:border-color 200ms,background 200ms,transform 200ms}
-.signal-metric:hover{border-color:#ffffff50;background:#ffffff07;transform:translateY(-2px)}
-.signal-metric:focus-visible{outline:2px solid #ddd;outline-offset:3px}
-.signal-metric-heading{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:10px/1.5 var(--font-mono,monospace)}
-.signal-metric-heading strong{font:500 20px/1.2 var(--font-mono,monospace);color:#fff}
-.signal-metric svg{display:block;width:100%;height:80px;margin:10px 0 4px;overflow:visible}
-.signal-chart-grid{fill:none;stroke:#ffffff10;stroke-width:1;stroke-dasharray:2 6}
-.signal-chart-line{fill:none;stroke:#e5e5e5;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
-.signal-chart-area{fill:#ffffff0a;stroke:none}.signal-chart-bars{fill:#ccc}.signal-chart-tip{fill:#fff}
-.signal-metric-range{color:#999;font:10px/1.5 var(--font-mono,monospace)}
-.signal-health[data-stale=true] .signal-health-heading{color:#c9b391}.signal-health[data-stale=true] svg{opacity:.45}
+.bio-card{min-width:0;margin:0;padding:14px 14px 12px;color:#ddd;background:#ffffff03;border:1px solid #ffffff16;border-radius:12px}
+.bio-card figcaption{display:flex;justify-content:space-between;align-items:center;gap:8px;font:10px/1.5 var(--font-mono,monospace);letter-spacing:.03em}
+.bio-card strong{color:#eee;font:400 15px/1.3 var(--font-sans,system-ui);white-space:nowrap}
+.bio-card svg{display:block;width:100%;height:100px;margin:10px 0 4px;overflow:visible}
+.bio-grid{fill:none;stroke:#ffffff10;stroke-width:1;stroke-dasharray:2 6}
+.bio-breath-line{fill:none;stroke:#e5e5e5;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.bio-breath-area{fill:#ffffff08}.bio-breath-tip{fill:#fff}.bio-spectrum{fill:#ccc}.bio-spectrum-envelope{fill:none;stroke:#ffffff40;stroke-width:1;stroke-linejoin:round}
+.bio-card-foot{display:flex;align-items:center;gap:10px;color:#999;font:10px/1.5 var(--font-sans,system-ui)}
+.bio-breath-track{flex:1;height:1px;background:#ffffff25;position:relative}
+.bio-breath-track i{display:block;position:absolute;left:calc(var(--breath-expansion,0)*100%);top:-2px;width:5px;height:5px;margin-left:-2px;border-radius:50%;background:#eee}
+.bio-band-labels{display:grid;grid-template-columns:repeat(5,1fr);text-align:center;color:#777;font:12px/1.5 var(--font-mono,monospace)}
+.bio-band-labels [data-active=true]{color:#fff}
+.signal-health[data-stale=true] .signal-health-heading{color:#c9b391}.signal-health[data-stale=true] svg{opacity:.4}
+.signal-health[data-empty=true] :is(svg,.bio-card-foot,.bio-band-labels){visibility:hidden}
+@media(max-width:700px){.signal-health-grid{gap:10px}.bio-card{padding:12px 10px}.bio-card figcaption{font-size:9px;letter-spacing:0}.bio-card strong{font-size:11px}.bio-card svg{height:90px}.signal-health-heading{font-size:9px}}
 .page-top-button{position:fixed;z-index:180;right:max(24px,env(safe-area-inset-right));bottom:max(24px,env(safe-area-inset-bottom));display:grid;place-items:center;width:48px;height:48px;margin:0;padding:0;border:1px solid #ffffff45;border-radius:15px;background:#101010f5;color:white;box-shadow:0 6px 22px #0008;opacity:0;transform:translateY(14px) scale(.92);pointer-events:none;transition:opacity 220ms,transform 260ms cubic-bezier(.2,.8,.2,1),background 180ms,border-color 180ms}
 .page-top-button[data-visible=true]{opacity:1;transform:none;pointer-events:auto;cursor:pointer}
 .page-top-button svg{display:block;width:30px;height:30px;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
@@ -19,7 +23,7 @@
 .page-top-button:hover{background:#f3f3f3;color:#111;border-color:#fff}.page-top-button:hover .page-top-arrow{transform:translateY(-2px)}
 .page-top-button:active{transform:scale(.94)}.page-top-button:focus-visible{outline:2px solid #fff;outline-offset:4px}
 body:is(.chat-active,.entity-active) .page-top-button,body:has(dialog[open]) .page-top-button{visibility:hidden;pointer-events:none}
-@media(max-width:700px){.page-top-button{right:16px;bottom:calc(18px + env(safe-area-inset-bottom));width:44px;height:44px;border-radius:14px}.signal-health-grid{gap:10px}.signal-metric{padding:12px 10px 10px}.signal-metric-heading{flex-wrap:wrap;gap:4px}.signal-metric-heading strong{font-size:18px}.signal-metric svg{height:70px}.signal-health-heading{font-size:9px}}
-@media(prefers-reduced-motion:reduce){.page-top-button,.page-top-arrow,.signal-metric{transition:none}}
-.motion-disabled :is(.page-top-button,.page-top-arrow,.signal-metric){transition:none}
+@media(max-width:700px){.page-top-button{right:16px;bottom:calc(18px + env(safe-area-inset-bottom));width:44px;height:44px;border-radius:14px}}
+@media(prefers-reduced-motion:reduce){.page-top-button,.page-top-arrow{transition:none}}
+.motion-disabled :is(.page-top-button,.page-top-arrow){transition:none}
 .mobile-layout .page-top-button{bottom:calc(var(--phone-dock,68px) + 14px)}

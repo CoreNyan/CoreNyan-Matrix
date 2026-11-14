@@ -142,16 +142,16 @@ export function mountWaveform(canvas, registry) {
     const head = width - WAVE.headInset;
     const step = WAVE.pixelsPerSecond / WAVE.sampleRate;
     const first = Math.max(history.count - history.capacity, history.count - 1 - Math.ceil(head / step));
-    for (const trace of WAVE.traces) {
+    for (const trace of WAVE.traces.filter(trace => trace.channel === 'ecg')) {
       ctx.beginPath(); ctx.strokeStyle = trace.color; ctx.lineWidth = trace.width;
       for (let i = first; i < history.count; i++) {
         const x = head - (history.count - 1 - i) * step;
-        const y = height * trace.baseline - history.get(i, trace.channel);
+        const y = height * .53 - history.get(i, trace.channel);
         if (i === first) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.stroke();
       ctx.beginPath(); ctx.fillStyle = trace.color;
-      ctx.arc(head, height * trace.baseline - history.get(history.count - 1, trace.channel), trace.width * 1.5, 0, Math.PI * 2);
+      ctx.arc(head, height * .53 - history.get(history.count - 1, trace.channel), trace.width * 1.5, 0, Math.PI * 2);
       ctx.fill();
     }
     canvas.setAttribute('data-signal-ready','');
