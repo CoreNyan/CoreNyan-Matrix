@@ -1,0 +1,33 @@
+/* Transparent chrome shares the page's pixels; there is no separate caption strip. */
+html[data-window-chrome] body{padding-top:42px}
+.window-chrome,.window-resize{margin:0;padding:0;border:0;background:transparent;width:100%;max-width:none;max-height:none;overflow:visible}
+.window-chrome::backdrop,.window-resize::backdrop{background:transparent;pointer-events:none}
+.window-chrome{position:fixed;inset:0 0 auto;height:42px;z-index:2147483647;display:flex;pointer-events:none;user-select:none;mix-blend-mode:difference;color:#fff}
+.window-drag{flex:1;pointer-events:auto;touch-action:none}
+.window-actions{display:flex;align-items:center;padding:4px 5px;gap:4px;pointer-events:auto}
+.window-actions button{display:grid;place-items:center;width:40px;height:34px;min-width:40px;padding:0;border:0;border-radius:9px;background:transparent;color:#fff;cursor:default;transition:background .18s,transform .18s;box-shadow:none}
+.window-actions button:hover{background:#ffffff24}
+.window-actions button:active{transform:scale(.86);background:#ffffff40}
+.window-actions button:focus-visible{outline:1px solid #fff;outline-offset:-3px}
+.window-actions svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round;transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+.window-actions [data-window=minimize]:hover svg{transform:translateY(2px)}
+.window-actions [data-window=maximize]:hover svg{transform:scale(1.12)}
+.window-actions [data-window=close]:hover svg{transform:rotate(90deg)}
+.window-restore{display:none}
+html[data-window-maximized=true] .window-expand{display:none}
+html[data-window-maximized=true] .window-restore{display:block}
+.window-resize{position:fixed;inset:0;height:100%;z-index:2147483647;pointer-events:none}
+.window-resize>div{position:absolute;pointer-events:auto;touch-action:none}
+[data-resize=n],[data-resize=s]{left:7px;right:7px;height:4px;cursor:ns-resize}
+[data-resize=n]{top:0}[data-resize=s]{bottom:0}
+[data-resize=e],[data-resize=w]{top:7px;bottom:7px;width:4px;cursor:ew-resize}
+[data-resize=e]{right:0}[data-resize=w]{left:0}
+[data-resize=ne],[data-resize=nw],[data-resize=se],[data-resize=sw]{width:7px;height:7px}
+[data-resize=ne]{right:0;top:0;cursor:nesw-resize}[data-resize=nw]{left:0;top:0;cursor:nwse-resize}
+[data-resize=se]{right:0;bottom:0;cursor:nwse-resize}[data-resize=sw]{left:0;bottom:0;cursor:nesw-resize}
+html[data-window-maximized=true] .window-resize{display:none}
+html[data-terminal-boot] body>.window-chrome,html[data-terminal-boot] body>.window-resize{opacity:1;pointer-events:none}
+html:is([data-terminal-phase=closing],[data-terminal-phase=closed]) .window-chrome{opacity:0;transition:opacity .16s}
+html:is([data-terminal-phase=closing],[data-terminal-phase=closed]) :is(.window-chrome,.window-resize) *{pointer-events:none}
+@media(prefers-reduced-motion:reduce){.window-actions button,.window-actions svg{transition:none}}
+body.motion-off .window-actions svg{transition:none}

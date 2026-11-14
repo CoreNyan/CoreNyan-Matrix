@@ -53,7 +53,7 @@ function createEdgeGlitch(host){
 }
 function capture(e){const s=getComputedStyle(e);return{opacity:s.opacity,transform:s.transform,clipPath:s.clipPath};}
 function collect(){
- const surfaces=[...document.body.children].filter(e=>e!==session()&&e!==exitMask&&!['SCRIPT','STYLE','LINK'].includes(e.tagName)&&onScreen(e));
+ const surfaces=[...document.body.children].filter(e=>e!==session()&&e!==exitMask&&!e.hasAttribute('data-native-chrome')&&!['SCRIPT','STYLE','LINK'].includes(e.tagName)&&onScreen(e));
  const view=document.querySelector('.chapter-view.active')||document.querySelector('body>main');
  const candidates=view?[...view.querySelectorAll('.signal-health,.cell-topline,.identity-heading-row,.hero-manifesto,.subconscious-diary-box,.hero-bottom-bar,.signal-loom-stage,.loom-cognitive-matrix,.loom-footer-bar,.health-dials,.ledger-block,.chat-header,.chat-sidebar>header,.chat-sidebar>label,.chat-sidebar>nav,.chat-messages,.chat-bottom,.entity-flight,.entity-stage,:scope>.brand,:scope>h1,:scope>form')].filter(onScreen):[];
  const details=candidates.filter(e=>!candidates.some(other=>other!==e&&other.contains(e))).slice(0,24);
