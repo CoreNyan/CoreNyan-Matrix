@@ -30,11 +30,9 @@ html[data-terminal-phase=closed] .terminal-session>*{opacity:0}
 .terminal-actions button{display:block;width:auto;margin:0;padding:10px 15px;border:1px solid #ffffff40;border-radius:5px;background:#ffffff05;color:#eee;font:12px/1.5 "Microsoft YaHei UI","PingFang SC",system-ui;cursor:pointer;transition:background 180ms}
 .terminal-actions button:hover{background:#ffffff16}.terminal-actions button:focus-visible{outline:2px solid #ddd;outline-offset:3px}.terminal-actions button[hidden]{display:none}
 .terminal-session[data-mode=handoff]{pointer-events:none}
-.terminal-session[data-mode=closing]:not([data-interrupted=true]) :is(.terminal-percentage,.terminal-actions){visibility:hidden}
-.terminal-session[data-mode=closing] .terminal-core{pointer-events:none}
 html[data-terminal-app] :is([data-vitals-content],#ecgCanvas){transition:opacity 560ms cubic-bezier(.22,.75,.25,1)}
 html[data-terminal-app]:not([data-vitals-ready]) [data-vitals-content],#ecgCanvas:not([data-signal-ready]){opacity:0}
-html[data-terminal-phase=closing] dialog[open]::backdrop{animation:terminal-backdrop-out 600ms ease both}
+html[data-terminal-phase=closing] dialog[open]::backdrop{animation:terminal-backdrop-out 300ms ease both}
 html[data-terminal-phase=closed] dialog[open]::backdrop{opacity:0;animation:none}
 @keyframes terminal-backdrop-out{to{opacity:0}}
 @media(max-width:700px) and (min-height:521px){

@@ -1,5 +1,5 @@
 // A terminal session: real startup work -> shared handoff -> a reversible shutdown.
-const OPEN_MS=1180,CLOSE_MS=980,root=document.documentElement;
+const OPEN_MS=1180,CLOSE_MS=300,root=document.documentElement;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)'),boot=window.MatrixBoot;
 let phase='loading',enabled=true,animations=[],finishTimer,generation=0,preparing=false;
 const session=()=>document.querySelector('.terminal-session');
@@ -16,7 +16,7 @@ function capture(e){const s=getComputedStyle(e);return{opacity:s.opacity,transfo
 function collect(){
  const surfaces=[...document.body.children].filter(e=>e!==session()&&!['SCRIPT','STYLE','LINK'].includes(e.tagName)&&onScreen(e));
  const view=document.querySelector('.chapter-view.active')||document.querySelector('body>main');
- const candidates=view?[...view.querySelectorAll('.cell-topline,.identity-heading-row,.hero-manifesto,.subconscious-diary-box,.hero-bottom-bar,.signal-loom-stage,.loom-cognitive-matrix,.loom-footer-bar,.health-dials,.ledger-block,.chat-header,.chat-sidebar>header,.chat-sidebar>label,.chat-sidebar>nav,.chat-messages,.chat-bottom,.entity-flight,.entity-stage,:scope>.brand,:scope>h1,:scope>form')].filter(onScreen):[];
+ const candidates=view?[...view.querySelectorAll('.signal-health,.cell-topline,.identity-heading-row,.hero-manifesto,.subconscious-diary-box,.hero-bottom-bar,.signal-loom-stage,.loom-cognitive-matrix,.loom-footer-bar,.health-dials,.ledger-block,.chat-header,.chat-sidebar>header,.chat-sidebar>label,.chat-sidebar>nav,.chat-messages,.chat-bottom,.entity-flight,.entity-stage,:scope>.brand,:scope>h1,:scope>form')].filter(onScreen):[];
  const details=candidates.filter(e=>!candidates.some(other=>other!==e&&other.contains(e))).slice(0,24);
  return {surfaces,details};
 }
@@ -24,7 +24,7 @@ function finish(closing){
  setPhase(closing?'closed':'open');root.removeAttribute('data-terminal-boot');
  for(const e of document.querySelectorAll('[data-terminal-surface]')){e.inert=closing;if(!closing)e.removeAttribute('data-terminal-surface');}
  cancel();
- const panel=session();if(panel){panel.hidden=!closing;panel.inert=!closing;panel.dataset.mode=closing?'closing':'idle';}
+ const panel=session();if(panel){panel.hidden=true;panel.inert=true;panel.dataset.mode='idle';}
  dispatchEvent(new CustomEvent('matrix-terminal-settled',{detail:{closing}}));
 }
 function play(closing=false){
@@ -38,34 +38,41 @@ function play(closing=false){
  for(const e of surfaces){e.setAttribute('data-terminal-surface','');e.inert=true;}
  root.removeAttribute('data-terminal-boot');
  if(!panel||!allowed()){finish(closing);return 0;}
- panel.hidden=false;panel.inert=false;panel.dataset.mode=closing?'closing':'handoff';panel.dataset.interrupted=String(closing&&(previous==='loading'||previous==='opening'));
- panel.querySelector('[data-boot-status]').textContent=closing?'暂别，待会儿见':'神经已接入';
- const duration=closing?CLOSE_MS:OPEN_MS;
+ if(closing){
+  // Fade only what is already on screen. Never reopen the startup scene.
+  if(!panel.hidden)animate(panel,[current.get(panel),{...current.get(panel),opacity:0}],CLOSE_MS,0,'ease-out');
+  for(const e of surfaces)animate(e,[current.get(e),{...current.get(e),opacity:0}],CLOSE_MS,0,'ease-out');
+  // Preserve interrupted entry transforms while their parents fade out.
+  for(const e of details)animate(e,[current.get(e),current.get(e)],CLOSE_MS);
+  finishTimer=setTimeout(()=>finish(true),CLOSE_MS);return CLOSE_MS;
+ }
+ if(previous==='closed'||previous==='closing'){
+  panel.hidden=true;
+  for(const e of surfaces)animate(e,[current.get(e),{opacity:1,transform:'none',clipPath:'none'}],CLOSE_MS);
+  for(const e of details)animate(e,[current.get(e),{opacity:1,transform:'none',clipPath:'none'}],CLOSE_MS);
+  finishTimer=setTimeout(()=>finish(false),CLOSE_MS);return CLOSE_MS;
+ }
+ panel.hidden=false;panel.inert=false;panel.dataset.mode='handoff';
+ panel.querySelector('[data-boot-status]').textContent='神经已接入';
+ const duration=OPEN_MS;
  const core=panel.querySelector('.terminal-core');
  const doodle=panel.querySelector('.terminal-doodle');
- if(closing){
-  const interrupted=previous==='loading'||previous==='opening';
-  animate(panel,[interrupted?current.get(panel):{opacity:0},{opacity:1,offset:.68},{opacity:1}],duration);
-  animate(core,[interrupted?current.get(core):{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)',clipPath:'inset(0 0 0 0)',offset:.44},{opacity:0,transform:'translateY(-8px)',clipPath:'inset(0 0 0 0)'}],duration);
-  if(doodle)animate(doodle,[current.get(doodle),{transform:'translateY(3px) rotate(7deg) scale(.97)',offset:.5},{transform:'translateY(12px) rotate(10deg) scale(.92)'}],duration);
- }else{
   animate(panel,[initial?{opacity:1}:current.get(panel),{opacity:1,offset:.15},{opacity:0}],duration);
   // Keep the completed drawing intact: a small greeting, then the whole scene recedes.
   animate(core,[initial?{opacity:1,transform:'none'}:current.get(core),{opacity:1,transform:'translateY(-4px) scale(.995)',offset:.3},{opacity:0,transform:'translateY(-25px) scale(.96)'}],duration);
   if(doodle)animate(doodle,[current.get(doodle),{transform:'translateY(-9px) rotate(-5deg) scale(1.045)',offset:.3},{transform:'translateY(2px) rotate(2deg) scale(.99)',offset:.52},{transform:'translateY(0) rotate(0deg) scale(1)'}],Math.min(820,duration));
- }
  surfaces.forEach((e,i)=>{
-  const start=initial&&!closing?{opacity:0,transform:'translateY(14px)',clipPath:'inset(0 0 0 0)'}:current.get(e);
-  const delay=closing?0:90+Math.min(i,4)*35;
-  animate(e,[start,{opacity:closing?0:1,transform:closing?'translateY(-10px)':'none',clipPath:'inset(0 0 0 0)'}],closing?600:duration-delay,delay);
+  const start=initial?{opacity:0,transform:'translateY(14px)',clipPath:'inset(0 0 0 0)'}:current.get(e);
+  const delay=90+Math.min(i,4)*35;
+  animate(e,[start,{opacity:1,transform:'none',clipPath:'inset(0 0 0 0)'}],duration-delay,delay);
  });
  details.forEach(e=>{
   const r=e.getBoundingClientRect(),order=Math.min(1,(r.top/innerHeight*.65+r.left/innerWidth*.35));
-  const delay=closing?(1-order)*110:150+order*220;
-  const start=initial&&!closing?{opacity:0,transform:'translateY(18px)',clipPath:'inset(0 0 12% 0)'}:current.get(e);
-  animate(e,[start,{opacity:closing?0:1,transform:closing?'translateY(-10px)':'none',clipPath:'inset(0 0 0 0)'}],closing?470:duration-delay,delay);
+  const delay=150+order*220;
+  const start=initial?{opacity:0,transform:'translateY(18px)',clipPath:'inset(0 0 12% 0)'}:current.get(e);
+  animate(e,[start,{opacity:1,transform:'none',clipPath:'inset(0 0 0 0)'}],duration-delay,delay);
  });
- finishTimer=setTimeout(()=>finish(closing),duration);
+ finishTimer=setTimeout(()=>finish(false),duration);
  return duration;
 }
 function bounded(promise,ms,message){

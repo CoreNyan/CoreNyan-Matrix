@@ -1,3 +1,5 @@
+import {mountSignalHealth} from './signal-health.js';
+import {mountPageTop} from './page-top.js';
 import {mountRecentThoughts} from './recent-thoughts.js';
 import {renderLogSources} from './log-sources.js';
 import {mountExplorerSelection} from './explorer-selection.js';
@@ -2366,6 +2368,8 @@ import { entityPreview } from './entity-models.js';
     mountWaveform($('ecgCanvas'), registry);
     mountEntityView($('view-entity'), registry, () => state.lastVitalsPayload?.organs || []);
     mountHealthDetails(registry);
+    mountSignalHealth($('signalHealth'),registry);
+    mountPageTop();
     mountAmbientEffects(registry);
     initFileShortcuts();
     onPreferences(()=>{for(const id of ['open','rename','copy','cut','paste','delete']){const label=document.querySelector('[data-ctx="'+id+'"] span:last-child');if(label)label.textContent=editorShortcutLabel(id);}});
