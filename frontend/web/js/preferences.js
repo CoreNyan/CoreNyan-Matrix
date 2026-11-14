@@ -2,6 +2,8 @@ import {platformClipboard,copyImage,notifyReply,notificationPermission} from './
 import {PREFERENCES,DEFAULT_PREFERENCES,SHORTCUTS,validatePreferences,normalizeChord} from './preference-schema.js';
 export {SHORTCUTS,normalizeChord};
 let values=structuredClone(DEFAULT_PREFERENCES),revision=0,ready=false,busy=false,timer,dirty={},listeners=new Set();
+// The authenticated startup request is the single initial snapshot, not a second fetch.
+if(window.matrixInitialPreferences){values=validatePreferences(window.matrixInitialPreferences.values);revision=window.matrixInitialPreferences.revision;ready=true;delete window.matrixInitialPreferences;}
 export const preferences=()=>values;
 export const preferencesReady=()=>ready;
 export const binding=id=>values.shortcuts[id]??SHORTCUTS.find(a=>a.id===id)?.defaultKey??'';
@@ -28,7 +30,7 @@ export function mountPreferences(registry){
  const state=registry.state;state.website={displayScale:'auto',textSize:'standard'};
  onPreferences(p=>{state.website={displayScale:p.displayScale,textSize:p.textSize};state.motionEnabled=p.motion;state.logs.autoRefresh=p.autoPoll;document.documentElement.dataset.textSize=p.textSize;if(p.displayScale==='auto')document.documentElement.style.removeProperty('--ui-scale');else document.documentElement.style.setProperty('--ui-scale',String(Number(p.displayScale)/100));});
  registry.subscribe(['website','motionEnabled','logs.autoRefresh'],()=>{if(!ready)return;const next={...state.website,motion:state.motionEnabled,autoPoll:state.logs.autoRefresh},patch={};for(const [key,value] of Object.entries(next))if(value!==values[key])patch[key]=value;if(Object.keys(patch).length)updatePreferences(patch);});
- void syncPreferences();setInterval(()=>{if(!document.hidden)void syncPreferences();},PREFERENCES.pollMs);
+ if(!ready)void syncPreferences();else notify('已同步到账号');setInterval(()=>{if(!document.hidden)void syncPreferences();},PREFERENCES.pollMs);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void syncPreferences();});
  window.addEventListener('beforeunload',e=>{if(Object.keys(dirty).length){e.preventDefault();e.returnValue='';}});
 }

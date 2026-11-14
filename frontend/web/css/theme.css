@@ -10,19 +10,30 @@ html[data-theme=light] .document-page img{filter:none}
 ::view-transition-group(root){animation:none}
 ::view-transition-new(root){z-index:1}
 ::view-transition-old(root){z-index:0}
-#btnTheme{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;min-width:36px;padding:0;border:1px solid #999;border-radius:50%;background:transparent;color:#fff;cursor:pointer;transition:transform .24s,background .24s,border-color .24s,color .24s}
+#btnTheme{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;min-width:36px;padding:0;border:1px solid var(--ink-white,#fff);border-radius:var(--radius-control,8px);background:var(--ink-white,#fff);color:var(--bg-void,#090909);cursor:pointer;transition:transform .24s,background .24s,border-color .24s,color .24s}
 #btnTheme svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-#btnTheme:hover{background:#fff;color:#090909;border-color:#fff;transform:rotate(-12deg)}
-#btnTheme:active{transform:scale(.88)}
+#btnTheme:hover{background:var(--bg-void,#090909);color:var(--ink-white,#fff);border-color:var(--ink-white,#fff);transform:translateY(-1px)}
+#btnTheme:active{transform:scale(.94)}
 #btnTheme:focus-visible{outline:2px solid currentColor;outline-offset:3px}
 .settings-motion-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
 .settings-motion-controls .settings-row{min-width:0;gap:10px}
 html .settings-dialog :is(button,select):not(:disabled):not([data-tab]){background:#000;border-color:#888;color:#fff}
 html .settings-dialog :is(button,select):not(:disabled):hover{border-color:#fff}
 html .settings-dialog button:not(:disabled):not([data-tab]):hover{background:#fff;color:#000}
-@media(max-width:700px){.settings-motion-controls{grid-template-columns:1fr;gap:0}.mobile-layout #btnTheme{flex:0 0 42px;width:42px;height:42px;border-radius:12px}.mobile-layout #btnTheme svg{display:block}}
+@media(max-width:700px){.settings-motion-controls{grid-template-columns:1fr;gap:0}.mobile-layout #btnTheme{flex:0 0 42px;width:42px;height:42px;border-radius:12px;background:transparent;color:#eee;border-color:#333}.mobile-layout #btnTheme svg{display:block}}
 @media(prefers-reduced-motion:reduce){#btnTheme{transition:none}}
 /* No page-edge track; editors and consoles retain their independent scroll controls. */
 html{scrollbar-width:none}html::-webkit-scrollbar{display:none}
 html:is([data-terminal-boot],[data-terminal-phase=closing],[data-terminal-phase=closed]){overflow:hidden}
 .terminal-session{scrollbar-width:none}.terminal-session::-webkit-scrollbar{display:none}
+
+/* Neutral pre-auth wait: no account theme is painted until its settings arrive. */
+html[data-theme-pending]::after{content:"";position:fixed;left:calc(50% - 10px);top:calc(50% - 10px);width:20px;height:20px;box-sizing:border-box;border:1px solid #ffffff30;border-top-color:#fff;border-radius:50%;animation:theme-connect 1s linear infinite;pointer-events:none;z-index:2147483647}
+@keyframes theme-connect{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){html[data-theme-pending]::after{animation:none}}
+html[data-theme-handoff]::before{content:"";position:fixed;inset:0;background:#090909;z-index:2147483647;pointer-events:none;animation:theme-handoff 180ms ease-out both}
+html[data-theme=light][data-theme-handoff]::before{background:#f6f6f6}
+@keyframes theme-handoff{from{opacity:1}to{opacity:0}}
+
+.topbar-RichToggles #btnSettings{height:36px;box-sizing:border-box}
+@media(max-width:700px){.mobile-layout .topbar-RichToggles #btnSettings{height:42px}}

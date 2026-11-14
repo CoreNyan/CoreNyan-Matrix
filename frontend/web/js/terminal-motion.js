@@ -136,7 +136,7 @@ function waitForCanvas(canvas,attribute){
 async function prepare(){
  if(preparing||phase!=='loading')return;
  const state=boot?.snapshot();
- if(state&&!['config','connection','interface','content'].every(id=>settled(state.steps.find(s=>s.id===id))))return;
+ if(state&&!['config','connection','preferences','interface','content'].every(id=>settled(state.steps.find(s=>s.id===id))))return;
  preparing=true;const ticket=generation;boot?.begin('assets');
  try{
   await boot?.doodleReady?.();
@@ -179,4 +179,4 @@ reduce.addEventListener('change',()=>{if(reduce.matches){bootEdges?.clear();exit
 addEventListener('pagehide',()=>{generation++;cancel();});
 addEventListener('pageshow',e=>{if(e.persisted){setPhase('closed');play();}});
 // Show the native window as soon as the real connection console has painted.
-void (async()=>{await frame();dispatchEvent(new Event('matrix-terminal-present'));})();
+void (async()=>{await window.MatrixTheme?.ready;await frame();dispatchEvent(new Event('matrix-terminal-present'));})();

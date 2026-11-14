@@ -28,6 +28,23 @@ window.matrixReady=(async()=>{
   if(check.status===401&&!login){location.replace('/login?next='+encodeURIComponent(location.pathname+location.search));await new Promise(()=>{});}
   if(!check.ok&&!(login&&check.status===401))throw Error('暂时无法连接小可，请检查网络后重试');
   boot?.done(stage);
- }catch(error){boot?.fail(stage,error);throw error;}
+  stage='preferences';boot?.begin(stage);
+  if(check.ok){
+   const [{validatePreferences},response]=await Promise.all([
+    import('/contracts/preference-schema.js'),
+    fetch('/api/preferences',{cache:'no-store',signal:AbortSignal.timeout(15000)})
+   ]);
+   if(response.status===401){location.replace('/login');await new Promise(()=>{});}
+   if(!response.ok)throw Error('账号设置同步失败，请重新连接');
+   const data=await response.json();
+   if(!data.ok||!Number.isSafeInteger(data.revision))throw Error('账号设置返回不完整，请重新连接');
+   const values=validatePreferences(data.values),root=document.documentElement;
+   window.matrixInitialPreferences={revision:data.revision,values};
+   root.dataset.textSize=values.textSize;root.classList.toggle('motion-disabled',!values.motion);document.body.classList.toggle('motion-off',!values.motion);
+   if(values.displayScale!=='auto')root.style.setProperty('--ui-scale',String(Number(values.displayScale)/100));
+   window.MatrixTheme?.complete(values.theme);
+   boot?.done(stage);
+  }else{window.MatrixTheme?.complete(window.MatrixTheme.mode);boot?.skip(stage);}
+ }catch(error){boot?.fail(stage,error);window.MatrixTheme?.complete(window.MatrixTheme.mode);throw error;}
 })();
 window.matrixReady.catch(error=>{const target=document.querySelector('#error');if(target)target.textContent=error.message;});

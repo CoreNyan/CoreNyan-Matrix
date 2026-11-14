@@ -1,6 +1,6 @@
 // Runs before application modules. Progress counts completed work, never elapsed time.
 (()=>{
- const definitions=[['config','配置连接'],['connection','连接服务'],['interface','构建界面'],['content','同步内容'],['assets','准备资源'],['frame','绘制画面']];
+ const definitions=[['config','配置连接'],['connection','连接服务'],['preferences','同步账号设置'],['interface','构建界面'],['content','同步内容'],['assets','准备资源'],['frame','绘制画面']];
  const steps=definitions.map(([id,label])=>({id,label,status:'pending',detail:''})),listeners=new Set();
  const snapshot=()=>({steps:steps.map(s=>({...s})),percent:Math.floor(100*steps.filter(s=>['done','skipped'].includes(s.status)).length/steps.length)});
  function update(id,status,detail=''){const step=steps.find(s=>s.id===id);if(!step||['done','skipped'].includes(step.status))return;Object.assign(step,{status,detail:String(detail)});for(const listener of listeners)listener(snapshot());}
@@ -51,12 +51,13 @@
   function stop(){cancelAnimationFrame(raf);raf=0;last=0;pen.style.visibility='hidden';}
   function update(progress){
    target=Math.max(target,Math.min(1,progress));host.dataset.target=String(target);
-   if(disposed||!ready)return;
+   if(disposed||!ready||document.documentElement.hasAttribute('data-theme-pending'))return;
    if(reduce.matches||document.documentElement.classList.contains('motion-disabled')){stop();value=target;paint();notify();}
    else if(!raf&&value<target)raf=requestAnimationFrame(tick);
   }
   function refresh(){ready=true;paths=[...host.querySelectorAll('[data-doodle-stroke]')];lengths=paths.map(p=>Math.max(.001,p.getTotalLength()));total=lengths.reduce((a,b)=>a+b,0);paint();update(target);}
   function settled(immediate=false){if(immediate){stop();value=target;paint();notify();}return disposed||value===target?Promise.resolve():new Promise(resolve=>waiters.add(resolve));}
+  addEventListener('matrix-appearance-ready',()=>update(target),{once:true});
   reduce.addEventListener('change',()=>update(target));
   addEventListener('matrix-terminal-settled',()=>{stop();notify();});
   addEventListener('pagehide',()=>{disposed=true;stop();notify();},{once:true});
