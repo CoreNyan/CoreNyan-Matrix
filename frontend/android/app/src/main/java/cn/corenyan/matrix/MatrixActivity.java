@@ -26,7 +26,7 @@ public final class MatrixActivity extends Activity {
   }
   @Override public void onGeolocationPermissionsHidePrompt(){finishLocation(false);}
 
-  @Override public boolean onShowFileChooser(WebView view,ValueCallback<Uri[]> callback,FileChooserParams params){if(!trusted(view.getUrl()))return false;if(fileCallback!=null)fileCallback.onReceiveValue(null);fileCallback=callback;Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("*/*");String[] types=params.getAcceptTypes();if(types!=null&&types.length>0&&!types[0].isEmpty())i.putExtra(Intent.EXTRA_MIME_TYPES,types);i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,params.getMode()==FileChooserParams.MODE_OPEN_MULTIPLE);try{startActivityForResult(i,PICK_FILE);}catch(ActivityNotFoundException e){fileCallback.onReceiveValue(null);fileCallback=null;toast("没有可用的文件选择器");}return true;}
+  @Override public boolean onShowFileChooser(WebView view,ValueCallback<Uri[]> callback,FileChooserParams params){if(!trusted(view.getUrl()))return false;if(fileCallback!=null)fileCallback.onReceiveValue(null);fileCallback=callback;Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.addCategory(Intent.CATEGORY_OPENABLE);i.setType("*/*");i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);String[] types=params.getAcceptTypes();if(types!=null&&types.length>0&&!types[0].isEmpty())i.putExtra(Intent.EXTRA_MIME_TYPES,types);i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE,params.getMode()==FileChooserParams.MODE_OPEN_MULTIPLE);try{startActivityForResult(i,PICK_FILE);}catch(ActivityNotFoundException e){fileCallback.onReceiveValue(null);fileCallback=null;toast("没有可用的文件选择器");}return true;}
   @Override public void onShowCustomView(View view,CustomViewCallback callback){if(fullscreen!=null){callback.onCustomViewHidden();return;}fullscreen=view;fullscreenCallback=callback;web.setVisibility(View.GONE);root.addView(view,new FrameLayout.LayoutParams(-1,-1));}
   @Override public void onHideCustomView(){hideFullscreen();}
  });
@@ -71,7 +71,14 @@ public final class MatrixActivity extends Activity {
    timer.removeCallbacks(done);timer.postDelayed(done,Math.max(0,delay-180));
   });
  }
- @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==PICK_FILE&&fileCallback!=null){fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result,data));fileCallback=null;}else if(request==43&&result==RESULT_OK&&data!=null&&data.getData()!=null&&downloadUrl!=null){download(data.getData(),downloadUrl);downloadUrl=null;}}
+ private void finishFiles(ValueCallback<Uri[]> callback,Uri[] selected,String error){if(fileCallback!=callback)return;fileCallback=null;if(isFinishing()||isDestroyed()||web==null||!trusted(web.getUrl()))selected=null;callback.onReceiveValue(selected);if(error!=null)toast(error);}
+ @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);
+  if(request==PICK_FILE&&fileCallback!=null){final ValueCallback<Uri[]> callback=fileCallback;final Uri[] selected=FileSelection.parse(result,data);
+   if(selected==null){finishFiles(callback,null,result==RESULT_OK?"未读到所选文件，请使用系统文件管理器重试":null);return;}
+   final String pageNonce=nonce;toast("正在准备附件…");final Handler timeout=new Handler(Looper.getMainLooper());final Runnable expired=()->finishFiles(callback,null,"读取文件超时，请重新选择本机文件");timeout.postDelayed(expired,45000);
+   io.execute(()->{try{Uri[] staged=FileSelection.stage(getApplicationContext(),selected);runOnUiThread(()->{timeout.removeCallbacks(expired);finishFiles(callback,nonce.equals(pageNonce)?staged:null,null);});}catch(Exception e){runOnUiThread(()->{timeout.removeCallbacks(expired);finishFiles(callback,null,e instanceof IOException?e.getMessage():"无法读取所选文件，请重新选择");});}});
+  }else if(request==43&&result==RESULT_OK&&data!=null&&data.getData()!=null&&downloadUrl!=null){download(data.getData(),downloadUrl);downloadUrl=null;}
+ }
  @Override protected void onSaveInstanceState(Bundle state){web.saveState(state);super.onSaveInstanceState(state);}
  @Override protected void onPause(){CookieManager.getInstance().flush();super.onPause();}
  @Override protected void onResume(){super.onResume();if(web!=null)web.evaluateJavascript("dispatchEvent(new Event('focus'))",null);}
