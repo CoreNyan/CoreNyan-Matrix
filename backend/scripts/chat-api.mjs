@@ -47,6 +47,7 @@ export function createChatApi({sharedRoot,gatewayRoot,environmentSnapshot=()=>nu
   }catch(e){if(res.headersSent){res.destroy();return true;}const error=/^[A-Z0-9_: -]{1,100}$/.test(e.message)?e.message:'CHAT_SERVICE_UNAVAILABLE';json(res,/NOT_FOUND/.test(error)?404:/CONFLICT/.test(error)?409:/AUTH|DENIED/.test(error)?403:/RPC|UNAVAILABLE/.test(error)?503:400,{ok:false,error});return true;}
  };
  handle.listForAccount=account=>client.call('list',{}, {platform:'chat',authenticated:true,accountId:account.id,username:account.username,role:account.role,linkedQQ:account.linkedQQ||''});
+ handle.recoverForAccount=account=>client.call('recover',{}, {platform:'chat',authenticated:true,accountId:account.id,username:account.username,role:account.role,linkedQQ:account.linkedQQ||''},{timeoutMs:8000});
  handle.readNotificationReply=async(account,ref)=>{
   const threadId=uuid(ref.threadId),messageId=uuid(ref.messageId);
   if(!Number.isSafeInteger(ref.sequence)||ref.sequence<1)throw Error('INVALID_MESSAGE_SEQUENCE');
