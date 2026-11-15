@@ -1,7 +1,8 @@
 const minute=value=>typeof value==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)?Number(value.slice(0,2))*60+Number(value.slice(3)):null;
-export function welcomeContext(config,{username='',date=new Date(),weather=null}={}){
+export function welcomeContext(config,{username='',date=new Date(),weather=null,environment=null}={}){
+ weather??=environment?.weather;
  const timezone=config.timezone||Intl.DateTimeFormat().resolvedOptions().timeZone;
- let parts;try{parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date).map(p=>[p.type,p.value]));}catch{return welcomeContext({...config,timezone:'UTC'},{username,date,weather});}
+ let parts;try{parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date).map(p=>[p.type,p.value]));}catch{return welcomeContext({...config,timezone:'UTC'},{username,date,weather,environment});}
  const {year,month,day,hour,minute:min}=parts,minutes=Number(hour)*60+Number(min),times=[];
  for(const [name,p] of Object.entries(config.timePresets||{})){
   const start=minute(p?.from),end=minute(p?.to);if(start===null||end===null)continue;
@@ -17,15 +18,25 @@ export function welcomeContext(config,{username='',date=new Date(),weather=null}
   if(p.minWindSpeed!==undefined&&!(Number.isFinite(p.minWindSpeed)&&fresh.windSpeed>=p.minWindSpeed))continue;
   weatherNames.push(name);
  }
- return {times,weatherNames,weekday,month:Number(month),date:`${year}-${month}-${day}`,vars:{user:username,greeting:period?.greeting||'你好',period:period?.label||'',time:`${hour}:${min}`,date:`${year}-${month}-${day}`,year,month:Number(month),day:Number(day),weekday:'星期'+['','一','二','三','四','五','六','日'][weekday],...(fresh?{weather:fresh.label,temperature:fresh.temperature,humidity:fresh.humidity,windSpeed:fresh.windSpeed}:{})}};
+ const location=environment?.expiresAt>date.getTime()?environment.location:null,locations=[];
+ if(location&&Number.isFinite(location.latitude)&&Math.abs(location.latitude)<=90&&Number.isFinite(location.longitude)&&Math.abs(location.longitude)<=180){
+  for(const [name,p] of Object.entries(config.locationPresets||{})){
+   const b=p?.bounds;if(!Array.isArray(b)||b.length!==4||!b.every(Number.isFinite))continue;
+   const [west,south,east,north]=b;if(west< -180||east>180||south< -90||north>90||west>east||south>north)continue;
+   if(location.longitude>=west&&location.longitude<=east&&location.latitude>=south&&location.latitude<=north)locations.push(name);
+  }
+ }
+ const place=config.locationPresets?.[locations[0]]?.label;
+ return {times,weatherNames,locations,weekday,month:Number(month),date:`${year}-${month}-${day}`,vars:{user:username,greeting:period?.greeting||'你好',period:period?.label||'',time:`${hour}:${min}`,date:`${year}-${month}-${day}`,year,month:Number(month),day:Number(day),weekday:'星期'+['','一','二','三','四','五','六','日'][weekday],...(typeof place==='string'&&place.trim()?{location:place}:{}),...(fresh?{weather:fresh.label,temperature:fresh.temperature,humidity:fresh.humidity,windSpeed:fresh.windSpeed}:{})}};
 }
 export function matches(when,context){
  if(when===undefined)return true;
- if(!when||typeof when!=='object'||Array.isArray(when)||Object.keys(when).some(k=>!['time','weather','dates','weekdays','months'].includes(k)))return false;
+ if(!when||typeof when!=='object'||Array.isArray(when)||Object.keys(when).some(k=>!['time','weather','locations','dates','weekdays','months'].includes(k)))return false;
  return Object.entries(when).every(([key,values])=>{
   if(!Array.isArray(values)||!values.length)return false;
   if(key==='time')return values.some(v=>context.times.includes(v));
   if(key==='weather')return values.some(v=>context.weatherNames.includes(v));
+  if(key==='locations')return values.some(v=>context.locations?.includes(v));
   if(key==='dates')return values.every(v=>typeof v==='string'&&/^(?:\d{4}-)?\d{2}-\d{2}$/.test(v))&&values.some(v=>v===context.date||v===context.date.slice(5));
   if(key==='weekdays')return values.every(v=>Number.isInteger(v)&&v>=1&&v<=7)&&values.includes(context.weekday);
   return values.every(v=>Number.isInteger(v)&&v>=1&&v<=12)&&values.includes(context.month);

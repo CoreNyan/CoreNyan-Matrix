@@ -1,0 +1,218 @@
+{
+  "_help": {
+    "selection": "titles 和 subtitles 分别随机；同一任务、同一处理状态保持不变。queued 为等待中的文案。",
+    "rules": "继承 chat-welcome.json 的 timePresets/weatherPresets，可在此覆盖或新增。when 中不同条件同时满足，同一数组内满足任一项即可。",
+    "variables": [
+      "{user}",
+      "{greeting}",
+      "{period}",
+      "{time}",
+      "{date}",
+      "{year}",
+      "{month}",
+      "{day}",
+      "{weekday}",
+      "{weather}",
+      "{temperature}",
+      "{humidity}",
+      "{windSpeed}",
+      "{location}"
+    ],
+    "conditions": [
+      "time",
+      "weather",
+      "locations",
+      "dates",
+      "weekdays",
+      "months"
+    ],
+    "location": "只使用当前设备已授权且未过期的位置；locationPresets 的 bounds 为 [西经度,南纬度,东经度,北纬度]，label 为显示名称。没有相应位置或天气时跳过相关文案，不会主动索取定位。"
+  },
+  "titles": [
+    "让本姑娘想想… (｡•̀ᴗ-)✧",
+    "嗯…这里得琢磨一下。",
+    "小可的脑袋转起来啦 (๑•̀ㅂ•́)و",
+    "{user}，这句我接住了。",
+    "先把乱糟糟的线头理一理。",
+    "好，容我认真想一小会儿。",
+    "这个嘛…有点意思。(¬‿¬)",
+    "脑袋里的拼图还差一块…",
+    "想法冒泡中 ₍ᐢ.ˬ.ᐢ₎",
+    "本姑娘在呢，思路还没走丢。",
+    {
+      "text": "早晨的脑袋，开工啦。٩(ˊᗜˋ*)و",
+      "when": {
+        "time": [
+          "morning"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "午间思考营业中。",
+      "when": {
+        "time": [
+          "noon"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "下午的灵感，让我捋一捋。",
+      "when": {
+        "time": [
+          "afternoon"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "夜里也有小小的灵感。(っ˘ω˘ς )",
+      "when": {
+        "time": [
+          "evening",
+          "dawn"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "外面{weather}，脑袋里倒是挺热闹。",
+      "when": {
+        "weather": [
+          "rain",
+          "snow"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "新的一年，先接住你的第一个点子。",
+      "when": {
+        "dates": [
+          "01-01"
+        ]
+      },
+      "weight": 3
+    }
+  ],
+  "subtitles": [
+    "别催别催，想法还在拐弯呢。(¬_¬)",
+    "把这一点和那一点接起来…",
+    "等一下，这里好像还有个小细节。",
+    "不随便糊弄你，让我多想一步。",
+    "{user}的话，当然要认真接住。",
+    "脑袋里有几个念头，正在排队。",
+    "让本姑娘把话想明白再说。(๑•ᴗ•๑)",
+    "思路拐了个弯，但没跑远。",
+    "嗯…换个角度试试看。",
+    "布丁先放一边，这件事比较要紧。",
+    {
+      "text": "早上好，{user}。思路也跟着醒过来啦。",
+      "when": {
+        "time": [
+          "morning"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "中午啦，你慢慢吃饭，我再想一想。",
+      "when": {
+        "time": [
+          "noon"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "这个下午，留一点脑细胞给你的问题。",
+      "when": {
+        "time": [
+          "afternoon"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "已经{time}了，小可还在这里琢磨。",
+      "when": {
+        "time": [
+          "dawn"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "{weather}的日子，思路也像雨点一样冒出来。☂",
+      "when": {
+        "weather": [
+          "rain"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "你那边约{temperature}°C，想事情也别忘了喝口水。",
+      "when": {
+        "weather": [
+          "hot"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "外面{temperature}°C，手揣暖一点，我再想想。",
+      "when": {
+        "weather": [
+          "cold"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "{location}那边的你，稍等本姑娘一小会儿。(｡•̀ᴗ-)✧",
+      "when": {
+        "locations": [
+          "shanghai"
+        ]
+      },
+      "weight": 3
+    },
+    {
+      "text": "周末也有值得琢磨的小事嘛。",
+      "when": {
+        "weekdays": [
+          6,
+          7
+        ]
+      },
+      "weight": 3
+    }
+  ],
+  "queued": {
+    "titles": [
+      "这条也记下啦。(๑•ᴗ•๑)",
+      "{user}，没漏掉你的消息。",
+      "收到啦，让本姑娘挪个空。",
+      "新的想法先放在这里。"
+    ],
+    "subtitles": [
+      "前面的事情还没忙完，这条也好好留着。",
+      "一个一个来，我还记着这件事。",
+      "等手头这件告一段落，就轮到这里。",
+      "先别急，消息已经在小可这里啦。"
+    ]
+  },
+  "locationPresets": {
+    "shanghai": {
+      "label": "上海附近",
+      "bounds": [
+        120.85,
+        30.67,
+        122.2,
+        31.9
+      ]
+    }
+  }
+}

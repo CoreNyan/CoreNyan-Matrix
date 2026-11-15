@@ -7,7 +7,7 @@ import {reveal} from './ui-motion.js';
 let configuration,previousTitle='',previousSubtitle='',previousDoodle=0;
 const welcomes=new WeakMap();
 const strings=value=>Array.isArray(value)?[...new Set(value.filter(item=>typeof item==='string'&&item.trim()||item&&typeof item.text==='string'))]:[];
-function greetings(){
+export function loadWelcomeConfig(){
  return configuration??=fetch('/contracts/chat-welcome.json',{cache:'no-cache',signal:AbortSignal.timeout(5000)})
   .then(response=>{if(!response.ok)throw Error('WELCOME_CONFIG_UNAVAILABLE');return response.json();})
   .catch(()=>({}))
@@ -19,7 +19,7 @@ function greetings(){
 }
 function render(node){
  const state=welcomes.get(node);if(!state?.entry||!state.username)return;
- const context=welcomeContext(state.config,{username:state.username,weather:environmentFor(state.username)?.weather});
+ const context=welcomeContext(state.config,{username:state.username,environment:environmentFor(state.username)});
  const expand=text=>expandWelcome(text,context);
  node.querySelector('h2').textContent=expand(state.entry.title);node.querySelector('p').textContent=expand(state.entry.subtitle);
  if(node.hidden){node.hidden=false;if(node.isConnected)reveal(node);}
@@ -33,8 +33,8 @@ export function updateChatWelcome(node,username){
 export function createChatWelcome(username=''){
  const node=document.createElement('div');node.className='chat-welcome';node.hidden=true;
  const state={username,entry:null,weatherKind:null};welcomes.set(node,state);
- void greetings().then(config=>{
-  state.config=config;const context=welcomeContext(config,{username:state.username,weather:environmentFor(state.username)?.weather});
+ void loadWelcomeConfig().then(config=>{
+  state.config=config;const context=welcomeContext(config,{username:state.username,environment:environmentFor(state.username)});
   const entry={title:selectWelcome(config.titles,context,previousTitle)||'小可在，慢慢说。',subtitle:selectWelcome(config.subtitles,context,previousSubtitle)||'{user}，今天想聊些什么？'};
   previousTitle=entry.title;previousSubtitle=entry.subtitle;state.entry=entry;
   previousDoodle=nextDoodle(previousDoodle,DOODLE_TOTAL);
@@ -43,7 +43,7 @@ export function createChatWelcome(username=''){
   node.append(image,title,subtitle,environmentControls({enableOnly:true}));render(node);
   const unsubscribe=onEnvironment(()=>{
    if(!node.isConnected){unsubscribe();return;}
-   const next=welcomeContext(config,{username:state.username,weather:environmentFor(state.username)?.weather});
+   const next=welcomeContext(config,{username:state.username,environment:environmentFor(state.username)});
    const kind=environmentFor(state.username)?.weather?.kind||null;
    if(kind===state.weatherKind){render(node);return;}state.weatherKind=kind;
    state.entry={title:selectWelcome(config.titles,next,previousTitle)||entry.title,subtitle:selectWelcome(config.subtitles,next,previousSubtitle)||entry.subtitle};
