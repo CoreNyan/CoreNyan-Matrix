@@ -18,7 +18,7 @@ import {createMetricsSampler} from './scripts/container-metrics.mjs';
 import {containerStarts} from './scripts/container-starts.mjs';
 import {createLayerRegistry} from './scripts/layer-registry.mjs';
 import {searchFiles} from './scripts/file-search.mjs';
-import {minecraftNames} from './scripts/bond-summary.mjs';
+import {minecraftNames,recentInteractions} from './scripts/bond-summary.mjs';
 import {randomUUID} from 'node:crypto';
 import { TRASH_PREVIEW } from '../contracts/constants.js';
 import { IMAGE_TYPES, isBinaryFile } from '../contracts/file-types.js';
@@ -539,18 +539,7 @@ const server = http.createServer(async (req, res) => {
       const topics = (p.behavior?.topics || [])
         .map(t => (typeof t === 'string' ? t : t?.value))
         .filter(Boolean);
-      const recentEvidence = (p.behavior?.recentEvidence || [])
-        .slice(-15)
-        .reverse()
-        .map(ev => ({
-          at: ev.at,
-          role: ev.role,
-          type: ev.type,
-          text: ev.text || '',
-          assistantContext: ev.assistantContext || '',
-          delta: ev.delta ?? 0,
-          conversationId: ev.conversationId || ''
-        }));
+      const recentEvidence = recentInteractions(p.behavior?.recentEvidence || []);
       const impressions = p.relationship?.impressions || (p.impression ? [p.impression] : []);
 
       return sendJson(res, 200, {

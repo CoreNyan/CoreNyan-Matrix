@@ -908,8 +908,8 @@ import { entityPreview } from './entity-models.js';
     return h;
   }
 
-  async function getBondDetail(bondId) {
-    if (state.bondDetailCache.has(bondId)) {
+  async function getBondDetail(bondId, fresh = false) {
+    if (!fresh && state.bondDetailCache.has(bondId)) {
       return state.bondDetailCache.get(bondId);
     }
     const res = await apiFetch(`${API.BONDS}${encodeURIComponent(bondId)}`);
@@ -921,12 +921,24 @@ import { entityPreview } from './entity-models.js';
 
   async function openBondDossierModal(bondId) {
     state.dossier = { open: true, id: bondId, bond: null, error: '' };
+    await refreshBondDossier();
+  }
+
+  const pendingDossiers = new WeakSet();
+  async function refreshBondDossier() {
     const dossier = state.dossier;
+    if (!dossier.open || pendingDossiers.has(dossier)) return;
+    pendingDossiers.add(dossier);
     try {
-      const bond = await getBondDetail(bondId);
+      const bond = await getBondDetail(dossier.id, true);
       if (state.dossier !== dossier || !dossier.open) return;
-      dossier.bond = bond;
-    } catch (err) { if (state.dossier === dossier) dossier.error = err.message; }
+      // Let the reader finish selecting text before replacing the dossier body.
+      const selection = window.getSelection();
+      if (dossier.bond && selection && !selection.isCollapsed && $('bondModalBody').contains(selection.anchorNode)) return;
+      if (JSON.stringify(dossier.bond) !== JSON.stringify(bond)) dossier.bond = bond;
+      dossier.error = '';
+    } catch (err) { if (state.dossier === dossier && !dossier.bond) dossier.error = err.message; }
+    finally { pendingDossiers.delete(dossier); }
   }
 
   function renderBondDossier() {
@@ -936,6 +948,8 @@ import { entityPreview } from './entity-models.js';
     $('bondModalIdTag').textContent = termTextTemplate`BOND {{concept.dossier.en}} // ${id}`;
     $('bondModalTitle').textContent = bond ? `${bond.name || bond.id} · [${bond.stage || 'BOND'}]` : termText("LOADING {{concept.neural.en}} {{concept.dossier.en}}...");
     const body = $('bondModalBody');
+    const scroller = body;
+    const scrollTop = scroller.scrollTop;
     if (!bond || error) {
       body.innerHTML = `<div class="fm-empty-notice">${error ? escapeHtml(error) : termHtml('SYNCHRONIZING {{concept.bond.en}} {{chapter.neural.en}}...')}</div>`;
       return;
@@ -954,7 +968,7 @@ import { entityPreview } from './entity-models.js';
             return `
               <div class="evidence-item">
                 <div class="evidence-head">
-                  <span>${escapeHtml(dt)} · [${escapeHtml(ev.role || ev.type || 'EVENT')}]</span>
+                  <span>${escapeHtml(dt)} · [${escapeHtml(ev.type === 'assessment' ? '关系评估' : ev.role || ev.type || 'EVENT')}]</span>
                   <span>DELTA: ${escapeHtml(deltaStr)}</span>
                 </div>
                 <div class="evidence-channel">${escapeHtml(evidenceChannel(ev.conversationId))}</div>
@@ -997,6 +1011,7 @@ import { entityPreview } from './entity-models.js';
         <div class="dossier-sec-title">RECENT {{concept.memory.en}} EVIDENCE (最近交流记录)</div>
         <div class="evidence-list">${evidenceHtml}</div>
       `;
+      scroller.scrollTop = scrollTop;
   }
 
   function renderOrgansMatrix(organs) {
@@ -2185,7 +2200,6 @@ import { entityPreview } from './entity-models.js';
     return state.lastVitalsPayload?.organs?.find(o=>o.id===id);
   }
   function renderLogControls(){
-    $('btnBrainRequests').hidden=!['corenyan-brain',SERVICE_CONTROL.brainFile].includes(state.logs.organ);
     const layer=currentLogLayer(),busy=Boolean(state.busyOrgan),controllable=layer?.kind==='container';
     $('btnLogPower').textContent=layer?.online?'关闭 ■':'启动 ▷';
     $('btnLogPower').disabled=!controllable||busy;
@@ -2206,7 +2220,6 @@ import { entityPreview } from './entity-models.js';
   }
 
   function initNeuralTerminal() {
-    mountApiRecords({button:$('btnBrainRequests'),apiFetch});
     terminalView=createTerminalView($('neuralLogTerminal'),{onDeferred:paused=>{
       $('logSelectionStatus').textContent=paused?'选区已保留 · 取消选择后显示最新日志':'';
     }});
@@ -2383,6 +2396,7 @@ import { entityPreview } from './entity-models.js';
     mountRecycleBin(registry, apiFetch, refreshCurrentScopeFiles);
     layerEditor=mountLayerEditor(apiFetch,async()=>{await loadFileScopes(false);await pollVitals();});
     const chatView=mountChat($('view-chat'),registry);
+    mountApiRecords({button:$('view-chat').querySelector('[data-requests]'),apiFetch});
     mountMobileLayout(registry);
     mountOnebotLogin(registry,message=>showToast(message,true));
     mountSettings(registry,{openSystemConfig:async entry=>{
@@ -2436,10 +2450,12 @@ import { entityPreview } from './entity-models.js';
     setInterval(() => {
       if (document.hidden) return;
       pollVitals();
+      void refreshBondDossier();
       if (state.activeView === VIEW.NEURAL && state.logs.autoRefresh) {
         fetchNeuralLogs();
       }
     }, TIMING.poll);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshBondDossier();});
   }
 
   if (document.readyState === 'loading') {

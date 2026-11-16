@@ -12,6 +12,7 @@ using System.Windows.Forms;
 internal sealed class PixelDissolve : Form {
     internal const int DurationMs=880;
     const int TargetTiles=640;
+    const double FrameMs=1000.0/60;
     readonly Bitmap source;
     readonly List<Tile> tiles=new List<Tile>();
     readonly Rectangle origin;
@@ -31,6 +32,8 @@ internal sealed class PixelDissolve : Form {
     [DllImport("gdi32.dll")] static extern bool DeleteObject(IntPtr value);
     [DllImport("gdi32.dll")] static extern bool DeleteDC(IntPtr value);
     [DllImport("dwmapi.dll")] static extern int DwmFlush();
+    [DllImport("winmm.dll")] static extern uint timeBeginPeriod(uint period);
+    [DllImport("winmm.dll")] static extern uint timeEndPeriod(uint period);
     protected override bool ShowWithoutActivation {get{return true;}}
     protected override CreateParams CreateParams {get{var p=base.CreateParams;p.ExStyle|=0x00080000|0x00000020|0x08000000|0x00000080;return p;}}
     static float Ease(float t){return t*t*(3-2*t);}
@@ -87,6 +90,7 @@ internal sealed class PixelDissolve : Form {
                 int from=(tile.Source.Y+(py-y)*tile.Source.Height/height)*source.Width+tile.Source.X;
                 for(int px=left;px<right;px++){
                     uint value=(uint)sourcePixels[from+(px-x)*tile.Source.Width/width];
+                    if(opacity==255){if((value>>24)!=0)output[py*Width+px]=value;continue;}
                     uint a=(value>>24)*(uint)opacity/255;if(a==0)continue;
                     uint r=((value>>16)&255)*(uint)opacity/255,g=((value>>8)&255)*(uint)opacity/255,b=(value&255)*(uint)opacity/255;
                     output[py*Width+px]=(a<<24)|(r<<16)|(g<<8)|b;
@@ -97,14 +101,24 @@ internal sealed class PixelDissolve : Form {
         if(!UpdateLayeredWindow(Handle,IntPtr.Zero,ref point,ref sizeNative,memoryDC,ref offset,0,ref blend,2))throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
     }
     internal async Task Play(Form owner,Action revealDesktop){
-        Render(0);Show(owner);DwmFlush();revealDesktop();
-        var clock=Stopwatch.StartNew();
-        while(!IsDisposed&&clock.ElapsedMilliseconds<DurationMs){
-            long start=clock.ElapsedMilliseconds;Render(Math.Min(1,(float)start/DurationMs));
-            // Time-based trajectories skip late frames rather than stretching the close.
-            await Task.Delay(Math.Max(1,22-(int)(clock.ElapsedMilliseconds-start)));
+        // Task.Delay otherwise rounds against Windows' coarse timer and turns a
+        // 22ms frame budget into ~31ms. Limit the finer resolution to this effect.
+        bool fineTimer=timeBeginPeriod(1)==0;
+        try{
+            Render(0);Show(owner);DwmFlush();revealDesktop();
+            var clock=Stopwatch.StartNew();
+            while(!IsDisposed&&clock.Elapsed.TotalMilliseconds<DurationMs){
+                double now=clock.Elapsed.TotalMilliseconds;
+                Render(Math.Min(1,(float)(now/DurationMs)));
+                // Absolute frame deadlines prevent timer/rendering drift; skip
+                // missed deadlines instead of queuing a burst of stale frames.
+                double next=(Math.Floor(clock.Elapsed.TotalMilliseconds/FrameMs)+1)*FrameMs;
+                await Task.Delay(Math.Max(1,(int)Math.Ceiling(Math.Min(next,DurationMs)-clock.Elapsed.TotalMilliseconds)));
+            }
+            if(!IsDisposed)Render(1);
+        }finally{
+            if(fineTimer)timeEndPeriod(1);
         }
-        if(!IsDisposed)Render(1);
     }
     protected override void Dispose(bool disposing){
         if(disposing){if(frame!=null){frame.Dispose();frame=null;}
