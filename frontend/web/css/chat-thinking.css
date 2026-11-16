@@ -19,3 +19,13 @@
 .visuals-paused .thought-symbol *,.motion-disabled .thought-symbol *,#view-chat:not(.active) .thought-symbol *{animation-play-state:paused!important}
 @media(max-width:700px){.chat-task-list{padding:14px;border-radius:14px}.thought-header{gap:12px}.thought-symbol{width:46px;height:46px}.chat-task-heading{font-size:13px}.thought-caption-note{font-size:11px}.chat-task{grid-template-columns:12px 60px minmax(0,1fr);gap:8px}}
 @media(prefers-reduced-motion:reduce){.thought-symbol *{animation:none!important}.is-thinking .thought-thread{stroke-dasharray:none}}
+
+/* Keep the animated status at the end of messages; details are opt-in. */
+.chat-task-list{margin:4px auto 8px;padding:6px 10px;border-radius:10px;animation:none}
+.thought-header{gap:8px;list-style:none;cursor:pointer;min-height:32px}.thought-header::-webkit-details-marker{display:none}
+.thought-symbol{width:28px;height:28px}.thought-caption{flex:1;overflow:hidden}.chat-task-heading{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thought-caption-note{display:none}.chat-task-list[open] .thought-caption-note{display:block}
+.thought-count{flex:none;font-size:11px;color:#999}.thought-expand{font-size:13px;color:#888}.chat-task-list[open] .thought-expand{transform:rotate(180deg)}
+.chat-task-list .thought-tasks{margin-top:8px;padding-top:8px;max-height:120px;overflow:auto}
+.chat-bottom{position:relative}.chat-shell .chat-new-messages{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);z-index:2;white-space:nowrap;background:#222;border:1px solid #555;border-radius:18px;padding:7px 13px;font-size:12px;box-shadow:0 3px 14px #0006}
+.chat-shell .chat-new-messages:active{transform:translateX(-50%)}
