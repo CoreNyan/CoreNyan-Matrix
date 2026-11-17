@@ -3,7 +3,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const require=createRequire(import.meta.url);
-const shared=require(process.env.CORENYAN_SHARED_ROOT||path.join(root,'../../shared'));
+const shared=require(process.env.CORENYAN_SHARED_ROOT||path.join(root,'../../corenyan-gateway/shared'));
 const log=shared.createLogger({root,service:'Matrix',policy:()=>shared.config().logs});
 console.log=(...args)=>log(...args);
 console.info=(...args)=>log(...args);

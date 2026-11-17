@@ -1,5 +1,5 @@
 export const SYSTEM_CONFIG=Object.freeze({
- id:'system-config',label:'系统配置',scope:'shared_src',directory:'shared',
+ id:'system-config',label:'系统配置',scope:'shared_src',directory:'corenyan-gateway/shared',
  entries:Object.freeze([
   {label:'全局模块与身份',description:'模块开关、管理身份和通信参数',scope:'shared_src',file:'architecture.json'},
   {label:'工具注册表',description:'工具归属与读写属性',scope:'shared_src',file:'tool-registry.json'},

@@ -433,7 +433,7 @@ async function readJsonBody(req) {
 const securityDirectory=(process.env.MATRIX_SECURITY_DIR||process.env.CORENYAN_WEB_SECURITY_DIR);
 if(!securityDirectory)throw Error('CORENYAN_WEB_SECURITY_DIR is required; refusing unprotected startup');
 const userEnvironment=createUserEnvironment();
-const chatApi=createChatApi({environmentSnapshot:userEnvironment.snapshot,sharedRoot:path.join(path.dirname(WEB_ROOT),'shared'),gatewayRoot:GATEWAY_ROOT});
+const chatApi=createChatApi({environmentSnapshot:userEnvironment.snapshot,sharedRoot:path.join(GATEWAY_ROOT,'shared'),gatewayRoot:GATEWAY_ROOT});
 const credentialFile=path.join(securityDirectory,'credentials.json');
 const accounts=createAccountStore(credentialFile);
 startChatRecovery({accounts,recover:chatApi.recoverForAccount});
