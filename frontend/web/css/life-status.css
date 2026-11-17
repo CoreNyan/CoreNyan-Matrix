@@ -11,8 +11,8 @@
 .notch-signal{display:flex;align-items:center;gap:2px;height:18px;margin-left:4px;color:#aaa}
 .notch-signal i{width:2px;height:5px;border-radius:2px;background:currentColor;transform-origin:center;animation:status-breathe 2.2s ease-in-out infinite}
 .notch-signal i:nth-child(2){height:12px;animation-delay:-.3s}.notch-signal i:nth-child(3){height:8px;animation-delay:-.6s}.notch-signal i:nth-child(4){height:15px;animation-delay:-.9s}
-.notch-avatar-pill[data-mode=SLEEPING] .notch-signal i{animation-duration:4s;color:#666}
-.notch-avatar-pill[data-mode=THINKING] .notch-signal i{animation-duration:1.1s;color:#eee}
+.notch-avatar-pill[data-mode=Dormancy] .notch-signal i{animation-duration:4s;color:#666}
+.notch-avatar-pill[data-mode=Awake] .notch-signal i{animation-duration:1.8s;color:#eee}
 @keyframes status-breathe{50%{transform:scaleY(.45);opacity:.5}}
 .visuals-paused .notch-signal i,body.motion-off .notch-signal i{animation-play-state:paused}
 @media(prefers-reduced-motion:reduce){.notch-signal i{animation:none}.notch-avatar-pill,.notch-avatar-img{transition:none}}

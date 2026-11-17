@@ -551,7 +551,7 @@ import { entityPreview } from './entity-models.js';
 
       if ($('hostPlatformTag')) $('hostPlatformTag').textContent = `${host.hostname || termText("{{brand.display}}")} // ${host.platform || 'LINUX'}`;
       if ($('vitalMoodText')) $('vitalMoodText').textContent = termTextTemplate`{{health.mood.en}}: ${Math.round(vitals.mood ?? TELEMETRY.mood)}%`;
-      if ($('vitalActivityText')) $('vitalActivityText').textContent = `MODE: ${vitals.mode || 'SURFING'}`;
+      if ($('vitalActivityText')) $('vitalActivityText').textContent = `MODE: ${vitals.mode || 'Awake'}`;
       if ($('vitalPuddingText')) $('vitalPuddingText').textContent = termTextTemplate`{{health.energy.en}}: ${Math.round(vitals.energy ?? TELEMETRY.energy)}%`;
       if ($('lastHeartbeatTag')) $('lastHeartbeatTag').textContent = `HEARTBEAT: ${formatTimeAgo(vitals.lastHeartbeat)}`;
 
@@ -591,6 +591,8 @@ import { entityPreview } from './entity-models.js';
       if ($('vitalHappinessVal')) $('vitalHappinessVal').textContent = `${moodPct}%`;
       if ($('vitalEnergyVal')) $('vitalEnergyVal').textContent = `${energyPct}%`;
       if ($('vitalCuriosityVal')) $('vitalCuriosityVal').textContent = `${curiosityPct}%`;
+      if ($('gaugeMoodDetail')) $('gaugeMoodDetail').textContent = vitals.moodLabel || '';
+      if ($('gaugeEnergyDetail')) $('gaugeEnergyDetail').textContent = vitals.energyLabel || '';
 
       const load1m = Array.isArray(host.loadAvg) ? host.loadAvg[0] : 0;
       if ($('gaugeCpuLoadText')) $('gaugeCpuLoadText').textContent = `1m: ${load1m ?? 0}`;

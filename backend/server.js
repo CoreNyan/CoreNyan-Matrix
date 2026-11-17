@@ -173,7 +173,7 @@ function getCoreNyanBioState() {
   let life = {
     energy: 88,
     mood: 82,
-    mode: 'SURFING',
+    mode: 'Awake',
     modeEnteredAt: Date.now() - 3600000,
     lastHeartbeat: Date.now(),
     recentLogs: []
@@ -187,7 +187,7 @@ function getCoreNyanBioState() {
   life.recentLogs = [];
   try { const thoughts = JSON.parse(fs.readFileSync(path.join(BRAIN_ROOT, 'data', 'recent-thoughts.json'), 'utf8')); if (Array.isArray(thoughts.entries)) life.recentLogs = thoughts.entries.slice(-80).map(({at,text}) => ({at,text})); } catch {}
 
-  if(life.mode==='GAMING')life.mode='SURFING';
+  life.mode=['Dormancy','RESTING','SLEEPING'].includes(life.mode)?'Dormancy':'Awake';
   let brainConfig = {};
   try {
     if (fs.existsSync(brainCfgFile)) {
@@ -513,7 +513,9 @@ const server = http.createServer(async (req, res) => {
           bpm,
           energy: Number((bio.life.energy ?? 85).toFixed(1)),
           mood: Number((bio.life.mood ?? 80).toFixed(1)),
-          mode: bio.life.mode || 'SURFING',
+          mode: bio.life.mode || 'Awake',
+          moodLabel: bio.life.moodLabel || '',
+          energyLabel: bio.life.energyLabel || '',
           lastHeartbeat: bio.life.lastHeartbeat || Date.now(),
           recentLogs: bio.life.recentLogs || []
         },

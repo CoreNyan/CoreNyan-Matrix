@@ -84,10 +84,8 @@ export const EDITOR = freeze({
 });
 
 export const LIFE_MODE_LABELS = freeze({
-  "SURFING": "ACTIVE · 冲浪巡游中",
-  "SLEEPING": "SLEEP · 深度休眠中",
-  "DRAWING": termText("PAINTING · 创作中"),
-  "THINKING": "THINKING · 深度推演中"
+  "Awake": "AWAKE · 清醒中",
+  "Dormancy": "DORMANCY · 休眠中"
 });
 
 export const TIMING = freeze({
@@ -242,7 +240,7 @@ export const EFFECTS = freeze({
 
 export const WAVE_HEALTH = freeze({
   smoothingSeconds: 1.2, pressureWeights: { cpu: .6, memory: .25, disk: .15 },
-  modeRate: { SLEEPING: .72, THINKING: 1, SURFING: 1.04, DRAWING: .96 },
+  modeRate: { Dormancy: .72, Awake: 1.04 },
   pressureBpm: 12, moodBpm: 8, amplitudeBase: .55, energyAmplitude: .55,
   intervalBase: .045, pressureVariation: .12, moodVariation: .08,
   respirationBase: .16, pressureRespiration: .14, energyRespiration: .04

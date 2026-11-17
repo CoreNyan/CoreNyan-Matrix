@@ -2,7 +2,7 @@ import {createFrameBudget,visualActive,observeVisualActivity} from './render-bud
 import {VIEW} from './constants.js';
 import {waveProfile} from './waveform.js';
 const BANDS=['δ','θ','α','β','γ'];
-const STATES={SLEEPING:{label:'SLEEPING',weights:[.85,.5,.22,.06,.02]},THINKING:{label:'THINKING',weights:[.12,.28,.38,.9,.62]},DRAWING:{label:'DRAWING',weights:[.15,.62,.78,.5,.34]},SURFING:{label:'ACTIVE',weights:[.2,.38,.72,.55,.25]}};
+const STATES={Dormancy:{label:'DORMANCY',weights:[.85,.5,.22,.06,.02]},Awake:{label:'AWAKE',weights:[.2,.38,.72,.55,.25]}};
 // State-driven visual synthesis, never a measured respiratory/EEG medical reading.
 export function bioProfile(payload){
  const life=payload?.vitals;if(!life||!Number.isFinite(life.energy)||!Number.isFinite(life.mood))return null;
