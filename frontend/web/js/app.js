@@ -14,6 +14,7 @@ import {closeDialog,setOverlayVisible,setMotionEnabled,reveal,dismissToast} from
 import {mountMobileLayout} from './mobile-layout.js';
 import {mountChat} from './chat.js';
 import {mountOnebotLogin} from './onebot-login.js';
+import {mountTelegramLogin} from './telegram-login.js';
 import {mountSettings} from './settings.js';
 import {createTerminalView} from './terminal-view.js';
 import {SERVICE_CONTROL,sessionImpact} from './organ-control-policy.js';
@@ -2401,6 +2402,7 @@ import { entityPreview } from './entity-models.js';
     mountApiRecords({button:$('view-chat').querySelector('[data-requests]'),apiFetch});
     mountMobileLayout(registry);
     mountOnebotLogin(registry,message=>showToast(message,true));
+    mountTelegramLogin(registry);
     mountSettings(registry,{openSystemConfig:async entry=>{
       if(!await confirmFileDiscard())return false;
       await loadFileScopes(false);

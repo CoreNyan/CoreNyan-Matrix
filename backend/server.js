@@ -5,6 +5,7 @@ import './scripts/runtime-log.mjs';
 import {createAccountStore} from './scripts/account-store.mjs';
 import {createNotifications} from './scripts/notifications.mjs';
 import {readOnebotLogin} from './scripts/onebot-login.mjs';
+import {readTelegramLogin} from './scripts/telegram-login.mjs';
 import {chatPrivatePath} from './scripts/chat-private-path.mjs';
 import {createUserEnvironment} from './scripts/user-environment.mjs';
 import {createChatApi} from './scripts/chat-api.mjs';
@@ -271,6 +272,7 @@ const localOrganStates = new Map([
   ['corenyan-brain', true],
   ['corenyan-gateway', true],
   ['onebot-qq', true],
+  ['corenyan-telegram', false],
   ['corenyan-redis', true]
 ]);
 
@@ -579,6 +581,7 @@ const server = http.createServer(async (req, res) => {
       try{return sendJson(res,200,{ok:true,record:await apiRecords.read(pathname.split('/').at(-1))});}catch{return sendJson(res,404,{ok:false,error:'记录不存在或已过保留期'});}
     }
     if(pathname==='/api/onebot/login'&&req.method==='GET')return sendJson(res,200,{ok:true,...await readOnebotLogin(path.join(ONEBOT_ROOT,'data/qq-login-state.json'))});
+    if(pathname==='/api/telegram/login'&&req.method==='GET')return sendJson(res,200,await readTelegramLogin(path.join(GATEWAY_ROOT,'shared/architecture.json')));
     if (pathname === '/api/logs' && req.method === 'GET') {
       const organId = url.searchParams.get('organ') || 'corenyan-brain';
       const lines = Number(url.searchParams.get('lines') || 120);

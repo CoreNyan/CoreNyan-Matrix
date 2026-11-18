@@ -8,12 +8,13 @@ const ID=/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/;
 const assert=(ok,message)=>{if(!ok)throw Error(message);};
 export function createLayerRegistry({file,workspace,roots,externalRoots=[]}) {
  const known=(name,rootScope,nameTerm,en,desc,doodle,port,directory)=>({key:name,id:name,rootScope,name:termText(nameTerm),organCode:termText(en),sub:desc,desc,doodle,port,kind:'container',containerName:name,directory,shortcuts:[],entityModel:ENTITY.layerModels[name]||'ark'});
+ const telegram=known('corenyan-telegram','telegram_src','交流层-Telegram','TELEGRAM // 06','Telegram 消息通信','',8092,path.join(roots.gateway,'src/modules/telegram'));
  const defaults=[
  known('corenyan-brain','brain_src','{{organ.brain.zh}}','{{organ.brain.en}} // 01','认知与自我决策','',null,roots.brain),
  known('corenyan-gateway','gateway_src','{{organ.gateway.zh}}','{{organ.gateway.en}} // 02','进行事物的感知和表达','',8089,roots.gateway),
  known('onebot-qq','onebot_src','{{organ.qq.zh}}','{{organ.qq.en}} // 03','SnowLuma · OneBot 11','',5099,roots.onebot||path.join(workspace,'snowluma-data')),
  known('corenyan-redis','redis_src','{{organ.redis.zh}}','{{organ.redis.en}} // 04','各层级的通信工具','',6379,roots.redis),
- known('corenyan-web','web_src','CoreNyan-Matrix','CONTAINER LAYER // 05','前端与管理控制台','',25999,roots.web)
+ known('corenyan-web','web_src','CoreNyan-Matrix','CONTAINER LAYER // 05','前端与管理控制台','',25999,roots.web),telegram
  ];
  defaults[2].containerName='snowluma-qq';defaults[4].containerName='corenyan-matrix-api';
  defaults[0].shortcuts=[['memory','{{scope.memory}}','memory-vault'],['skills','{{scope.skills}}','skills'],['prompts','{{scope.prompts}}','prompts'],['model_presets','大模型预设','model-presets'],['affections','{{scope.affections}}','affections'],['artworks','{{concept.retinaArt.zh}}','images/generated'],['endocrine','{{chapter.endocrine.en}}','config.json']].map(([id,label,relative])=>({id,label:termText(label),path:relative,kind:id==='endocrine'?'config':'directory'}));
@@ -21,6 +22,10 @@ export function createLayerRegistry({file,workspace,roots,externalRoots=[]}) {
  defaults[0].desc='小可的核心，只负责思考。';defaults[1].desc='负责处理冲浪时接收到的信息';defaults[2].desc='小可冲浪使用的QQ。';defaults[3].desc='承载事件广播、RPC 回路与状态同步';
  function atomic(data){fs.mkdirSync(path.dirname(file),{recursive:true});const tmp=file+'.'+randomUUID()+'.tmp';fs.writeFileSync(tmp,JSON.stringify(data,null,2)+'\n');fs.renameSync(tmp,file);}
  if(!fs.existsSync(file))atomic({version:1,revision:1,layers:defaults});
+ else {
+  const data=read();
+  if(!data.layers.some(layer=>layer.key===telegram.key||layer.id===telegram.id||layer.containerName===telegram.containerName||layer.rootScope===telegram.rootScope||layer.shortcuts.some(shortcut=>shortcut.id===telegram.rootScope)))atomic({...data,revision:data.revision+1,layers:[...data.layers,telegram]});
+ }
  function read(){const data=JSON.parse(fs.readFileSync(file,'utf8'));assert(data.version===1&&Array.isArray(data.layers),'层配置格式错误');return data;}
  function safeDirectory(raw,allowFile=false){
   assert(typeof raw==='string'&&path.isAbsolute(raw),'目录必须是云端绝对路径');
