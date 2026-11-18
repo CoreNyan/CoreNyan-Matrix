@@ -581,7 +581,10 @@ const server = http.createServer(async (req, res) => {
       try{return sendJson(res,200,{ok:true,record:await apiRecords.read(pathname.split('/').at(-1))});}catch{return sendJson(res,404,{ok:false,error:'记录不存在或已过保留期'});}
     }
     if(pathname==='/api/onebot/login'&&req.method==='GET')return sendJson(res,200,{ok:true,...await readOnebotLogin(path.join(ONEBOT_ROOT,'data/qq-login-state.json'))});
-    if(pathname==='/api/telegram/login'&&req.method==='GET')return sendJson(res,200,await readTelegramLogin(path.join(GATEWAY_ROOT,'shared/architecture.json')));
+    if(pathname==='/api/telegram/login'&&req.method==='GET'){
+      res.setHeader('Cache-Control','private, no-store');
+      return sendJson(res,200,await readTelegramLogin(path.join(GATEWAY_ROOT,'shared/architecture.json'),undefined,req.auth?.role==='owner'));
+    }
     if (pathname === '/api/logs' && req.method === 'GET') {
       const organId = url.searchParams.get('organ') || 'corenyan-brain';
       const lines = Number(url.searchParams.get('lines') || 120);
