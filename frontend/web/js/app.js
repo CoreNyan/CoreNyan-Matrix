@@ -15,6 +15,7 @@ import {mountMobileLayout} from './mobile-layout.js';
 import {mountChat} from './chat.js';
 import {mountOnebotLogin} from './onebot-login.js';
 import {mountTelegramLogin} from './telegram-login.js';
+import {mountBilibiliLogin} from './bilibili-login.js';
 import {mountSettings} from './settings.js';
 import {createTerminalView} from './terminal-view.js';
 import {SERVICE_CONTROL,sessionImpact} from './organ-control-policy.js';
@@ -2408,6 +2409,7 @@ import { entityPreview } from './entity-models.js';
     mountMobileLayout(registry);
     mountOnebotLogin(registry,message=>showToast(message,true));
     mountTelegramLogin(registry);
+    mountBilibiliLogin(registry);
     mountSettings(registry,{openSystemConfig:async entry=>{
       if(!await confirmFileDiscard())return false;
       await loadFileScopes(false);

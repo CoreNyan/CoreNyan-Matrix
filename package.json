@@ -20,7 +20,8 @@
     "codemirror": "^5.65.21",
     "dompurify": "^3.4.17",
     "marked": "^18.1.1",
-    "nodemailer": "10.5.0"
+    "nodemailer": "10.5.0",
+    "qrcode-generator": "2.0.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0"

@@ -2,6 +2,7 @@ import { copyFile, mkdir } from 'node:fs/promises';
 const vendor = 'frontend/web/vendor';
 await mkdir(vendor, { recursive: true });
 const files = {
+  'qrcode-generator/dist/qrcode.mjs':'qrcode.js',
   'codemirror/addon/dialog/dialog.js':'dialog.js',
   'codemirror/addon/search/searchcursor.js':'searchcursor.js',
   'codemirror/addon/search/search.js':'search.js',

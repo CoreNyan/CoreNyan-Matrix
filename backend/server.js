@@ -6,6 +6,7 @@ import {createAccountStore} from './scripts/account-store.mjs';
 import {createNotifications} from './scripts/notifications.mjs';
 import {readOnebotLogin} from './scripts/onebot-login.mjs';
 import {readTelegramLogin} from './scripts/telegram-login.mjs';
+import {handleBilibiliLogin} from './scripts/bilibili-login.mjs';
 import {chatPrivatePath} from './scripts/chat-private-path.mjs';
 import {createUserEnvironment} from './scripts/user-environment.mjs';
 import {createChatApi} from './scripts/chat-api.mjs';
@@ -582,6 +583,7 @@ const server = http.createServer(async (req, res) => {
       try{return sendJson(res,200,{ok:true,record:await apiRecords.read(pathname.split('/').at(-1))});}catch{return sendJson(res,404,{ok:false,error:'记录不存在或已过保留期'});}
     }
     if(pathname==='/api/onebot/login'&&req.method==='GET')return sendJson(res,200,{ok:true,...await readOnebotLogin(path.join(ONEBOT_ROOT,'data/qq-login-state.json'))});
+    if(pathname==='/api/bilibili/login'){await handleBilibiliLogin(req,res,{readBody:readJsonBody,send:sendJson,trustedOrigin:trustedRequestOrigin});return;}
     if(pathname==='/api/telegram/login'&&req.method==='GET'){
       res.setHeader('Cache-Control','private, no-store');
       return sendJson(res,200,await readTelegramLogin(path.join(GATEWAY_ROOT,'shared/architecture.json'),undefined,req.auth?.role==='owner'));
