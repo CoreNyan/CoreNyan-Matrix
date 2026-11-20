@@ -31,7 +31,7 @@ import { termText, termHtml, termTextTemplate, termHtmlTemplate, applyStaticTerm
 import { mountRecycleBin } from './recycle-bin.js';
 import { ONEBOT_LOGIN, MODEL_PRESETS, TRASH_PREVIEW, DOODLE_TOTAL, CHAPTER_META, TIMING, UI, EDITOR, API, LIFE_MODE_LABELS, ANSI_CLASSES, VIEW, FILE_VIEW, RECORD_TYPE, ORGAN, FILTER, TELEMETRY, LANGUAGE_EXTENSIONS, INSPECT_LABELS, MOTION, FILE_ICONS } from './constants.js';
 import { StateRegistry, frameDebounce } from './state-registry.js';
-import { mountWaveform } from './waveform.js';
+import { mountWaveform, waveProfile } from './waveform.js';
 import { mountHealthDials, renderHealthDials } from './health-dials.js';
 import { mountHealthDetails, healthValues } from './health-details.js';
 import { mountAmbientEffects } from './ambient-effects.js';
@@ -543,7 +543,7 @@ import { entityPreview } from './entity-models.js';
       if ($('topDiskVal')) $('topDiskVal').textContent = `${host.diskPercent ?? 0}%`;
       if ($('topNetVal')) $('topNetVal').textContent = `↓${formatBytes(host.netRxRate)}/s ↑${formatBytes(host.netTxRate)}/s`;
       if ($('topUptimeVal')) $('topUptimeVal').textContent = formatUptime(host.uptimeSeconds);
-      if ($('spineBpmValue')) $('spineBpmValue').textContent = `${vitals.bpm ?? TELEMETRY.bpm} BPM`;
+      if ($('spineBpmValue')) $('spineBpmValue').textContent = `${Math.round(waveProfile({vitals}).bpm)} BPM · ${Math.round(waveProfile({vitals}).respirationHz * 60)} 次呼吸/分`;
 
       if ($('spineLifeStatusText')) {
         const label=LIFE_MODE_LABELS[vitals.mode]||'ONLINE · 在线';

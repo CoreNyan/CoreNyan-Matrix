@@ -1,4 +1,5 @@
 import {createFrameBudget,visualActive,observeVisualActivity} from './render-budget.js';
+import {lifeWave} from '../../../contracts/life-wave.js';
 import {RENDER_BUDGET} from './constants.js';
 'use strict';
 import { WAVE, TELEMETRY, VIEW, WAVE_HEALTH } from './constants.js';
@@ -20,20 +21,7 @@ export function perlin(x, seed = WAVE.seed) {
 }
 
 export function waveProfile(payload = {}) {
-  const host = payload.host || {}, life = payload.vitals || {};
-  const clamp = (value, fallback) => Number.isFinite(value) ? Math.max(0, Math.min(100, value)) / 100 : fallback / 100;
-  const pressure = clamp(host.cpuPercent, 0) * WAVE_HEALTH.pressureWeights.cpu
-    + clamp(host.memPercent, 0) * WAVE_HEALTH.pressureWeights.memory
-    + clamp(host.diskPercent, 0) * WAVE_HEALTH.pressureWeights.disk;
-  const energy = clamp(life.energy, TELEMETRY.energy), agitation = 1 - clamp(life.mood, TELEMETRY.mood);
-  const rate = WAVE_HEALTH.modeRate[life.mode] || 1;
-  return {
-    bpm: Math.max(WAVE.bpmMin, Math.min(WAVE.bpmMax, ((life.bpm || TELEMETRY.bpm) + pressure * WAVE_HEALTH.pressureBpm + agitation * WAVE_HEALTH.moodBpm) * rate)),
-    amplitude: WAVE_HEALTH.amplitudeBase + energy * WAVE_HEALTH.energyAmplitude,
-    intervalVariation: WAVE_HEALTH.intervalBase + pressure * WAVE_HEALTH.pressureVariation + agitation * WAVE_HEALTH.moodVariation,
-    respirationHz: (WAVE_HEALTH.respirationBase + pressure * WAVE_HEALTH.pressureRespiration + energy * WAVE_HEALTH.energyRespiration) * rate,
-    noise: WAVE.noiseAmplitude * (1 + pressure + agitation), activity: pressure * 100
-  };
+  return lifeWave(payload.vitals);
 }
 
 // A bounded acquisition buffer: existing samples are never recalculated.
@@ -142,17 +130,20 @@ export function mountWaveform(canvas, registry) {
     const head = width - WAVE.headInset;
     const step = WAVE.pixelsPerSecond / WAVE.sampleRate;
     const first = Math.max(history.count - history.capacity, history.count - 1 - Math.ceil(head / step));
-    for (const trace of WAVE.traces.filter(trace => trace.channel === 'ecg')) {
+    for (const trace of WAVE.traces) {
       ctx.beginPath(); ctx.strokeStyle = trace.color; ctx.lineWidth = trace.width;
       for (let i = first; i < history.count; i++) {
         const x = head - (history.count - 1 - i) * step;
-        const y = height * .53 - history.get(i, trace.channel);
+        const y = height * trace.baseline - history.get(i, trace.channel);
         if (i === first) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.stroke();
       ctx.beginPath(); ctx.fillStyle = trace.color;
-      ctx.arc(head, height * .53 - history.get(history.count - 1, trace.channel), trace.width * 1.5, 0, Math.PI * 2);
+      ctx.arc(head, height * trace.baseline - history.get(history.count - 1, trace.channel), trace.width * 1.5, 0, Math.PI * 2);
       ctx.fill();
+      ctx.font = '11px monospace';
+      const rate = trace.channel === 'ecg' ? Math.round(history.profile.bpm) + ' BPM' : Math.round(history.profile.respirationHz * 60) + ' /min';
+      ctx.fillText((trace.channel === 'ecg' ? '心跳 ' : '呼吸 ') + rate, 10, height * trace.baseline - 28);
     }
     canvas.setAttribute('data-signal-ready','');
     if (registry.state.motionEnabled && visualActive()) frame = budget.request(draw);

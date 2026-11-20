@@ -21,6 +21,7 @@ import {createLayerRegistry} from './scripts/layer-registry.mjs';
 import {searchFiles} from './scripts/file-search.mjs';
 import {minecraftNames,recentInteractions} from './scripts/bond-summary.mjs';
 import {randomUUID} from 'node:crypto';
+import {lifeWave} from '../contracts/life-wave.js';
 import { TRASH_PREVIEW } from '../contracts/constants.js';
 import { IMAGE_TYPES, isBinaryFile } from '../contracts/file-types.js';
 import { termText, termHtml, termTextTemplate, termHtmlTemplate } from '../contracts/terminology.js';
@@ -489,7 +490,7 @@ const server = http.createServer(async (req, res) => {
         Promise.resolve(sampleNetworkRate())
       ]);
       const bio = getCoreNyanBioState();
-      const bpm = Math.round(62 + (cpuPercent * 0.45) + ((100 - (bio.life.energy || 80)) * 0.15));
+      const bpm = Math.round(lifeWave(bio.life).bpm);
 
       return sendJson(res, 200, {
         ok: true,
