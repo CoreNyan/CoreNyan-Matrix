@@ -7,7 +7,7 @@ export function mountBilibiliLogin(registry){
  function render(s){
   clearTimeout(expiry);code.replaceChildren();panel.dataset.status=s.status||'unavailable';
   const messages={unconfigured:'尚未登录小可的 B 站账号。',unverified:'已保存账号，请检查登录是否有效。',qr:'用小可的 B 站账号扫码，并在手机上确认登录。',scanned:'已扫码，请在手机上确认。',verifying:'扫码确认成功，正在验证账号。',expired:'二维码已过期，请重新生成。'};
-  if(s.ok===false){label.textContent=s.error==='OWNER_REQUIRED'?'仅主管理员可登录账号。':s.error==='BILI_LOGIN_BUSY'?'登录操作正在处理，请稍候。':s.error==='BILI_LOGIN_INVALID'?'登录已失效，请重新扫码。':'登录暂时不可用，请重试。';start.hidden=s.error==='OWNER_REQUIRED';check.hidden=true;return;}
+  if(s.ok===false){const reasons={OWNER_REQUIRED:'仅主管理员可登录账号。',BILI_LOGIN_BUSY:'登录操作正在处理，请稍候。',BILI_LOGIN_INVALID:'登录已失效，请重新扫码。',BILI_CREDENTIALS_REQUIRED:'扫码结果缺少登录凭据，请重新扫码。',BILI_LOGIN_NETWORK_UNAVAILABLE:'服务器连接 B 站失败，请重试。',BILI_LOGIN_REDIRECT_INVALID:'扫码确认后的登录地址无法解析。',BILI_ACCOUNT_MISMATCH:'扫码账号与返回的登录账号不一致。',BILI_LOGIN_STORAGE_UNAVAILABLE:'服务器未能保存登录状态。'};label.textContent=reasons[s.error]||'登录未完成。';if(/^BILI_[A-Z0-9_-]+$/.test(s.error||''))label.textContent+='（'+s.error+'）';start.hidden=s.error==='OWNER_REQUIRED';start.textContent='重新扫码';check.hidden=true;return;}
   start.hidden=false;start.textContent=['qr','scanned','expired'].includes(s.status)?'重新生成二维码':s.status==='online'?'切换账号':'扫码登录';check.hidden=!['online','unverified'].includes(s.status);
   label.textContent=s.status==='online'?`已验证登录 · ${s.account.name} · UID ${s.account.uid}${s.enabled?'':' · B 站工具尚未启用'}`:messages[s.status]||'登录状态不可用。';
   if(['qr','scanned'].includes(s.status)&&s.expiresAt>Date.now()){
