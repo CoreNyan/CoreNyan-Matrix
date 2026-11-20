@@ -143,7 +143,7 @@ export function mountWaveform(canvas, registry) {
       ctx.fill();
       ctx.font = '11px monospace';
       const rate = trace.channel === 'ecg' ? Math.round(history.profile.bpm) + ' BPM' : Math.round(history.profile.respirationHz * 60) + ' /min';
-      ctx.fillText((trace.channel === 'ecg' ? '心跳 ' : '呼吸 ') + rate, 10, height * trace.baseline - 28);
+      ctx.fillText((trace.channel === 'ecg' ? 'HEART RATE ' : 'RESPIRATION ') + rate, 10, height * trace.baseline - 28);
     }
     canvas.setAttribute('data-signal-ready','');
     if (registry.state.motionEnabled && visualActive()) frame = budget.request(draw);

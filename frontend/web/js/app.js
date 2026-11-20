@@ -515,7 +515,11 @@ import { entityPreview } from './entity-models.js';
     navigation.userNavigation();
     state.lightbox.open = false; state.dossier.open = false;
     state.activeView = viewId;
-    if (viewId === VIEW.MEMORY && !state.fm.scopes.length) loadFileScopes();
+    // Scope metadata is prefetched on other pages; it does not load a directory.
+    if (viewId === VIEW.MEMORY) {
+      if (!state.fm.scopes.length) void loadFileScopes();
+      else void refreshCurrentScopeFiles();
+    }
     else if (viewId === VIEW.NEURAL) fetchNeuralLogs();
     else if (viewId === VIEW.ENDOCRINE && !state.endocrine.rawText) loadBrainConfig();
   }
@@ -543,7 +547,7 @@ import { entityPreview } from './entity-models.js';
       if ($('topDiskVal')) $('topDiskVal').textContent = `${host.diskPercent ?? 0}%`;
       if ($('topNetVal')) $('topNetVal').textContent = `↓${formatBytes(host.netRxRate)}/s ↑${formatBytes(host.netTxRate)}/s`;
       if ($('topUptimeVal')) $('topUptimeVal').textContent = formatUptime(host.uptimeSeconds);
-      if ($('spineBpmValue')) $('spineBpmValue').textContent = `${Math.round(waveProfile({vitals}).bpm)} BPM · ${Math.round(waveProfile({vitals}).respirationHz * 60)} 次呼吸/分`;
+      if ($('spineBpmValue')) $('spineBpmValue').textContent = `${Math.round(waveProfile({vitals}).bpm)} BPM · ${Math.round(waveProfile({vitals}).respirationHz * 60)} breaths/min`;
 
       if ($('spineLifeStatusText')) {
         const label=LIFE_MODE_LABELS[vitals.mode]||'ONLINE · 在线';
