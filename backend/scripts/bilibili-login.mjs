@@ -2,9 +2,10 @@ import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 const run=promisify(execFile);
 const actions=new Set(['status','start','poll','check']);
-export async function callBilibiliLogin(action){
+export async function callBilibiliLogin(action,site){
  if(!actions.has(action))throw Error('BILI_LOGIN_ACTION_INVALID');
- try{const {stdout}=await run('docker',['exec','corenyan-gateway','node','src/modules/bilibili/login.cjs',action],{timeout:30000,maxBuffer:16384});return JSON.parse(stdout);}
+ if(site!==undefined&&!['domestic','international'].includes(site))return {ok:false,error:'BILI_LOGIN_SITE_INVALID'};
+ try{const {stdout}=await run('docker',['exec','corenyan-gateway','node','src/modules/bilibili/login.cjs',action,...(action==='start'&&site?[site]:[])],{timeout:30000,maxBuffer:16384});return JSON.parse(stdout);}
  catch(error){try{const result=JSON.parse(error.stdout);if(result.ok===false&&/^BILI_[A-Z0-9_-]+$/.test(result.error))return result;}catch{}return {ok:false,error:'BILI_LOGIN_UNAVAILABLE'};}
 }
 export async function handleBilibiliLogin(req,res,{readBody,send,trustedOrigin,call=callBilibiliLogin}){
@@ -12,7 +13,8 @@ export async function handleBilibiliLogin(req,res,{readBody,send,trustedOrigin,c
  if(req.auth?.role!=='owner')return send(res,403,{ok:false,error:'OWNER_REQUIRED'});
  if(!['GET','POST'].includes(req.method))return send(res,405,{ok:false,error:'METHOD_NOT_ALLOWED'});
  if(req.method==='POST'&&!trustedOrigin(req))return send(res,403,{ok:false,error:'ORIGIN_DENIED'});
- const action=req.method==='GET'?'status':(await readBody(req)).action;
+ const body=req.method==='GET'?{}:await readBody(req),action=req.method==='GET'?'status':body?.action;
  if(!actions.has(action))return send(res,400,{ok:false,error:'BILI_LOGIN_ACTION_INVALID'});
- const result=await call(action);return send(res,result.ok===false?502:200,result);
+ if(body.site!==undefined&&!['domestic','international'].includes(body.site))return send(res,400,{ok:false,error:'BILI_LOGIN_SITE_INVALID'});
+ const result=await call(action,action==='start'?body.site:undefined);return send(res,result.ok===false?502:200,result);
 }
