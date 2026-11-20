@@ -4,8 +4,10 @@ import {buildGeometry} from './entity-geometry.mjs';
 import {ENTITY,ENTITY_MODELS,ENTITY_FLEET} from '../frontend/web/js/constants.js';
 const out=path.resolve(process.argv[2]||'frontend/web/assets/entity');
 fs.mkdirSync(out,{recursive:true});
-const manifest={version:Number(process.argv[3]||ENTITY.assetVersion),models:{}};
-for(const kind of Object.keys(ENTITY_MODELS)){
+const selected=process.argv.slice(4);
+const manifest=selected.length&&fs.existsSync(path.join(out,'manifest.json'))?JSON.parse(fs.readFileSync(path.join(out,'manifest.json'),'utf8')):{version:Number(process.argv[3]||ENTITY.assetVersion),models:{}};
+for(const kind of selected.length?selected:Object.keys(ENTITY_MODELS)){
+ if(!Object.hasOwn(ENTITY_MODELS,kind))throw Error('Unknown entity model: '+kind);
  const m=buildGeometry(kind);
  const scale=3/32767,packed=Buffer.alloc(16+m.count*10);
  packed.write('CNPC',0);packed.writeUInt32LE(1,4);packed.writeUInt32LE(m.count,8);packed.writeFloatLE(scale,12);

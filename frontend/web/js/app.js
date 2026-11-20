@@ -650,7 +650,8 @@ import { entityPreview } from './entity-models.js';
   function renderMiniOrganStrip(organs) {
     const strip = $('vitalOrgansStrip');
     if (!strip) return;
-    strip.innerHTML = organs.map((o) => `
+    const rank=o=>['STARTING','RESTARTING'].includes(o.stateCode)?0:o.online?1:2;
+    strip.innerHTML = [...organs].sort((a,b)=>rank(a)-rank(b)).map((o) => `
       <div class="organ-mini-pill ${o.online ? 'online' : ''}" title="${escapeHtml(o.sub)}">
         <span>${escapeHtml(o.name)}</span>
         <span style="display:inline-flex;align-items:center;gap:5px;">

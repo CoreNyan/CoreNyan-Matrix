@@ -239,6 +239,19 @@ function command(s){
  }
 }
 
+function telegram(s){
+ // Broad, thin paper facets with a raised central fold and an open V tail.
+ const nose=[0,0,-4.6],ridge=[0,.65,1.65],keel=[0,-.55,1.9];
+ for(const side of [-1,1]){
+  const wing=[side*2.7,.08,2.55],fold=[side*.62,.18,1.25];
+  s.tri(nose,wing,fold,.85);s.tri(nose,fold,ridge,.95);
+  s.tri(nose,keel,fold,.65);s.tri(fold,keel,ridge,.75);
+  for(const [a,b] of [[nose,wing],[wing,fold],[fold,nose],[nose,ridge],[ridge,fold],[nose,keel],[keel,fold]])s.line(a,b);
+  // Fine fold line inset from the leading edge, keeping the paper silhouette clean.
+  s.line([side*.12,.025,-3.95],[side*2.35,.095,2.12],.8);
+ }
+}
+
 function sensor(s){
  // Deep forward receiver arms, a large dish and asymmetric instrument outriggers.
  s.hull([[-1.4,.65,.28],[-.5,1.15,.55],[.8,1.25,.7],[1.8,.8,.45]],{center:[0,0,1.3]});
@@ -520,7 +533,7 @@ function specialistDetails(s,kind){
 }
 
 export function buildGeometry(kind){
- const yard=new Yard();({command,sensor,courier,relay,ark}[kind]||ark)(yard);finishing(yard,kind);arsenal(yard,kind);specialistDetails(yard,kind);
+ const yard=new Yard();({command,sensor,courier,relay,ark,telegram}[kind]||ark)(yard);finishing(yard,kind);arsenal(yard,kind);specialistDetails(yard,kind);
  let min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
  for(const f of yard.faces)for(const p of [f.a,f.b,f.c])for(let i=0;i<3;i++){min[i]=Math.min(min[i],p[i]);max[i]=Math.max(max[i],p[i]);}
  const middle=min.map((v,i)=>(v+max[i])/2),scale=4.8/Math.max(...max.map((v,i)=>v-min[i])),point=p=>mul(sub(p,middle),scale);
